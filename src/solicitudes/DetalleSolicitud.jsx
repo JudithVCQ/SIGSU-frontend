@@ -18,7 +18,9 @@ export default function DetalleSolicitud() {
   const tieneResponsable = solicitud.responsable && solicitud.responsable !== 'Sin asignar';
 
   const [comentarios, setComentarios] = useState(
-    tieneResponsable
+    solicitud.comentarios && solicitud.comentarios.length > 0
+      ? solicitud.comentarios
+      : tieneResponsable
       ? [
           {
             nombre: solicitud.responsable,
@@ -130,6 +132,16 @@ export default function DetalleSolicitud() {
           <h1>{solicitud.titulo}</h1>
           <p>Registrada el {solicitud.fecha} a las 09:42</p>
         </div>
+        {user?.rol === ROLES.TECNICO &&
+          solicitud.responsable === user?.nombre &&
+          (solicitud.estado === 'Asignada' || solicitud.estado === 'En atención') && (
+            <Button
+              variant="primary"
+              onClick={() => navigate(`/tecnico/atencion/${solicitud.codigo}`)}
+            >
+              Ir a atención
+            </Button>
+          )}
       </div>
 
       <div className="detail-grid">
@@ -158,6 +170,12 @@ export default function DetalleSolicitud() {
             <div className="description">
               <small>Descripción</small>
               <p>{solicitud.descripcion}</p>
+              {solicitud.solucion && (
+                <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--borde)' }}>
+                  <small>Solución registrada por el técnico</small>
+                  <p>{solicitud.solucion}</p>
+                </div>
+              )}
             </div>
           </section>
 
