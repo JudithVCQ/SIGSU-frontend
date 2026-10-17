@@ -1,6 +1,6 @@
 // TEMPORAL: datos simulados. Se elimina al conectar el backend; reemplazar por src/services/.
 
-export const SOLICITUDES_MOCK = [
+export const INITIAL_SOLICITUDES = [
   {
     codigo: 'SIG-00131',
     titulo: 'Proyector sin señal de video',
@@ -89,6 +89,30 @@ export const SOLICITUDES_MOCK = [
     evidencias: [{ nombre: 'bisagra_lab2.jpg', tamano: '1.4 MB' }],
   },
 ];
+
+let inMemorySolicitudes = [...INITIAL_SOLICITUDES];
+let nextIdCounter = 132;
+
+export const SOLICITUDES_MOCK = inMemorySolicitudes;
+
+export function getSolicitudesMock() {
+  return inMemorySolicitudes;
+}
+
+export function getSolicitudByCodigo(codigo) {
+  return inMemorySolicitudes.find((s) => s.codigo === codigo) || inMemorySolicitudes[0];
+}
+
+export function addSolicitudMock(nueva) {
+  inMemorySolicitudes = [nueva, ...inMemorySolicitudes];
+  return nueva;
+}
+
+export function generateNextCodigo() {
+  const code = `SIG-${String(nextIdCounter).padStart(5, '0')}`;
+  nextIdCounter += 1;
+  return code;
+}
 
 export const ESTADO_NIVEL = {
   Pendiente: 0,
