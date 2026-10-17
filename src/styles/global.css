@@ -563,8 +563,7 @@ h2, h3 {
 
 .field input,
 .field textarea,
-.field select,
-.search-field input {
+.field select {
   width: 100%;
   border: 1px solid #ccd1ce;
   border-radius: 8px;
@@ -1024,12 +1023,35 @@ td:first-child {
   padding-left: 12px;
   background: #fff;
   color: var(--muted);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.search-field:focus-within {
+  border-color: var(--verde);
+  box-shadow: 0 0 0 3px rgba(31, 78, 67, 0.08);
 }
 
 .search-field input {
+  flex: 1;
+  width: 100%;
   border: 0;
-  box-shadow: none !important;
+  border-radius: 0;
+  background: transparent;
+  min-height: 0;
   height: 100%;
+  padding: 0 12px;
+  color: var(--carbon);
+  box-shadow: none !important;
+  outline: none !important;
+  font-size: 12px;
+}
+
+.search-field input:focus,
+.search-field input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
 }
 
 .results-label {
