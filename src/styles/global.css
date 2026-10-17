@@ -1,0 +1,21 @@
+@import './tokens.css';
+*{box-sizing:border-box} html,body,#root{height:100%}
+body{margin:0;font-family:var(--fuente);color:var(--carbon);background:var(--fondo);font-size:14px}
+h1,h2,h3{color:var(--verde);margin:0 0 .5rem}
+:focus-visible{outline:2px solid var(--dorado);outline-offset:2px}
+.app{display:flex;flex-direction:column;min-height:100%}
+.topbar{height:var(--topbar);background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 1rem}
+.topbar button{background:none;border:1px solid #fff6;color:#fff;border-radius:var(--radio);padding:.3rem .7rem;cursor:pointer;margin-left:.5rem}
+.shell{display:flex;flex:1}
+.sidebar{width:var(--sidebar);background:#fff;border-right:1px solid var(--borde);padding:1rem .6rem;display:flex;flex-direction:column;gap:.2rem}
+.sidebar a{padding:.55rem .7rem;border-radius:var(--radio);color:var(--carbon);text-decoration:none}
+.sidebar a.active{background:var(--verde-suave);color:var(--verde);font-weight:600}
+.content{flex:1;padding:1.5rem;min-width:0}
+.badge{display:inline-block;padding:.15rem .6rem;border-radius:999px;font-size:12px;font-weight:600}
+.badge-pendiente,.badge-media{background:var(--media-fondo);color:var(--media-texto)}
+.badge-asignada,.badge-cerrada{background:#E4E4E2;color:#555}
+.badge-en-atencion{background:#DCE6E3;color:var(--verde)}
+.badge-resuelta,.badge-baja{background:var(--verde-suave);color:#2F6B3A}
+.badge-alta{background:var(--peligro-fondo);color:#8B2C2C}
+@media(max-width:720px){.sidebar{position:fixed;bottom:0;left:0;right:0;width:auto;flex-direction:row;justify-content:space-around;padding:.3rem;z-index:5}
+ .content{padding:1rem 1rem 4.5rem}}
