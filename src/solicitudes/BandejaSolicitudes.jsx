@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ESTADOS, CATEGORIAS, PRIORIDADES } from '../config/constants';
 import { getSolicitudesMock } from '../mocks/solicitudes';
+import { esVencida } from '../config/vigencia';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
@@ -17,14 +18,16 @@ export default function BandejaSolicitudes() {
   const [estadoFilter, setEstadoFilter] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('');
   const [prioridadFilter, setPrioridadFilter] = useState('');
+  const [soloVencidas, setSoloVencidas] = useState(false);
 
   const filtered = items.filter((r) => {
     const matchesEstado = !estadoFilter || r.estado === estadoFilter;
     const matchesCategoria = !categoriaFilter || r.categoria === categoriaFilter;
     const matchesPrioridad = !prioridadFilter || r.prioridad === prioridadFilter;
+    const matchesVencida = !soloVencidas || esVencida(r);
     const searchTarget = `${r.codigo} ${r.titulo} ${r.categoria} ${r.descripcion || ''}`.toLowerCase();
     const matchesQuery = !query.trim() || searchTarget.includes(query.trim().toLowerCase());
-    return matchesEstado && matchesCategoria && matchesPrioridad && matchesQuery;
+    return matchesEstado && matchesCategoria && matchesPrioridad && matchesVencida && matchesQuery;
   });
 
   return (
@@ -35,7 +38,7 @@ export default function BandejaSolicitudes() {
       />
 
       <section className="panel table-panel">
-        <div className="filters">
+        <div className="filters filters-supervisor">
           <label className="search-field">
             <Icon name="search" size={18} />
             <input
@@ -65,6 +68,14 @@ export default function BandejaSolicitudes() {
             options={PRIORIDADES}
             placeholder="Todas"
           />
+          <label className={`filter-vencidas ${soloVencidas ? 'active' : ''}`}>
+            <input
+              type="checkbox"
+              checked={soloVencidas}
+              onChange={(e) => setSoloVencidas(e.target.checked)}
+            />
+            <span>Solo vencidas</span>
+          </label>
         </div>
 
         <div className="results-label">
@@ -73,6 +84,7 @@ export default function BandejaSolicitudes() {
         </div>
 
         <RequestTable
+          mostrarVencidas
           requests={filtered}
           onOpen={(code) => navigate(`/solicitudes/${code}`)}
         />

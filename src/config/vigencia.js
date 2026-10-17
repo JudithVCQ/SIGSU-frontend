@@ -44,7 +44,7 @@ export function calcularFechaLimite(solicitud) {
  * Criterio: estado distinto de 'Resuelta' y 'Cerrada' Y ahora > fechaLimite.
  * "Vencida" no es un estado nuevo, sino un indicador derivado.
  */
-export function esVencida(solicitud, ahora = new Date()) {
+export function esVencida(solicitud, ahora) {
   if (!solicitud) return false;
   if (solicitud.estado === 'Resuelta' || solicitud.estado === 'Cerrada') {
     return false;
@@ -53,7 +53,8 @@ export function esVencida(solicitud, ahora = new Date()) {
   const limite = calcularFechaLimite(solicitud);
   if (!limite) return false;
 
-  return ahora.getTime() > limite.getTime();
+  const fechaReferencia = ahora instanceof Date ? ahora : new Date();
+  return fechaReferencia.getTime() > limite.getTime();
 }
 
 /**

@@ -5,6 +5,7 @@ import {
   SUPERVISOR_KPIS,
   CARGA_POR_CATEGORIA,
 } from '../mocks/solicitudes';
+import { esVencida } from '../config/vigencia';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import KpiCard from '../components/KpiCard';
@@ -16,6 +17,7 @@ export default function SupervisorDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const items = getSolicitudesMock();
+  const vencidasCount = items.filter((s) => esVencida(s)).length;
 
   const firstName = user?.nombre ? user.nombre.split(' ')[0] : 'Ana';
 
@@ -45,6 +47,13 @@ export default function SupervisorDashboard() {
           change="+4% vs. periodo anterior"
           tone="gold"
         />
+        <KpiCard
+          number={String(vencidasCount)}
+          label="Vencidas"
+          change="Superan plazo de atención"
+          tone="danger"
+          icon="alert"
+        />
       </div>
 
       <div className="dashboard-grid">
@@ -63,6 +72,7 @@ export default function SupervisorDashboard() {
           </div>
           <RequestTable
             compact
+            mostrarVencidas
             requests={items}
             onOpen={(code) => navigate(`/solicitudes/${code}`)}
           />

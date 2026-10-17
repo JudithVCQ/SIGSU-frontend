@@ -1,8 +1,9 @@
 import Badge from './Badge';
 import Button from './Button';
 import Icon from './Icon';
+import { esVencida } from '../config/vigencia';
 
-export default function RequestTable({ requests = [], compact = false, onOpen }) {
+export default function RequestTable({ requests = [], compact = false, onOpen, mostrarVencidas = false }) {
   const data = compact ? requests.slice(0, 3) : requests;
 
   const getInitials = (name) => {
@@ -53,7 +54,10 @@ export default function RequestTable({ requests = [], compact = false, onOpen })
                   </td>
                   <td>{category}</td>
                   <td>
-                    <Badge texto={status} />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <Badge texto={status} />
+                      {mostrarVencidas && esVencida(r) && <Badge texto="Vencida" />}
+                    </div>
                   </td>
                   <td>
                     <Badge texto={priority} />
@@ -99,7 +103,10 @@ export default function RequestTable({ requests = [], compact = false, onOpen })
                   <strong>{code}</strong>
                   {date && <span>{date}</span>}
                 </div>
-                <Badge texto={status} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <Badge texto={status} />
+                  {mostrarVencidas && esVencida(r) && <Badge texto="Vencida" />}
+                </div>
               </div>
               <h3>{title}</h3>
               <div className="request-meta">

@@ -6,6 +6,7 @@ import { getSolicitudByCodigo, ESTADO_NIVEL } from '../mocks/solicitudes';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
+import { esVencida, calcularFechaLimite, formatearFechaVisual } from '../config/vigencia';
 import './solicitudes.css';
 
 export default function DetalleSolicitud() {
@@ -16,6 +17,9 @@ export default function DetalleSolicitud() {
   const solicitud = getSolicitudByCodigo(id);
   const level = ESTADO_NIVEL[solicitud.estado] ?? 0;
   const tieneResponsable = solicitud.responsable && solicitud.responsable !== 'Sin asignar';
+  const isSupervisor = user?.rol === ROLES.SUPERVISOR;
+  const vencida = esVencida(solicitud);
+  const fechaLimite = calcularFechaLimite(solicitud);
 
   const [comentarios, setComentarios] = useState(
     solicitud.comentarios && solicitud.comentarios.length > 0
@@ -128,6 +132,7 @@ export default function DetalleSolicitud() {
             <span className="code">{solicitud.codigo}</span>
             <Badge texto={solicitud.estado} />
             <Badge texto={solicitud.prioridad} />
+            {isSupervisor && vencida && <Badge texto="Vencida" />}
           </div>
           <h1>{solicitud.titulo}</h1>
           <p>Registrada el {solicitud.fecha} a las 09:42</p>
@@ -160,13 +165,33 @@ export default function DetalleSolicitud() {
               </div>
               <div>
                 <small>Estado</small>
-                <Badge texto={solicitud.estado} />
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <Badge texto={solicitud.estado} />
+                  {isSupervisor && vencida && <Badge texto="Vencida" />}
+                </div>
               </div>
               <div>
                 <small>Prioridad</small>
                 <Badge texto={solicitud.prioridad} />
               </div>
+              {isSupervisor && vencida && (
+                <div>
+                  <small>Fecha límite</small>
+                  <span style={{ color: 'var(--peligro)', fontWeight: 600 }}>
+                    {formatearFechaVisual(fechaLimite)}
+                  </span>
+                </div>
+              )}
             </div>
+            {isSupervisor && vencida && (
+              <div className="vencida-alert-banner">
+                <Icon name="alert" size={18} />
+                <div>
+                  <strong>Solicitud fuera de plazo</strong>
+                  <span>Esta solicitud superó la fecha límite de atención ({formatearFechaVisual(fechaLimite)}).</span>
+                </div>
+              </div>
+            )}
             <div className="description">
               <small>Descripción</small>
               <p>{solicitud.descripcion}</p>
@@ -264,7 +289,15 @@ export default function DetalleSolicitud() {
           {/* Estado actual & barra de progreso */}
           <section className="panel status-panel">
             <div className="card-label">ESTADO ACTUAL</div>
-            <Badge texto={solicitud.estado} />
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+              <Badge texto={solicitud.estado} />
+              {isSupervisor && vencida && <Badge texto="Vencida" />}
+            </div>
+            {isSupervisor && vencida && (
+              <p style={{ color: 'var(--peligro)', fontSize: '12px', fontWeight: 600, margin: '0 0 8px 0' }}>
+                Fecha límite superada: {formatearFechaVisual(fechaLimite)}
+              </p>
+            )}
             <p>{textosEstado[Math.min(level, 4)]}</p>
 
             <div className="progress">
