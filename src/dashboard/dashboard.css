@@ -1,0 +1,58 @@
+/* ───────── Estilos del Dashboard de Supervisión ───────── */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 0.8fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.workload {
+  padding-bottom: 16px;
+}
+
+.work-row {
+  padding: 10px 22px;
+}
+
+.work-row > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  margin-bottom: 7px;
+}
+
+.work-row b {
+  font-size: 10px;
+  color: var(--carbon);
+}
+
+.bar {
+  height: 5px;
+  background: #eceeeb;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--verde);
+  border-radius: inherit;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-grid {
+    margin-top: 12px;
+  }
+
+  .work-row {
+    padding-inline: 16px;
+  }
+}
