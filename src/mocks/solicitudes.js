@@ -1,4 +1,11 @@
 // TEMPORAL: datos simulados. Se elimina al conectar el backend; reemplazar por src/services/.
+import { formatearFechaVisual, esVencida } from '../config/vigencia';
+
+function haceDias(diasAtras) {
+  const d = new Date();
+  d.setDate(d.getDate() - diasAtras);
+  return d;
+}
 
 export const INITIAL_SOLICITUDES = [
   {
@@ -6,8 +13,9 @@ export const INITIAL_SOLICITUDES = [
     titulo: 'Proyector sin señal de video',
     categoria: 'Soporte informático',
     estado: 'En atención',
-    prioridad: 'Alta',
-    fecha: '16 oct, 2026',
+    prioridad: 'Alta', // Plazo 2 días. Registrada hace 4 días -> VENCIDA (1/2)
+    fechaRegistro: haceDias(4),
+    fecha: formatearFechaVisual(haceDias(4)),
     ubicacion: 'Pabellón A - Aula 205',
     responsable: 'Diego Morales',
     rolResponsable: 'Soporte técnico',
@@ -22,13 +30,13 @@ export const INITIAL_SOLICITUDES = [
         nombre: 'Diego Morales',
         rol: 'Soporte técnico',
         texto: 'Revisé el reporte y ya coordinamos la visita técnica. Te avisaré apenas termine.',
-        tiempo: '16 oct, 2026 · 12:10',
+        tiempo: `${formatearFechaVisual(haceDias(4))} · 12:10`,
       },
       {
         nombre: 'Camila Rojas',
         rol: 'Solicitante',
         texto: 'Gracias. Estaré en el aula hasta las 4 p. m. por si necesitan acceso.',
-        tiempo: '16 oct, 2026 · 12:32',
+        tiempo: `${formatearFechaVisual(haceDias(4))} · 12:32`,
       },
     ],
   },
@@ -37,8 +45,9 @@ export const INITIAL_SOLICITUDES = [
     titulo: 'Falla en el punto de red del laboratorio 4',
     categoria: 'Soporte informático',
     estado: 'Asignada',
-    prioridad: 'Alta',
-    fecha: '15 oct, 2026',
+    prioridad: 'Alta', // Plazo 2 días. Registrada hace 1 día -> EN PLAZO
+    fechaRegistro: haceDias(1),
+    fecha: formatearFechaVisual(haceDias(1)),
     ubicacion: 'Pabellón B - Laboratorio 4',
     responsable: 'Diego Morales',
     rolResponsable: 'Soporte técnico',
@@ -52,8 +61,9 @@ export const INITIAL_SOLICITUDES = [
     titulo: 'Goteras en el techo del pasillo',
     categoria: 'Infraestructura',
     estado: 'Asignada',
-    prioridad: 'Media',
-    fecha: '14 oct, 2026',
+    prioridad: 'Media', // Plazo 5 días. Registrada hace 7 días -> VENCIDA (2/2)
+    fechaRegistro: haceDias(7),
+    fecha: formatearFechaVisual(haceDias(7)),
     ubicacion: 'Pabellón C - Segundo piso',
     responsable: 'Laura Díaz',
     rolResponsable: 'Mantenimiento general',
@@ -67,8 +77,9 @@ export const INITIAL_SOLICITUDES = [
     titulo: 'Impresora láser no responde en Sala de Profesores',
     categoria: 'Soporte informático',
     estado: 'Asignada',
-    prioridad: 'Media',
-    fecha: '14 oct, 2026',
+    prioridad: 'Media', // Plazo 5 días. Registrada hace 2 días -> EN PLAZO
+    fechaRegistro: haceDias(2),
+    fecha: formatearFechaVisual(haceDias(2)),
     ubicacion: 'Pabellón A - Sala de Profesores',
     responsable: 'Diego Morales',
     rolResponsable: 'Soporte técnico',
@@ -82,8 +93,9 @@ export const INITIAL_SOLICITUDES = [
     titulo: 'Constancia de estudios con firma digital',
     categoria: 'Trámites',
     estado: 'Pendiente',
-    prioridad: 'Baja',
-    fecha: '13 oct, 2026',
+    prioridad: 'Baja', // Plazo 10 días. Registrada hace 3 días -> EN PLAZO
+    fechaRegistro: haceDias(3),
+    fecha: formatearFechaVisual(haceDias(3)),
     ubicacion: 'Secretaría Académica',
     responsable: 'Sin asignar',
     rolResponsable: '',
@@ -96,9 +108,10 @@ export const INITIAL_SOLICITUDES = [
     codigo: 'SIG-00118',
     titulo: 'Luminaria averiada en sala de lectura',
     categoria: 'Mantenimiento',
-    estado: 'Resuelta',
+    estado: 'Resuelta', // Resuelta -> NO VENCIDA
     prioridad: 'Media',
-    fecha: '08 oct, 2026',
+    fechaRegistro: haceDias(9),
+    fecha: formatearFechaVisual(haceDias(9)),
     ubicacion: 'Biblioteca Central - Sala 2',
     responsable: 'Carlos Peña',
     rolResponsable: 'Electricidad',
@@ -113,9 +126,10 @@ export const INITIAL_SOLICITUDES = [
     codigo: 'SIG-00115',
     titulo: 'Reemplazo de switch de red en Pabellón B',
     categoria: 'Soporte informático',
-    estado: 'Resuelta',
+    estado: 'Resuelta', // Resuelta -> NO VENCIDA
     prioridad: 'Media',
-    fecha: '05 oct, 2026',
+    fechaRegistro: haceDias(12),
+    fecha: formatearFechaVisual(haceDias(12)),
     ubicacion: 'Pabellón B - Rack Piso 1',
     responsable: 'Diego Morales',
     rolResponsable: 'Soporte técnico',
@@ -129,7 +143,7 @@ export const INITIAL_SOLICITUDES = [
         nombre: 'Diego Morales',
         rol: 'Soporte técnico',
         texto: 'Equipo reemplazado y puertos probados con éxito.',
-        tiempo: '05 oct, 2026 · 17:00',
+        tiempo: `${formatearFechaVisual(haceDias(12))} · 17:00`,
       },
     ],
   },
@@ -137,9 +151,10 @@ export const INITIAL_SOLICITUDES = [
     codigo: 'SIG-00109',
     titulo: 'Acceso a la red Wi-Fi institucional',
     categoria: 'Soporte informático',
-    estado: 'Cerrada',
+    estado: 'Cerrada', // Cerrada -> NO VENCIDA
     prioridad: 'Baja',
-    fecha: '02 oct, 2026',
+    fechaRegistro: haceDias(15),
+    fecha: formatearFechaVisual(haceDias(15)),
     ubicacion: 'Pabellón B - Patio central',
     responsable: 'Diego Morales',
     rolResponsable: 'Soporte técnico',
@@ -154,9 +169,10 @@ export const INITIAL_SOLICITUDES = [
     codigo: 'SIG-00102',
     titulo: 'Puerta del laboratorio no cierra bien',
     categoria: 'Infraestructura',
-    estado: 'Resuelta',
+    estado: 'Resuelta', // Resuelta -> NO VENCIDA
     prioridad: 'Alta',
-    fecha: '28 sep, 2026',
+    fechaRegistro: haceDias(20),
+    fecha: formatearFechaVisual(haceDias(20)),
     ubicacion: 'Pabellón D - Laboratorio 2',
     responsable: 'Carlos Peña',
     rolResponsable: 'Carpintería',
@@ -182,8 +198,14 @@ export function getSolicitudByCodigo(codigo) {
 }
 
 export function addSolicitudMock(nueva) {
-  inMemorySolicitudes = [nueva, ...inMemorySolicitudes];
-  return nueva;
+  const registroDate = nueva.fechaRegistro || new Date();
+  const conFecha = {
+    ...nueva,
+    fechaRegistro: registroDate,
+    fecha: nueva.fecha || formatearFechaVisual(registroDate),
+  };
+  inMemorySolicitudes = [conFecha, ...inMemorySolicitudes];
+  return conFecha;
 }
 
 export function updateSolicitudEstado(codigo, nuevoEstado, datosExtra = {}) {
@@ -218,6 +240,10 @@ export function addEvidenciasSolicitud(codigo, nuevasEvidencias = []) {
     };
   });
   return inMemorySolicitudes.find((s) => s.codigo === codigo);
+}
+
+export function getSolicitudesVencidas() {
+  return inMemorySolicitudes.filter((s) => esVencida(s));
 }
 
 export function generateNextCodigo() {

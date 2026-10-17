@@ -34,3 +34,13 @@ export const EVIDENCIA = {
   tipos: ['image/jpeg', 'image/png', 'application/pdf'],
   formatosTexto: 'PNG, JPG o PDF · Máximo 3 archivos de 5 MB',
 };
+
+// SUPUESTO: plazo por confirmar (RF-034)
+export const VIGENCIA = {
+  plazoDiasPorPrioridad: {
+    Alta: 2,
+    Media: 5,
+    Baja: 10,
+  },
+  plazoDiasSinPrioridad: 2,
+};
