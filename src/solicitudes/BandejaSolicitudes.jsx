@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ESTADOS, CATEGORIAS, PRIORIDADES } from '../config/constants';
 import { getSolicitudesMock } from '../mocks/solicitudes';
 import { esVencida } from '../config/vigencia';
+import { getSolicitudes } from '../services/solicitudes.js';
+import { getCategorias, getPrioridades } from '../services/catalogos.js';
+import { ESTADOS } from '../config/constants';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
@@ -10,32 +12,89 @@ import RequestTable from '../components/RequestTable';
 import Icon from '../components/Icon';
 import './solicitudes.css';
 
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
+
 export default function BandejaSolicitudes() {
   const navigate = useNavigate();
-  const items = getSolicitudesMock();
 
-  const [query, setQuery] = useState('');
-  const [estadoFilter, setEstadoFilter] = useState('');
-  const [categoriaFilter, setCategoriaFilter] = useState('');
-  const [prioridadFilter, setPrioridadFilter] = useState('');
-  const [soloVencidas, setSoloVencidas] = useState(false);
+  const [items,       setItems]       = useState([]);
+  const [categorias,  setCategorias]  = useState([]);
+  const [prioridades, setPrioridades] = useState([]);
+  const [loading,     setLoading]     = useState(!USE_MOCKS);
+  const [error,       setError]       = useState('');
 
-  const filtered = items.filter((r) => {
-    const matchesEstado = !estadoFilter || r.estado === estadoFilter;
-    const matchesCategoria = !categoriaFilter || r.categoria === categoriaFilter;
-    const matchesPrioridad = !prioridadFilter || r.prioridad === prioridadFilter;
-    const matchesVencida = !soloVencidas || esVencida(r);
-    const searchTarget = `${r.codigo} ${r.titulo} ${r.categoria} ${r.descripcion || ''}`.toLowerCase();
-    const matchesQuery = !query.trim() || searchTarget.includes(query.trim().toLowerCase());
-    return matchesEstado && matchesCategoria && matchesPrioridad && matchesVencida && matchesQuery;
-  });
+  const [query,          setQuery]          = useState('');
+  const [estadoFilter,   setEstadoFilter]   = useState('');
+  const [categoriaId,    setCategoriaId]    = useState('');
+  const [prioridadId,    setPrioridadId]    = useState('');
+  // "Solo vencidas" solo disponible en modo mocks (backend no tiene ese filtro)
+  const [soloVencidas,   setSoloVencidas]   = useState(false);
+
+  const [page, setPage]   = useState(0);
+  const PAGE_SIZE          = 15;
+
+  useEffect(() => {
+    if (USE_MOCKS) {
+      setItems(getSolicitudesMock());
+      return;
+    }
+    setLoading(true);
+    Promise.all([getSolicitudes(), getCategorias(), getPrioridades()])
+      .then(([sols, cats, prios]) => {
+        setItems(sols);
+        setCategorias(cats);
+        setPrioridades(prios);
+      })
+      .catch(err => setError(err.message ?? 'No se pudieron cargar las solicitudes.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Recargar al cambiar filtros en modo real (enviamos filtros al servidor)
+  useEffect(() => {
+    if (USE_MOCKS || loading) return;
+    setLoading(true);
+    const params = {};
+    if (estadoFilter) {
+      // Convertir etiqueta UI → enum backend
+      const mapUI = {
+        'Registrada': 'REGISTRADA', 'En evaluación': 'EN_EVALUACION',
+        'Asignada': 'ASIGNADA', 'En atención': 'EN_ATENCION',
+        'Resuelta': 'RESUELTA', 'Cerrada': 'CERRADA',
+      };
+      params.estado = mapUI[estadoFilter] ?? estadoFilter;
+    }
+    if (query.trim())  params.texto       = query.trim();
+    if (categoriaId)   params.categoriaId = categoriaId;
+    if (prioridadId)   params.prioridadId = prioridadId;
+
+    getSolicitudes(params)
+      .then(sols => { setItems(sols); setPage(0); })
+      .catch(err => setError(err.message ?? 'Error al filtrar.'))
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estadoFilter, categoriaId, prioridadId]);
+
+  // Filtro local para texto en modo real, y todos los filtros en modo mocks
+  const filtered = USE_MOCKS
+    ? items.filter(r => {
+        const matchEstado    = !estadoFilter || r.estado === estadoFilter;
+        const matchCategoria = !categoriaId  || r.categoria === categoriaId;
+        const matchPrioridad = !prioridadId  || r.prioridad === prioridadId;
+        const matchVencida   = !soloVencidas || esVencida(r);
+        const target = `${r.codigo} ${r.titulo} ${r.categoria} ${r.descripcion || ''}`.toLowerCase();
+        const matchQuery = !query.trim() || target.includes(query.trim().toLowerCase());
+        return matchEstado && matchCategoria && matchPrioridad && matchVencida && matchQuery;
+      })
+    : query.trim()
+      ? items.filter(r => `${r.codigo} ${r.titulo} ${r.descripcion}`.toLowerCase().includes(query.trim().toLowerCase()))
+      : items;
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged      = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <div>
-      <PageHead
-        title="Solicitudes"
-        text="Consulta, filtra y gestiona todas las solicitudes de servicio."
-      />
+      <PageHead title="Solicitudes" text="Consulta, filtra y gestiona todas las solicitudes de servicio." />
 
       <section className="panel table-panel">
         <div className="filters filters-supervisor">
@@ -44,58 +103,99 @@ export default function BandejaSolicitudes() {
             <input
               placeholder="Buscar por código o descripción"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setPage(0); }}
             />
           </label>
+
           <FormSelect
             label="Estado"
             value={estadoFilter}
-            onChange={setEstadoFilter}
+            onChange={(v) => { setEstadoFilter(v); setPage(0); }}
             options={ESTADOS}
             placeholder="Todos los estados"
           />
-          <FormSelect
-            label="Categoría"
-            value={categoriaFilter}
-            onChange={setCategoriaFilter}
-            options={CATEGORIAS}
-            placeholder="Todas las categorías"
-          />
-          <FormSelect
-            label="Prioridad"
-            value={prioridadFilter}
-            onChange={setPrioridadFilter}
-            options={PRIORIDADES}
-            placeholder="Todas"
-          />
-          <label className={`filter-vencidas ${soloVencidas ? 'active' : ''}`}>
-            <input
-              type="checkbox"
-              checked={soloVencidas}
-              onChange={(e) => setSoloVencidas(e.target.checked)}
+
+          {/* Categoría: en mocks usa texto, en real usa id */}
+          {USE_MOCKS ? (
+            <FormSelect
+              label="Categoría"
+              value={categoriaId}
+              onChange={(v) => { setCategoriaId(v); setPage(0); }}
+              options={['Mantenimiento', 'Soporte informático', 'Infraestructura', 'Trámites']}
+              placeholder="Todas las categorías"
             />
-            <span>Solo vencidas</span>
-          </label>
+          ) : (
+            <label className="field">
+              <span className="field-label">Categoría</span>
+              <span className="select-wrap">
+                <select value={categoriaId} onChange={(e) => { setCategoriaId(e.target.value); setPage(0); }}>
+                  <option value="">Todas las categorías</option>
+                  {categorias.map(c => <option key={c.id} value={String(c.id)}>{c.nombre}</option>)}
+                </select>
+                <Icon name="down" size={16} />
+              </span>
+            </label>
+          )}
+
+          {/* Prioridad */}
+          {USE_MOCKS ? (
+            <FormSelect
+              label="Prioridad"
+              value={prioridadId}
+              onChange={(v) => { setPrioridadId(v); setPage(0); }}
+              options={['Alta', 'Media', 'Baja']}
+              placeholder="Todas"
+            />
+          ) : (
+            <label className="field">
+              <span className="field-label">Prioridad</span>
+              <span className="select-wrap">
+                <select value={prioridadId} onChange={(e) => { setPrioridadId(e.target.value); setPage(0); }}>
+                  <option value="">Todas</option>
+                  {prioridades.map(p => <option key={p.id} value={String(p.id)}>{p.nombre}</option>)}
+                </select>
+                <Icon name="down" size={16} />
+              </span>
+            </label>
+          )}
+
+          {/* "Solo vencidas": solo visible en modo mocks (backend no soporta este filtro) */}
+          {USE_MOCKS && (
+            <label className={`filter-vencidas ${soloVencidas ? 'active' : ''}`}>
+              <input type="checkbox" checked={soloVencidas} onChange={e => setSoloVencidas(e.target.checked)} />
+              <span>Solo vencidas</span>
+            </label>
+          )}
         </div>
+
+        {error && (
+          <div className="message error" role="alert" style={{ marginBottom: '16px' }}>
+            <Icon name="alert" /><div><strong>{error}</strong></div>
+          </div>
+        )}
 
         <div className="results-label">
-          {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Ordenadas por
-          más recientes
+          {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Ordenadas por más recientes
         </div>
 
-        <RequestTable
-          mostrarVencidas
-          requests={filtered}
-          onOpen={(code) => navigate(`/solicitudes/${code}`)}
-        />
+        {loading ? (
+          <p className="muted-note">Cargando solicitudes…</p>
+        ) : (
+          <RequestTable
+            requests={paged}
+            onOpen={(code) => navigate(`/solicitudes/${code}`)}
+          />
+        )}
 
         <div className="pagination">
-          <span>
-            Mostrando 1–{filtered.length} de {items.length}
-          </span>
+          <span>Mostrando {paged.length} de {filtered.length}</span>
           <div>
-            <Button variant="secondary">Anterior</Button>
-            <Button variant="secondary">Siguiente</Button>
+            <Button variant="secondary" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
+              Anterior
+            </Button>
+            <Button variant="secondary" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
+              Siguiente
+            </Button>
           </div>
         </div>
       </section>
