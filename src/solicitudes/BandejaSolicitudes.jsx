@@ -92,6 +92,69 @@ export default function BandejaSolicitudes() {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged      = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
+  // Acción contextual exclusiva para Supervisor según el estado de la solicitud
+  const renderSupervisorAction = (r) => {
+    const code = r.codigo || r.id;
+    const e = r.estadoApi ?? (
+      r.estado === 'Registrada'    ? 'REGISTRADA' :
+      r.estado === 'En evaluación' ? 'EN_EVALUACION' :
+      r.estado === 'Asignada'      ? 'ASIGNADA' :
+      r.estado === 'En atención'   ? 'EN_ATENCION' :
+      r.estado === 'Resuelta'      ? 'RESUELTA' :
+      r.estado === 'Cerrada'       ? 'CERRADA' : r.estado
+    );
+
+    // 1. Clasificar: si está en REGISTRADA o no tiene área ni categoría
+    if (e === 'REGISTRADA' || !r.categoriaId || !r.areaId) {
+      return (
+        <Button
+          variant="primary"
+          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+          onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
+        >
+          Clasificar
+        </Button>
+      );
+    }
+
+    // 2. Asignar: si está en evaluación o no tiene técnico responsable
+    if (e === 'EN_EVALUACION' || !r.responsableId || r.responsable === 'Sin asignar') {
+      return (
+        <Button
+          variant="primary"
+          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+          onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}
+        >
+          Asignar
+        </Button>
+      );
+    }
+
+    // 3. Revisar y cerrar: si el técnico ya documentó la solución
+    if (e === 'RESUELTA' || r.estado === 'Resuelta') {
+      return (
+        <Button
+          variant="primary"
+          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+          onClick={() => navigate(`/supervisor/solicitudes/${code}/cerrar`)}
+        >
+          Revisar y cerrar
+        </Button>
+      );
+    }
+
+    // 4. Cualquier otro estado (En atención, Cerrada): ver detalle
+    return (
+      <Button
+        variant="secondary"
+        style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+        onClick={() => navigate(`/solicitudes/${code}`)}
+      >
+        Ver
+      </Button>
+    );
+  };
+
   return (
     <div>
       <PageHead title="Solicitudes" text="Consulta, filtra y gestiona todas las solicitudes de servicio." />
@@ -184,6 +247,7 @@ export default function BandejaSolicitudes() {
           <RequestTable
             requests={paged}
             onOpen={(code) => navigate(`/solicitudes/${code}`)}
+            renderAction={renderSupervisorAction}
           />
         )}
 

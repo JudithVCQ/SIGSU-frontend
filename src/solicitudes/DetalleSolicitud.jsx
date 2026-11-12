@@ -154,6 +154,50 @@ export default function DetalleSolicitud() {
             Ir a atención
           </Button>
         )}
+
+        {/* Acción exclusiva para SUPERVISOR según el estado del ciclo */}
+        {isSupervisor && (() => {
+          const e = solicitud.estadoApi ?? (
+            solicitud.estado === 'Registrada'    ? 'REGISTRADA' :
+            solicitud.estado === 'En evaluación' ? 'EN_EVALUACION' :
+            solicitud.estado === 'Asignada'      ? 'ASIGNADA' :
+            solicitud.estado === 'En atención'   ? 'EN_ATENCION' :
+            solicitud.estado === 'Resuelta'      ? 'RESUELTA' :
+            solicitud.estado === 'Cerrada'       ? 'CERRADA' : solicitud.estado
+          );
+
+          if (e === 'REGISTRADA' || !solicitud.categoriaId || !solicitud.areaId) {
+            return (
+              <Button
+                variant="primary"
+                onClick={() => navigate(`/supervisor/solicitudes/${solicitud.codigo || solicitud.id}/clasificar`)}
+              >
+                Clasificar solicitud
+              </Button>
+            );
+          }
+          if (e === 'EN_EVALUACION' || !solicitud.responsableId || solicitud.responsable === 'Sin asignar') {
+            return (
+              <Button
+                variant="primary"
+                onClick={() => navigate(`/supervisor/solicitudes/${solicitud.codigo || solicitud.id}/asignar`)}
+              >
+                Asignar técnico
+              </Button>
+            );
+          }
+          if (e === 'RESUELTA' || solicitud.estado === 'Resuelta') {
+            return (
+              <Button
+                variant="primary"
+                onClick={() => navigate(`/supervisor/solicitudes/${solicitud.codigo || solicitud.id}/cerrar`)}
+              >
+                Revisar y cerrar
+              </Button>
+            );
+          }
+          return null;
+        })()}
       </div>
 
       <div className="detail-grid">

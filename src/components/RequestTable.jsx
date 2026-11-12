@@ -3,7 +3,13 @@ import Button from './Button';
 import Icon from './Icon';
 import { esVencida } from '../config/vigencia';
 
-export default function RequestTable({ requests = [], compact = false, onOpen, mostrarVencidas = false }) {
+export default function RequestTable({
+  requests = [],
+  compact = false,
+  onOpen,
+  mostrarVencidas = false,
+  renderAction,
+}) {
   const data = compact ? requests.slice(0, 3) : requests;
 
   const getInitials = (name) => {
@@ -70,15 +76,19 @@ export default function RequestTable({ requests = [], compact = false, onOpen, m
                       </span>
                     </td>
                   )}
-                  <td>
-                    <button
-                      type="button"
-                      className="row-action"
-                      onClick={() => onOpen && onOpen(code)}
-                      aria-label={`Abrir ${code}`}
-                    >
-                      <Icon name="chevron" size={18} />
-                    </button>
+                  <td style={{ textAlign: 'right' }}>
+                    {renderAction ? (
+                      renderAction(r)
+                    ) : (
+                      <button
+                        type="button"
+                        className="row-action"
+                        onClick={() => onOpen && onOpen(code)}
+                        aria-label={`Abrir ${code}`}
+                      >
+                        <Icon name="chevron" size={18} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -119,9 +129,13 @@ export default function RequestTable({ requests = [], compact = false, onOpen, m
                   <Badge texto={priority} />
                 </div>
               </div>
-              <Button variant="secondary" full onClick={() => onOpen && onOpen(code)}>
-                Ver solicitud
-              </Button>
+              {renderAction ? (
+                renderAction(r)
+              ) : (
+                <Button variant="secondary" full onClick={() => onOpen && onOpen(code)}>
+                  Ver solicitud
+                </Button>
+              )}
             </article>
           );
         })}
