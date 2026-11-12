@@ -1,137 +1,170 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CATEGORIAS, EVIDENCIA } from '../config/constants';
+import { EVIDENCIA } from '../config/constants';
 import { addSolicitudMock, generateNextCodigo } from '../mocks/solicitudes';
+import { crearSolicitud, subirEvidencia } from '../services/solicitudes.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import FormField from '../components/FormField';
-import FormSelect from '../components/FormSelect';
 import Icon from '../components/Icon';
 import './solicitudes.css';
 
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
+
 export default function NuevaSolicitud() {
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
   const fileInputRef = useRef(null);
 
-  const [categoria, setCategoria] = useState('');
-  const [ubicacion, setUbicacion] = useState('');
+  const [titulo,      setTitulo]      = useState('');
+  const [ubicacion,   setUbicacion]   = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [files, setFiles] = useState([]);
-  const [tried, setTried] = useState(false);
-  const [fileError, setFileError] = useState('');
+  const [files,       setFiles]       = useState([]);
+  const [tried,       setTried]       = useState(false);
+  const [fileError,   setFileError]   = useState('');
+  const [loading,     setLoading]     = useState(false);
+  const [apiError,    setApiError]    = useState('');
   const [createdCode, setCreatedCode] = useState(null);
+  // Evidencias que fallaron en el envío (para reintentar individualmente)
+  const [failedFiles, setFailedFiles] = useState([]);
+  const [solicitudId, setSolicitudId] = useState(null);
 
   const errors = {
-    categoria: categoria ? '' : 'Selecciona una categoría',
-    ubicacion: ubicacion.trim() ? '' : 'Este campo es obligatorio: indica dónde ocurre el problema',
-    descripcion:
-      descripcion.trim().length >= 10
-        ? ''
-        : 'Describe el problema con al menos 10 caracteres',
+    titulo:      titulo.trim().length < 3        ? 'Ingresa un título para la solicitud (mínimo 3 caracteres)' : '',
+    ubicacion:   !ubicacion.trim()               ? 'Este campo es obligatorio: indica dónde ocurre el problema' : '',
+    descripcion: descripcion.trim().length < 10  ? 'Describe el problema con al menos 10 caracteres' : '',
   };
-
-  const missingCount = Object.values(errors).filter(Boolean).length;
-  const getFieldError = (key) => (tried ? errors[key] : '');
+  const missingCount  = Object.values(errors).filter(Boolean).length;
+  const getFieldError = (k) => (tried ? errors[k] : '');
 
   const handleFileChange = (e) => {
     setFileError('');
-    const selectedFiles = Array.from(e.target.files || []);
-    const validFiles = [];
-
-    for (const f of selectedFiles) {
+    const selected = Array.from(e.target.files || []);
+    const valid    = [];
+    for (const f of selected) {
       if (!EVIDENCIA.tipos.includes(f.type)) {
         setFileError(`Formato no permitido: ${f.name}. Solo se aceptan PNG, JPG o PDF.`);
         continue;
       }
       if (f.size > EVIDENCIA.maxMB * 1024 * 1024) {
-        setFileError(`El archivo ${f.name} supera el límite de ${EVIDENCIA.maxMB} MB.`);
+        setFileError(`El archivo "${f.name}" supera el límite de ${EVIDENCIA.maxMB} MB.`);
         continue;
       }
-      validFiles.push(f);
+      valid.push(f);
     }
-
-    const updated = [...files, ...validFiles].slice(0, EVIDENCIA.maxArchivos);
-    setFiles(updated);
+    setFiles(prev => [...prev, ...valid].slice(0, EVIDENCIA.maxArchivos));
     e.target.value = '';
   };
 
-  const handleRemoveFile = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
+  const handleRemoveFile = (idx) => setFiles(files.filter((_, i) => i !== idx));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setTried(true);
+    setApiError('');
+    if (missingCount > 0) return;
 
-    if (missingCount === 0) {
+    if (USE_MOCKS) {
       const nextCode = generateNextCodigo();
-      const nueva = {
+      addSolicitudMock({
         codigo: nextCode,
-        titulo:
-          descripcion.trim().length > 54
-            ? descripcion.trim().slice(0, 54).trimEnd() + '…'
-            : descripcion.trim(),
-        categoria,
-        estado: 'Pendiente',
-        prioridad: 'Media', // La prioridad la asigna el Supervisor
-        fecha: '17 oct, 2026',
-        ubicacion: ubicacion.trim(),
-        responsable: 'Sin asignar',
-        rolResponsable: '',
+        titulo: titulo.trim(),
         descripcion: descripcion.trim(),
-        evidencias: files.map((f) => ({
-          nombre: f.name,
-          tamano: `${(f.size / 1024 / 1024).toFixed(1)} MB`,
-        })),
-      };
-
-      addSolicitudMock(nueva);
+        ubicacion: ubicacion.trim(),
+        estado: 'Registrada',
+        prioridad: '',
+        fecha: new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }),
+        responsable: 'Sin asignar',
+        evidencias: files.map(f => ({ nombre: f.name, tamano: `${(f.size / 1024 / 1024).toFixed(1)} MB` })),
+      });
       setCreatedCode(nextCode);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const solicitud = await crearSolicitud({
+        titulo:      titulo.trim(),
+        descripcion: descripcion.trim(),
+        ubicacion:   ubicacion.trim(),
+      });
+
+      setSolicitudId(solicitud.id);
+      setCreatedCode(solicitud.codigo);
+
+      // Subir evidencias una a una; registrar las fallidas
+      const failed = [];
+      for (const file of files) {
+        try {
+          await subirEvidencia(solicitud.id, file);
+        } catch (uploadErr) {
+          failed.push({ file, error: uploadErr.message ?? 'Error al subir el archivo.' });
+        }
+      }
+      setFailedFiles(failed);
+    } catch (err) {
+      setApiError(err.message ?? 'No se pudo registrar la solicitud. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRetryFile = async (idx) => {
+    const { file } = failedFiles[idx];
+    try {
+      await subirEvidencia(solicitudId, file);
+      setFailedFiles(prev => prev.filter((_, i) => i !== idx));
+    } catch (uploadErr) {
+      setFailedFiles(prev =>
+        prev.map((item, i) => i === idx ? { ...item, error: uploadErr.message } : item)
+      );
     }
   };
 
   const handleReset = () => {
-    setCreatedCode(null);
-    setCategoria('');
-    setUbicacion('');
-    setDescripcion('');
-    setFiles([]);
-    setTried(false);
-    setFileError('');
+    setCreatedCode(null); setSolicitudId(null); setTitulo(''); setUbicacion('');
+    setDescripcion(''); setFiles([]); setTried(false); setFileError('');
+    setApiError(''); setFailedFiles([]);
   };
 
   if (createdCode) {
     return (
       <div className="narrow-page">
-        <PageHead
-          title="Registrar solicitud"
-          text="Tu solicitud ya fue enviada al equipo de atención."
-        />
-
+        <PageHead title="Registrar solicitud" text="Tu solicitud ya fue enviada al equipo de atención." />
         <div className="message success" role="status">
           <Icon name="check" />
-          <div>
-            <strong>Solicitud registrada correctamente. Código: {createdCode}</strong>
-          </div>
+          <div><strong>Solicitud registrada correctamente. Código: {createdCode}</strong></div>
         </div>
 
-        <div className="success-state">
-          <div className="success-circle">
-            <Icon name="check" size={32} />
+        {failedFiles.length > 0 && (
+          <div className="message error" role="alert" style={{ marginTop: '12px' }}>
+            <Icon name="alert" />
+            <div>
+              <strong>Algunos archivos no se subieron</strong>
+              {failedFiles.map((item, idx) => (
+                <div key={idx} style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span>{item.file.name}: {item.error}</span>
+                  <button
+                    type="button"
+                    className="auth-dev-btn"
+                    style={{ fontSize: '11px', padding: '4px 8px' }}
+                    onClick={() => handleRetryFile(idx)}
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
+        )}
+
+        <div className="success-state">
+          <div className="success-circle"><Icon name="check" size={32} /></div>
           <div className="code-chip">{createdCode}</div>
           <h2>Ya estamos en ello</h2>
-          <p>
-            Recibirás una notificación cuando la solicitud sea asignada a un responsable. Puedes
-            seguir su avance desde Mis solicitudes.
-          </p>
+          <p>Puedes seguir el avance desde Mis solicitudes.</p>
           <div className="row">
-            <Button onClick={() => navigate(`/solicitudes/${createdCode}`)}>
-              Ver solicitud
-            </Button>
-            <Button variant="secondary" onClick={handleReset}>
-              Registrar otra
-            </Button>
+            <Button onClick={() => navigate(`/solicitudes/${createdCode}`)}>Ver solicitud</Button>
+            <Button variant="secondary" onClick={handleReset}>Registrar otra</Button>
           </div>
         </div>
       </div>
@@ -140,38 +173,31 @@ export default function NuevaSolicitud() {
 
   return (
     <div className="narrow-page">
-      <button
-        type="button"
-        className="back-link"
-        onClick={() => navigate('/solicitante/solicitudes')}
-      >
+      <button type="button" className="back-link" onClick={() => navigate('/solicitante/solicitudes')}>
         <Icon name="arrow" size={18} /> Volver a mis solicitudes
       </button>
 
-      <PageHead
-        title="Registrar solicitud"
-        text="Completa la información para que podamos derivarla al equipo adecuado."
-      />
+      <PageHead title="Registrar solicitud" text="Completa la información para derivarla al equipo adecuado." />
 
       {tried && missingCount > 0 && (
         <div className="message error" role="alert">
           <Icon name="alert" />
           <div>
-            <strong>
-              Falta {missingCount === 1 ? '1 campo obligatorio' : `${missingCount} campos obligatorios`}
-            </strong>
+            <strong>Falta {missingCount === 1 ? '1 campo obligatorio' : `${missingCount} campos obligatorios`}</strong>
             <p>Revisa los campos marcados en rojo antes de registrar.</p>
           </div>
         </div>
       )}
-
       {fileError && (
         <div className="message error" role="alert">
           <Icon name="alert" />
-          <div>
-            <strong>Error en archivo adjunto</strong>
-            <p>{fileError}</p>
-          </div>
+          <div><strong>Error en archivo adjunto</strong><p>{fileError}</p></div>
+        </div>
+      )}
+      {apiError && (
+        <div className="message error" role="alert">
+          <Icon name="alert" />
+          <div><strong>No se pudo registrar la solicitud</strong><p>{apiError}</p></div>
         </div>
       )}
 
@@ -181,16 +207,17 @@ export default function NuevaSolicitud() {
             <span>1</span>
             <div>
               <h2>¿Qué necesitas?</h2>
-              <p>Elige la categoría y describe lo que ocurre.</p>
+              <p>Escribe un título breve y describe el problema.</p>
             </div>
           </div>
-          <FormSelect
-            label="Categoría"
-            value={categoria}
-            onChange={setCategoria}
-            options={CATEGORIAS}
-            placeholder="Selecciona una categoría"
-            error={getFieldError('categoria')}
+
+          <FormField
+            label="Título"
+            value={titulo}
+            onChange={setTitulo}
+            placeholder="Ej. Proyector sin señal en Aula 205"
+            error={getFieldError('titulo')}
+            hint={`${titulo.length}/150 caracteres`}
             required
           />
           <FormField
@@ -269,13 +296,12 @@ export default function NuevaSolicitud() {
         <div className="form-footer">
           <p>Los campos marcados con * son obligatorios.</p>
           <div className="row">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/solicitante/solicitudes')}
-            >
+            <Button variant="secondary" onClick={() => navigate('/solicitante/solicitudes')}>
               Cancelar
             </Button>
-            <Button type="submit">Registrar solicitud</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Registrando…' : 'Registrar solicitud'}
+            </Button>
           </div>
         </div>
       </form>

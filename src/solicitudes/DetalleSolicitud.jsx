@@ -1,124 +1,137 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ROLES } from '../config/constants';
-import { getSolicitudByCodigo, ESTADO_NIVEL } from '../mocks/solicitudes';
+import { getSolicitudByCodigo as getMock, ESTADO_NIVEL as ESTADO_NIVEL_MOCK } from '../mocks/solicitudes';
+import {
+  getSolicitudByCodigo,
+  getSeguimientos,
+  addSeguimiento,
+  getEvidencias,
+  getHistorial,
+} from '../services/solicitudes.js';
+import { ESTADO_NIVEL } from '../services/mappers.js';
+import { formatFechaVisual } from '../services/mappers.js';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
-import { esVencida, calcularFechaLimite, formatearFechaVisual } from '../config/vigencia';
 import './solicitudes.css';
 
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
+
 export default function DetalleSolicitud() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const { id }     = useParams();
+  const navigate   = useNavigate();
+  const { user }   = useAuth();
 
-  const solicitud = getSolicitudByCodigo(id);
-  const level = ESTADO_NIVEL[solicitud.estado] ?? 0;
-  const tieneResponsable = solicitud.responsable && solicitud.responsable !== 'Sin asignar';
-  const isSupervisor = user?.rol === ROLES.SUPERVISOR;
-  const vencida = esVencida(solicitud);
-  const fechaLimite = calcularFechaLimite(solicitud);
-
-  const [comentarios, setComentarios] = useState(
-    solicitud.comentarios && solicitud.comentarios.length > 0
-      ? solicitud.comentarios
-      : tieneResponsable
-      ? [
-          {
-            nombre: solicitud.responsable,
-            rol: solicitud.rolResponsable || 'Técnico asignado',
-            texto: 'Revisé el reporte y ya coordinamos la visita. Te avisaré apenas termine.',
-            tiempo: `${solicitud.fecha} · 12:10`,
-          },
-          {
-            nombre: user?.nombre || 'Camila Rojas',
-            rol: 'Solicitante',
-            texto: 'Gracias. Estaré en el aula hasta las 4 p. m. por si necesitan acceso.',
-            tiempo: `${solicitud.fecha} · 12:32`,
-          },
-        ]
-      : []
-  );
-
+  const [solicitud,   setSolicitud]   = useState(null);
+  const [seguimientos,setSeguimientos]= useState([]);
+  const [evidencias,  setEvidencias]  = useState([]);
+  const [historial,   setHistorial]   = useState([]);
+  const [loading,     setLoading]     = useState(!USE_MOCKS);
+  const [errSol,      setErrSol]      = useState('');
+  const [errSeg,      setErrSeg]      = useState('');
+  const [errEvi,      setErrEvi]      = useState('');
+  const [errHist,     setErrHist]     = useState('');
   const [nuevoComentario, setNuevoComentario] = useState('');
+  const [sendingComment,  setSendingComment]  = useState(false);
 
-  const handleSendComment = (e) => {
+  useEffect(() => {
+    if (USE_MOCKS) {
+      const s = getMock(id);
+      setSolicitud(s);
+      setSeguimientos(s?.comentarios ?? []);
+      setEvidencias(s?.evidencias ?? []);
+      // Timeline simulado (mocks no tienen historial real)
+      setHistorial([]);
+      return;
+    }
+
+    setLoading(true);
+    getSolicitudByCodigo(id)
+      .then((s) => {
+        setSolicitud(s);
+        setLoading(false);
+        // Carga paralela de los recursos anidados
+        Promise.allSettled([
+          getSeguimientos(s.id).then(setSeguimientos).catch(e => setErrSeg(e.message)),
+          getEvidencias(s.id).then(setEvidencias).catch(e => setErrEvi(e.message)),
+          getHistorial(s.id).then(setHistorial).catch(e => setErrHist(e.message)),
+        ]);
+      })
+      .catch(e => { setErrSol(e.message ?? 'No se encontró la solicitud.'); setLoading(false); });
+  }, [id]);
+
+  const handleSendComment = async (e) => {
     e.preventDefault();
     if (!nuevoComentario.trim()) return;
-
-    setComentarios([
-      ...comentarios,
-      {
-        nombre: user?.nombre || 'Usuario',
-        rol: user?.rol === ROLES.SOLICITANTE ? 'Solicitante' : 'Personal',
-        texto: nuevoComentario.trim(),
-        tiempo: 'Ahora',
-      },
-    ]);
-    setNuevoComentario('');
+    setSendingComment(true);
+    try {
+      if (USE_MOCKS) {
+        setSeguimientos(prev => [...prev, {
+          nombre: user?.nombre || 'Usuario',
+          rol:    user?.rol === ROLES.SOLICITANTE ? 'Solicitante' : 'Personal',
+          texto:  nuevoComentario.trim(),
+          tiempo: 'Ahora',
+        }]);
+      } else {
+        const nuevo = await addSeguimiento(solicitud.id, nuevoComentario.trim());
+        setSeguimientos(prev => [...prev, nuevo]);
+      }
+      setNuevoComentario('');
+    } catch (err) {
+      alert(err.message ?? 'No se pudo enviar el comentario.');
+    } finally {
+      setSendingComment(false);
+    }
   };
+
+  if (loading) return <div className="narrow-page"><p className="muted-note">Cargando solicitud…</p></div>;
+  if (errSol)  return (
+    <div className="narrow-page">
+      <div className="message error" role="alert">
+        <Icon name="alert" /><div><strong>{errSol}</strong></div>
+      </div>
+      <Button onClick={() => navigate(-1)}>Volver</Button>
+    </div>
+  );
+  if (!solicitud) return null;
+
+  const isSupervisor    = user?.rol === ROLES.SUPERVISOR;
+  const isTecnico       = user?.rol === ROLES.TECNICO;
+  const esMiSolicitud   = isTecnico && solicitud.responsableId === user?.id;
+
+  const estadoUi  = solicitud.estado ?? '';
+  const nivel     = ESTADO_NIVEL[estadoUi] ?? (USE_MOCKS ? (ESTADO_NIVEL_MOCK?.[estadoUi] ?? 0) : 0);
 
   const getBackPath = () => {
-    if (user?.rol === ROLES.SUPERVISOR) return '/supervisor/solicitudes';
-    if (user?.rol === ROLES.TECNICO) return '/tecnico';
+    if (isSupervisor) return '/supervisor/solicitudes';
+    if (isTecnico)    return '/tecnico';
     return '/solicitante/solicitudes';
   };
-
   const getBackLabel = () => {
-    if (user?.rol === ROLES.SUPERVISOR) return 'Volver a solicitudes';
-    if (user?.rol === ROLES.TECNICO) return 'Volver a mis asignaciones';
+    if (isSupervisor) return 'Volver a solicitudes';
+    if (isTecnico)    return 'Volver a mis asignaciones';
     return 'Volver a mis solicitudes';
   };
-
   const getInitials = (name) => {
     if (!name || name === 'Sin asignar') return 'U';
-    return name
-      .split(' ')
-      .map((w) => w[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
+    return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   };
 
-  const timelineSteps = [
-    {
-      titulo: 'Solicitud registrada',
-      descripcion: 'Registro inicial de la solicitud en el sistema.',
-      tiempo: `${solicitud.fecha} · 09:42`,
-    },
-    {
-      titulo: 'Responsable asignado',
-      descripcion: `La solicitud fue asignada a ${solicitud.responsable}.`,
-      tiempo: `${solicitud.fecha} · 10:15`,
-    },
-    {
-      titulo: 'Solicitud en atención',
-      descripcion: `${solicitud.responsable} inició los trabajos de atención.`,
-      tiempo: `${solicitud.fecha} · 11:24`,
-    },
-    {
-      titulo: 'Solicitud resuelta',
-      descripcion: 'El servicio fue completado con solución registrada.',
-      tiempo: `${solicitud.fecha} · 16:05`,
-    },
-    {
-      titulo: 'Solicitud cerrada',
-      descripcion: 'Cerrada formalmente tras la conformidad del servicio.',
-      tiempo: `${solicitud.fecha} · 18:30`,
-    },
-  ]
-    .slice(0, level + 1)
-    .reverse();
+  // Timeline: preferir historial real, o simular si está en mocks
+  const timelineItems = historial.length > 0
+    ? [...historial].reverse()
+    : (USE_MOCKS ? buildMockTimeline(solicitud, nivel) : []);
 
-  const textosEstado = [
-    'Tu solicitud espera ser asignada a un responsable.',
-    'Ya tiene responsable. La atención comenzará pronto.',
-    'El responsable está trabajando en tu solicitud.',
-    'El servicio fue completado. Gracias por reportarlo.',
-    'La solicitud fue cerrada. El historial queda disponible.',
-  ];
+  const textosEstado = {
+    'Registrada':    'Tu solicitud espera ser clasificada y asignada.',
+    'En evaluación': 'Solicitud clasificada. Esperando asignación de técnico.',
+    'Asignada':      'Ya tiene responsable. La atención comenzará pronto.',
+    'En atención':   'El responsable está trabajando en tu solicitud.',
+    'Resuelta':      'El servicio fue completado. Gracias por reportarlo.',
+    'Cerrada':       'La solicitud fue cerrada. El historial queda disponible.',
+  };
 
   return (
     <div>
@@ -130,68 +143,31 @@ export default function DetalleSolicitud() {
         <div>
           <div className="row wrap">
             <span className="code">{solicitud.codigo}</span>
-            <Badge texto={solicitud.estado} />
-            <Badge texto={solicitud.prioridad} />
-            {isSupervisor && vencida && <Badge texto="Vencida" />}
+            <Badge texto={estadoUi} />
+            {solicitud.prioridad && <Badge texto={solicitud.prioridad} />}
           </div>
           <h1>{solicitud.titulo}</h1>
-          <p>Registrada el {solicitud.fecha} a las 09:42</p>
+          <p>Registrada el {solicitud.fecha || formatFechaVisual(solicitud.creadoEn)}</p>
         </div>
-        {user?.rol === ROLES.TECNICO &&
-          solicitud.responsable === user?.nombre &&
-          (solicitud.estado === 'Asignada' || solicitud.estado === 'En atención') && (
-            <Button
-              variant="primary"
-              onClick={() => navigate(`/tecnico/atencion/${solicitud.codigo}`)}
-            >
-              Ir a atención
-            </Button>
-          )}
+        {esMiSolicitud && (solicitud.estadoApi === 'ASIGNADA' || solicitud.estadoApi === 'EN_ATENCION') && (
+          <Button variant="primary" onClick={() => navigate(`/tecnico/atencion/${solicitud.codigo}`)}>
+            Ir a atención
+          </Button>
+        )}
       </div>
 
       <div className="detail-grid">
         <main className="detail-main">
-          {/* Panel de datos principales */}
+          {/* Datos principales */}
           <section className="panel info-panel">
             <h2>Datos principales</h2>
             <div className="info-grid">
-              <div>
-                <small>Categoría</small>
-                <span>{solicitud.categoria}</span>
-              </div>
-              <div>
-                <small>Ubicación</small>
-                <span>{solicitud.ubicacion}</span>
-              </div>
-              <div>
-                <small>Estado</small>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  <Badge texto={solicitud.estado} />
-                  {isSupervisor && vencida && <Badge texto="Vencida" />}
-                </div>
-              </div>
-              <div>
-                <small>Prioridad</small>
-                <Badge texto={solicitud.prioridad} />
-              </div>
-              {isSupervisor && vencida && (
-                <div>
-                  <small>Fecha límite</small>
-                  <span style={{ color: 'var(--peligro)', fontWeight: 600 }}>
-                    {formatearFechaVisual(fechaLimite)}
-                  </span>
-                </div>
-              )}
+              <div><small>Categoría</small><span>{solicitud.categoria || '—'}</span></div>
+              <div><small>Ubicación</small><span>{solicitud.ubicacion || '—'}</span></div>
+              <div><small>Estado</small><Badge texto={estadoUi} /></div>
+              {solicitud.prioridad && <div><small>Prioridad</small><Badge texto={solicitud.prioridad} /></div>}
+              {solicitud.area && <div><small>Área responsable</small><span>{solicitud.area}</span></div>}
             </div>
-            {isSupervisor && vencida && (
-              <div className="vencida-alert-banner">
-                <Icon name="alert" size={18} />
-                <div>
-                  <strong>Solicitud fuera de plazo</strong>
-                  <span>Esta solicitud superó la fecha límite de atención ({formatearFechaVisual(fechaLimite)}).</span>
-                </div>
-              </div>
-            )}
             <div className="description">
               <small>Descripción</small>
               <p>{solicitud.descripcion}</p>
@@ -204,44 +180,47 @@ export default function DetalleSolicitud() {
             </div>
           </section>
 
-          {/* Historial / Timeline */}
+          {/* Historial de estados */}
           <section className="panel timeline">
             <h2>Historial de la solicitud</h2>
-            {timelineSteps.map((step, idx) => (
-              <div className="timeline-item" key={step.titulo}>
+            {errHist && <p className="muted-note" style={{ color: 'var(--peligro)' }}>{errHist}</p>}
+            {timelineItems.length === 0 && !errHist && (
+              <p className="muted-note">Aún no hay cambios de estado registrados.</p>
+            )}
+            {timelineItems.map((item, idx) => (
+              <div className="timeline-item" key={item.id ?? idx}>
                 <div className={`timeline-dot ${idx === 0 ? 'active' : ''}`}>
                   {idx === 0 && <Icon name="check" size={12} />}
                 </div>
                 <div>
-                  <strong>{step.titulo}</strong>
-                  <p>{step.descripcion}</p>
-                  <small>{step.tiempo}</small>
+                  {item.estadoDestino
+                    ? <strong>{item.estadoOrigen} → {item.estadoDestino}</strong>
+                    : <strong>{item.titulo}</strong>
+                  }
+                  <p>{item.observacion || item.descripcion || (item.cambiadoPor ? `por ${item.cambiadoPor}` : '')}</p>
+                  <small>{item.tiempo || item.cambiadoEn || ''}</small>
                 </div>
-                {idx < timelineSteps.length - 1 && <i />}
               </div>
             ))}
           </section>
 
-          {/* Comentarios */}
+          {/* Seguimientos / Comentarios */}
           <section className="panel info-panel">
             <h2>Comentarios</h2>
-            {comentarios.length === 0 ? (
-              <p className="muted-note">
-                Aún no hay comentarios. Puedes escribir uno si tienes más información.
-              </p>
+            {errSeg && <p className="muted-note" style={{ color: 'var(--peligro)' }}>{errSeg}</p>}
+            {seguimientos.length === 0 && !errSeg ? (
+              <p className="muted-note">Aún no hay comentarios.</p>
             ) : (
               <div className="comments">
-                {comentarios.map((c, i) => (
-                  <div className="comment" key={i}>
-                    <div
-                      className={`avatar small ${c.rol === 'Solicitante' ? '' : 'staff'}`.trim()}
-                    >
+                {seguimientos.map((c, i) => (
+                  <div className="comment" key={c.id ?? i}>
+                    <div className={`avatar small ${c.rol === 'Solicitante' ? '' : 'staff'}`.trim()}>
                       {getInitials(c.nombre)}
                     </div>
                     <div>
                       <div className="comment-head">
                         <strong>{c.nombre}</strong>
-                        <span>{c.rol}</span>
+                        {c.rol && <span>{c.rol}</span>}
                         <small>{c.tiempo}</small>
                       </div>
                       <p>{c.texto}</p>
@@ -250,7 +229,6 @@ export default function DetalleSolicitud() {
                 ))}
               </div>
             )}
-
             <form className="comment-form" onSubmit={handleSendComment}>
               <textarea
                 aria-label="Escribir comentario"
@@ -258,8 +236,8 @@ export default function DetalleSolicitud() {
                 value={nuevoComentario}
                 onChange={(e) => setNuevoComentario(e.target.value)}
               />
-              <Button type="submit" icon="send">
-                Comentar
+              <Button type="submit" icon="send" disabled={sendingComment || !nuevoComentario.trim()}>
+                {sendingComment ? 'Enviando…' : 'Comentar'}
               </Button>
             </form>
           </section>
@@ -267,15 +245,14 @@ export default function DetalleSolicitud() {
           {/* Evidencias */}
           <section className="panel info-panel">
             <h2>Evidencias</h2>
-            {!solicitud.evidencias || solicitud.evidencias.length === 0 ? (
+            {errEvi && <p className="muted-note" style={{ color: 'var(--peligro)' }}>{errEvi}</p>}
+            {evidencias.length === 0 && !errEvi ? (
               <p className="muted-note">No se adjuntaron archivos a esta solicitud.</p>
             ) : (
               <div className="evidence-grid">
-                {solicitud.evidencias.map((f, i) => (
-                  <div className="evidence" key={`${f.nombre || f.name}-${i}`}>
-                    <div className="evidence-thumb">
-                      <Icon name="image" size={26} />
-                    </div>
+                {evidencias.map((f, i) => (
+                  <div className="evidence" key={f.id ?? i}>
+                    <div className="evidence-thumb"><Icon name="image" size={26} /></div>
                     <strong>{f.nombre || f.name}</strong>
                     <small>{f.tamano || f.size}</small>
                   </div>
@@ -286,23 +263,14 @@ export default function DetalleSolicitud() {
         </main>
 
         <aside>
-          {/* Estado actual & barra de progreso */}
+          {/* Estado actual */}
           <section className="panel status-panel">
             <div className="card-label">ESTADO ACTUAL</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-              <Badge texto={solicitud.estado} />
-              {isSupervisor && vencida && <Badge texto="Vencida" />}
-            </div>
-            {isSupervisor && vencida && (
-              <p style={{ color: 'var(--peligro)', fontSize: '12px', fontWeight: 600, margin: '0 0 8px 0' }}>
-                Fecha límite superada: {formatearFechaVisual(fechaLimite)}
-              </p>
-            )}
-            <p>{textosEstado[Math.min(level, 4)]}</p>
-
+            <Badge texto={estadoUi} />
+            <p style={{ marginTop: '8px' }}>{textosEstado[estadoUi] ?? ''}</p>
             <div className="progress">
               {[0, 1, 2, 3].map((n) => (
-                <span key={n} className={n <= Math.min(level, 3) ? 'done' : ''} />
+                <span key={n} className={n <= Math.min(nivel, 3) ? 'done' : ''} />
               ))}
             </div>
             <div className="progress-labels">
@@ -311,37 +279,44 @@ export default function DetalleSolicitud() {
             </div>
           </section>
 
-          {/* Responsable asignado */}
+          {/* Responsable */}
           <section className="panel contact-panel">
             <div className="card-label">RESPONSABLE ASIGNADO</div>
-            {tieneResponsable ? (
+            {solicitud.responsable && solicitud.responsable !== 'Sin asignar' ? (
               <>
                 <div className="contact">
                   <div className="avatar staff">{getInitials(solicitud.responsable)}</div>
                   <div>
                     <strong>{solicitud.responsable}</strong>
-                    <span>{solicitud.rolResponsable || 'Soporte técnico'}</span>
+                    <span>{solicitud.rolResponsable || 'Técnico'}</span>
                   </div>
                 </div>
                 <Button
                   variant="secondary"
                   full
                   icon="send"
-                  onClick={() =>
-                    document.querySelector('.comment-form textarea')?.focus()
-                  }
+                  onClick={() => document.querySelector('.comment-form textarea')?.focus()}
                 >
                   Enviar comentario
                 </Button>
               </>
             ) : (
-              <p className="muted-note">
-                Todavía no hay un responsable asignado. Te avisaremos cuando lo haya.
-              </p>
+              <p className="muted-note">Todavía no hay un responsable asignado.</p>
             )}
           </section>
         </aside>
       </div>
     </div>
   );
+}
+
+function buildMockTimeline(solicitud, nivel) {
+  const steps = [
+    { titulo: 'Solicitud registrada',   descripcion: 'Registro inicial.', tiempo: solicitud.fecha },
+    { titulo: 'Responsable asignado',   descripcion: `Asignada a ${solicitud.responsable}.`, tiempo: solicitud.fecha },
+    { titulo: 'Solicitud en atención',  descripcion: 'Técnico inició labores.', tiempo: solicitud.fecha },
+    { titulo: 'Solicitud resuelta',     descripcion: 'Solución registrada.', tiempo: solicitud.fecha },
+    { titulo: 'Solicitud cerrada',      descripcion: 'Cerrada formalmente.', tiempo: solicitud.fecha },
+  ];
+  return steps.slice(0, nivel + 1).reverse();
 }
