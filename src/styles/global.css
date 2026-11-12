@@ -511,7 +511,10 @@ h2, h3 {
   background: currentColor;
 }
 
-/* Mapeo bilingüe estado/prioridad */
+/* Mapeo de estados backend ↔ UI */
+/* Registrada y En evaluación: amarillo (como "Pendiente") */
+.badge-registrada,
+.badge-en-evaluacion,
 .badge-pendiente,
 .badge-pending,
 .badge-media,

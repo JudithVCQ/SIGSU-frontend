@@ -1,12 +1,20 @@
+/**
+ * Badge.jsx — Muestra un indicador de estado o prioridad.
+ * Acepta los valores de UI (ej. "En atención", "Registrada", "Alta")
+ * o los alias de mocks (type="working", etc.).
+ */
+
 const TYPE_TO_TEXT = {
-  pending: 'Pendiente',
-  assigned: 'Asignada',
-  working: 'En atención',
-  resolved: 'Resuelta',
-  closed: 'Cerrada',
-  high: 'Alta',
-  medium: 'Media',
-  low: 'Baja',
+  pending:    'Registrada',   // alias legacy para mocks
+  registered: 'Registrada',
+  evaluation: 'En evaluación',
+  assigned:   'Asignada',
+  working:    'En atención',
+  resolved:   'Resuelta',
+  closed:     'Cerrada',
+  high:       'Alta',
+  medium:     'Media',
+  low:        'Baja',
 };
 
 const slug = (t) => {
@@ -19,9 +27,8 @@ const slug = (t) => {
 };
 
 export default function Badge({ texto, type, children }) {
-  // Soporta tanto la API del repo (texto="Pendiente") como la del mockup (type="working" o children)
   const displayText = children ?? texto ?? (type ? TYPE_TO_TEXT[type] : '');
-  
+
   let badgeClass = '';
   if (type) {
     const mapped = TYPE_TO_TEXT[type];
