@@ -26,7 +26,7 @@ export default function LoginPage() {
 
   const [correo,    setCorreo]    = useState('');
   const [password,  setPassword]  = useState('');
-  const [error,     setError]     = useState('');
+  const [error,     setError]     = useState(null); // { title, message }
   const [loading,   setLoading]   = useState(false);
   const [slowMsg,   setSlowMsg]   = useState('');
 
@@ -40,13 +40,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(null);
 
     if (USE_MOCKS) {
       // ── Modo mocks: lógica simulada (dev) ──────────────────────────────
       const cleanEmail = correo.trim().toLowerCase();
       const isValidEmail = cleanEmail.endsWith(EMAIL_DOMAIN) && cleanEmail.length > EMAIL_DOMAIN.length;
-      if (!isValidEmail || !password.trim()) { setError('Correo o contraseña incorrectos.'); return; }
+      if (!isValidEmail || !password.trim()) {
+        setError({
+          title: 'Correo o contraseña incorrectos',
+          message: 'Verifica tus credenciales e inténtalo nuevamente.',
+        });
+        return;
+      }
       const usernamePart   = cleanEmail.replace(EMAIL_DOMAIN, '');
       const formattedName  = usernamePart.split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Usuario';
       await login({ id: 1, nombre: formattedName, correo: cleanEmail, rol: ROLES.SOLICITANTE });
@@ -56,7 +62,10 @@ export default function LoginPage() {
 
     // ── Modo real ─────────────────────────────────────────────────────────
     if (!correo.trim() || !password.trim()) {
-      setError('Ingresa tu correo y contraseña.');
+      setError({
+        title: 'Campos incompletos',
+        message: 'Ingresa tu correo institucional y contraseña.',
+      });
       return;
     }
 
@@ -65,11 +74,21 @@ export default function LoginPage() {
       const usuario = await login({ correo: correo.trim().toLowerCase(), contrasena: password });
       navigate(ROLE_HOME[usuario.rol] ?? '/login');
     } catch (err) {
-      setError(
-        err.status === 401 || err.status === 403
-          ? 'Correo o contraseña incorrectos.'
-          : (err.message ?? 'No se pudo iniciar sesión. Inténtalo más tarde.')
-      );
+      let title = 'No se pudo iniciar sesión';
+      let message = err.message ?? 'Inténtalo más tarde.';
+
+      if (err.status === 400 || err.status === 401) {
+        title = 'Correo o contraseña incorrectos';
+        message = 'Verifica tus credenciales e inténtalo nuevamente.';
+      } else if (!err.status || err.status === 0 || err.name === 'AbortError' || err.isTimeout || err.isNetwork) {
+        title = 'Error de conexión';
+        message = 'No pudimos conectar con el servidor. Puede estar iniciando, intenta de nuevo en unos segundos.';
+      } else if (err.status >= 500) {
+        title = 'Error en el servidor';
+        message = 'El servidor tuvo un problema. Intenta más tarde.';
+      }
+
+      setError({ title, message });
     } finally {
       setLoading(false);
       setSlowMsg('');
@@ -108,8 +127,8 @@ export default function LoginPage() {
         <div className="message error" role="alert">
           <Icon name="alert" />
           <div>
-            <strong>Correo o contraseña incorrectos</strong>
-            <p>{error}</p>
+            <strong>{error.title}</strong>
+            <p>{error.message}</p>
           </div>
         </div>
       )}
@@ -126,7 +145,7 @@ export default function LoginPage() {
           label="Correo institucional"
           type="email"
           value={correo}
-          onChange={(v) => { setCorreo(v); setError(''); }}
+          onChange={(v) => { setCorreo(v); setError(null); }}
           placeholder={USE_MOCKS ? `nombre${EMAIL_DOMAIN}` : 'tu@correo.edu'}
           invalid={!!error}
           autoComplete="username"
@@ -135,7 +154,7 @@ export default function LoginPage() {
         <PasswordField
           label="Contraseña"
           value={password}
-          onChange={(v) => { setPassword(v); setError(''); }}
+          onChange={(v) => { setPassword(v); setError(null); }}
           invalid={!!error}
           autoComplete="current-password"
           disabled={loading}

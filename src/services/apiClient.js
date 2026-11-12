@@ -31,9 +31,24 @@ function humanMessage(status, body) {
     case 404: return 'El recurso solicitado no existe.';
     case 409: return serverMsg ?? 'El registro ya existe o hay un conflicto en los datos.';
     case 422: return serverMsg ?? 'Error de validación en los datos enviados.';
-    case 500: return 'Error en el servidor. Por favor intenta más tarde.';
+    case 500:
+    case 502:
+    case 503:
+    case 504: return 'El servidor tuvo un problema. Intenta más tarde.';
     default:  return serverMsg ?? `Error inesperado (${status}). Intenta más tarde.`;
   }
+}
+
+/** Formatea cualquier error hacia un mensaje amigable según su tipo */
+export function getErrorMessage(err, fallback = 'Ocurrió un error inesperado.') {
+  if (!err) return fallback;
+  if (!err.status || err.status === 0 || err.name === 'AbortError' || err.isTimeout || err.isNetwork) {
+    return 'No pudimos conectar con el servidor. Puede estar iniciando, intenta de nuevo en unos segundos.';
+  }
+  if (err.status >= 500) {
+    return 'El servidor tuvo un problema. Intenta más tarde.';
+  }
+  return err.message || fallback;
 }
 
 /** Limpia la sesión y redirige a /login */
@@ -124,14 +139,16 @@ export async function request(path, options = {}) {
     if (slowPending) notifySlow(false);
 
     if (err.name === 'AbortError') {
-      const timeoutErr = new Error('La conexión tardó demasiado. Intenta de nuevo en unos instantes.');
+      const timeoutErr = new Error('No pudimos conectar con el servidor. Puede estar iniciando, intenta de nuevo en unos segundos.');
       timeoutErr.status = 0;
+      timeoutErr.isTimeout = true;
       throw timeoutErr;
     }
     // Error de red (sin conexión, CORS, etc.)
     if (!err.status) {
-      const netErr = new Error('No se pudo conectar con el servidor. Verifica tu conexión a internet.');
+      const netErr = new Error('No pudimos conectar con el servidor. Puede estar iniciando, intenta de nuevo en unos segundos.');
       netErr.status = 0;
+      netErr.isNetwork = true;
       throw netErr;
     }
     throw err;

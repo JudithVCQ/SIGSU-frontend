@@ -35,6 +35,20 @@ export async function getSolicitudByCodigo(codigo) {
   return mapSolicitud(data);
 }
 
+/** Busca solicitud por ID numérico o por código (SIG-...) de forma defensiva */
+export async function getSolicitudAny(param) {
+  if (!param) return null;
+  const str = String(param).trim();
+  if (/^\d+$/.test(str)) {
+    try {
+      return await getSolicitudById(Number(str));
+    } catch {
+      return await getSolicitudByCodigo(str);
+    }
+  }
+  return await getSolicitudByCodigo(str);
+}
+
 /** GET /api/solicitudes/estados */
 export async function getEstados() {
   return apiGet('/api/solicitudes/estados');
