@@ -1,65 +1,84 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { EMAIL_DOMAIN, ROLES, ROLE_HOME } from '../config/constants';
+import { ROLES, ROLE_HOME } from '../config/constants';
+import { onSlowRequest } from '../services/apiClient.js';
 import AuthShell from './AuthShell';
 import Button from '../components/Button';
 import FormField from '../components/FormField';
 import PasswordField from '../components/PasswordField';
 import Icon from '../components/Icon';
 
+const USE_MOCKS  = import.meta.env.VITE_USE_MOCKS === 'true';
+const EMAIL_DOMAIN = '@universidad.edu';
+
 export default function LoginPage() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const notice = location.state?.notice || '';
+  const { login }  = useAuth();
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const [params]   = useSearchParams();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const notice     = location.state?.notice || '';
+  // Mensaje de sesión caducada enviado por apiClient vía query param
+  const expiredMsg = params.get('expired') === '1'
+    ? (params.get('msg') || 'Tu sesión ha caducado. Inicia sesión nuevamente.')
+    : '';
 
-  const handleEmailChange = (val) => {
-    setEmail(val);
-    setError(false);
-  };
+  const [correo,    setCorreo]    = useState('');
+  const [password,  setPassword]  = useState('');
+  const [error,     setError]     = useState('');
+  const [loading,   setLoading]   = useState(false);
+  const [slowMsg,   setSlowMsg]   = useState('');
 
-  const handlePasswordChange = (val) => {
-    setPassword(val);
-    setError(false);
-  };
+  // Suscripción al aviso de lentitud del servidor
+  useEffect(() => {
+    const unsub = onSlowRequest((pending) =>
+      setSlowMsg(pending ? 'Conectando con el servidor, puede tardar unos segundos…' : '')
+    );
+    return unsub;
+  }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    const isValidEmail = cleanEmail.endsWith(EMAIL_DOMAIN.toLowerCase()) && cleanEmail.length > EMAIL_DOMAIN.length;
-    const isValidPassword = password.trim().length >= 1;
+    setError('');
 
-    if (!isValidEmail || !isValidPassword) {
-      setError(true);
+    if (USE_MOCKS) {
+      // ── Modo mocks: lógica simulada (dev) ──────────────────────────────
+      const cleanEmail = correo.trim().toLowerCase();
+      const isValidEmail = cleanEmail.endsWith(EMAIL_DOMAIN) && cleanEmail.length > EMAIL_DOMAIN.length;
+      if (!isValidEmail || !password.trim()) { setError('Correo o contraseña incorrectos.'); return; }
+      const usernamePart   = cleanEmail.replace(EMAIL_DOMAIN, '');
+      const formattedName  = usernamePart.split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Usuario';
+      await login({ id: 1, nombre: formattedName, correo: cleanEmail, rol: ROLES.SOLICITANTE });
+      navigate(ROLE_HOME[ROLES.SOLICITANTE]);
       return;
     }
 
-    // TODO: conectar con el backend (POST /auth/login)
-    const usernamePart = cleanEmail.replace(EMAIL_DOMAIN.toLowerCase(), '');
-    const formattedName = usernamePart
-      .split(/[._-]/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ') || 'Camila Rojas';
+    // ── Modo real ─────────────────────────────────────────────────────────
+    if (!correo.trim() || !password.trim()) {
+      setError('Ingresa tu correo y contraseña.');
+      return;
+    }
 
-    const usuario = {
-      id: 'USR-001',
-      nombre: formattedName,
-      correo: cleanEmail,
-      rol: ROLES.SOLICITANTE,
-    };
-
-    login(usuario);
-    navigate(ROLE_HOME[ROLES.SOLICITANTE]);
+    setLoading(true);
+    try {
+      const usuario = await login({ correo: correo.trim().toLowerCase(), contrasena: password });
+      navigate(ROLE_HOME[usuario.rol] ?? '/login');
+    } catch (err) {
+      setError(
+        err.status === 401 || err.status === 403
+          ? 'Correo o contraseña incorrectos.'
+          : (err.message ?? 'No se pudo iniciar sesión. Inténtalo más tarde.')
+      );
+    } finally {
+      setLoading(false);
+      setSlowMsg('');
+    }
   };
 
-  const handleDevLogin = (rol, nombre, correo) => {
-    // TODO: eliminar al integrar backend
-    login({ id: `USR-${rol}`, nombre, correo, rol });
+  // Acceso rápido para desarrollo (solo con VITE_USE_MOCKS=true)
+  const handleDevLogin = async (rol, nombre, correo_dev) => {
+    await login({ id: `DEV-${rol}`, nombre, correo: correo_dev, rol });
     navigate(ROLE_HOME[rol]);
   };
 
@@ -74,9 +93,14 @@ export default function LoginPage() {
       {notice && (
         <div className="message success" role="status">
           <Icon name="check" />
-          <div>
-            <strong>{notice}</strong>
-          </div>
+          <div><strong>{notice}</strong></div>
+        </div>
+      )}
+
+      {expiredMsg && (
+        <div className="message error" role="alert">
+          <Icon name="alert" />
+          <div><strong>{expiredMsg}</strong></div>
         </div>
       )}
 
@@ -85,8 +109,15 @@ export default function LoginPage() {
           <Icon name="alert" />
           <div>
             <strong>Correo o contraseña incorrectos</strong>
-            <p>Verifica tus credenciales e inténtalo nuevamente.</p>
+            <p>{error}</p>
           </div>
+        </div>
+      )}
+
+      {slowMsg && !error && (
+        <div className="message" style={{ background: 'var(--verde-suave)', color: 'var(--carbon)' }} role="status">
+          <Icon name="clock" />
+          <div><p>{slowMsg}</p></div>
         </div>
       )}
 
@@ -94,88 +125,51 @@ export default function LoginPage() {
         <FormField
           label="Correo institucional"
           type="email"
-          value={email}
-          onChange={handleEmailChange}
-          placeholder={`nombre${EMAIL_DOMAIN}`}
-          invalid={error}
+          value={correo}
+          onChange={(v) => { setCorreo(v); setError(''); }}
+          placeholder={USE_MOCKS ? `nombre${EMAIL_DOMAIN}` : 'tu@correo.edu'}
+          invalid={!!error}
           autoComplete="username"
+          disabled={loading}
         />
         <PasswordField
           label="Contraseña"
           value={password}
-          onChange={handlePasswordChange}
-          invalid={error}
+          onChange={(v) => { setPassword(v); setError(''); }}
+          invalid={!!error}
           autoComplete="current-password"
+          disabled={loading}
         />
-        <Button type="submit" full>
-          Iniciar sesión
+        <Button type="submit" full disabled={loading}>
+          {loading ? 'Iniciando sesión…' : 'Iniciar sesión'}
         </Button>
       </form>
 
       <p className="auth-switch">
         ¿Aún no tienes cuenta?{' '}
-        <Link to="/registro" className="text-link">
-          Regístrate
-        </Link>
+        <Link to="/registro" className="text-link">Regístrate</Link>
       </p>
 
-      {import.meta.env.DEV && (
+      {/* Acceso rápido por rol: SOLO en modo mocks */}
+      {USE_MOCKS && (
         <div className="auth-dev">
-          {/* TODO: eliminar al integrar backend */}
-          <small>Acceso rápido por rol (Modo desarrollo)</small>
+          <small>Acceso rápido por rol (modo desarrollo)</small>
           <div className="auth-dev-buttons">
-            <button
-              type="button"
-              className="auth-dev-btn"
-              onClick={() =>
-                handleDevLogin(
-                  ROLES.SOLICITANTE,
-                  'Camila Rojas',
-                  `usuario.solicitante${EMAIL_DOMAIN}`
-                )
-              }
-            >
-              Solicitante
-            </button>
-            <button
-              type="button"
-              className="auth-dev-btn"
-              onClick={() =>
-                handleDevLogin(
-                  ROLES.SUPERVISOR,
-                  'Ana Martínez',
-                  `ana.martinez${EMAIL_DOMAIN}`
-                )
-              }
-            >
-              Supervisor
-            </button>
-            <button
-              type="button"
-              className="auth-dev-btn"
-              onClick={() =>
-                handleDevLogin(
-                  ROLES.TECNICO,
-                  'Diego Morales',
-                  `diego.morales${EMAIL_DOMAIN}`
-                )
-              }
-            >
-              Técnico
-            </button>
-            <button
-              type="button"
-              className="auth-dev-btn"
-              onClick={() =>
-                handleDevLogin(
-                  ROLES.ADMIN,
-                  'Carlos Ramos',
-                  `carlos.ramos${EMAIL_DOMAIN}`
-                )
-              }
-            >
-              Administrador
-            </button>
+            {[
+              [ROLES.SOLICITANTE, 'Camila Rojas',  'solicitante'],
+              [ROLES.SUPERVISOR,  'Ana Martínez',  'supervisor'],
+              [ROLES.TECNICO,     'Diego Morales', 'tecnico'],
+              [ROLES.ADMIN,       'Carlos Ramos',  'admin'],
+            ].map(([rol, nombre, slug]) => (
+              <button
+                key={rol}
+                type="button"
+                className="auth-dev-btn"
+                onClick={() => handleDevLogin(rol, nombre, `${slug}@universidad.edu`)}
+              >
+                {nombre.split(' ')[0]}
+              </button>
+            ))}
           </div>
         </div>
       )}
