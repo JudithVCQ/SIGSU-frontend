@@ -860,3 +860,30 @@ button.upload:hover {
   color: var(--verde);
   text-decoration: underline;
 }
+
+/* Plazo de atención (PlazoSolicitud) */
+.plazo-info .plazo-texto {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.plazo-info .plazo-badge {
+  margin-top: 6px;
+}
+
+.plazo-inline {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plazo-inline .plazo-texto {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.plazo-texto.plazo-vencida {
+  color: var(--peligro);
+  font-weight: 600;
+}

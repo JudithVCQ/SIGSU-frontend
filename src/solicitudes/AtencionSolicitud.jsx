@@ -20,6 +20,7 @@ import { formatFechaVisual } from '../services/mappers.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
+import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
@@ -270,6 +271,7 @@ export default function AtencionSolicitud() {
               <div><small>Ubicación</small><span>{solicitud.ubicacion}</span></div>
               <div><small>Estado actual</small><Badge texto={estadoUi} /></div>
               {solicitud.prioridad && <div><small>Prioridad asignada</small><Badge texto={solicitud.prioridad} /></div>}
+              <PlazoSolicitud solicitud={solicitud} />
             </div>
             <div className="description">
               <small>Descripción del problema</small>

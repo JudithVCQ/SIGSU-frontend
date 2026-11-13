@@ -12,6 +12,7 @@ import { formatFechaVisual } from '../services/mappers.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
+import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
@@ -219,6 +220,7 @@ export default function RevisarCerrar() {
           <div><small>Ubicación</small><span>{solicitud.ubicacion || '—'}</span></div>
           <div><small>Solicitante</small><span>{solicitud.solicitante || '—'}</span></div>
           <div><small>Fecha registro</small><span>{solicitud.fecha || formatFechaVisual(solicitud.creadoEn)}</span></div>
+          <PlazoSolicitud solicitud={solicitud} />
         </div>
 
         <div className="description" style={{ marginTop: '14px' }}>
