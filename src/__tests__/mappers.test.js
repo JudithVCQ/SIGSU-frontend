@@ -5,30 +5,33 @@ import {
   mapSolicitud,
   mapUsuario,
   parseNivel,
-  normalizarFechaUtc,
+  parseFechaBackend,
   formatFechaVisual,
+  mapSeguimiento,
+  mapHistorialItem,
+  mapAsignacion,
 } from '../services/mappers.js';
 import { aFechaInput, fechaInputAIso, describirPlazo } from '../config/vigencia.js';
 
 describe('mappers.js', () => {
-  describe('normalizarFechaUtc (fechas del backend en UTC sin zona)', () => {
+  describe('parseFechaBackend (fechas del backend en UTC sin zona)', () => {
     it('agrega "Z" a fechas sin designador de zona', () => {
-      expect(normalizarFechaUtc('2026-11-16T04:59:59')).toBe('2026-11-16T04:59:59Z');
-      expect(normalizarFechaUtc('2026-11-16T04:59:59.123')).toBe('2026-11-16T04:59:59.123Z');
-      expect(normalizarFechaUtc('2026-11-16T04:59')).toBe('2026-11-16T04:59Z');
+      expect(parseFechaBackend('2026-11-16T04:59:59')).toBe('2026-11-16T04:59:59Z');
+      expect(parseFechaBackend('2026-11-16T04:59:59.123')).toBe('2026-11-16T04:59:59.123Z');
+      expect(parseFechaBackend('2026-11-16T04:59')).toBe('2026-11-16T04:59Z');
     });
 
     it('no modifica fechas que ya traen zona ni fechas sin hora', () => {
-      expect(normalizarFechaUtc('2026-11-16T04:59:59Z')).toBe('2026-11-16T04:59:59Z');
-      expect(normalizarFechaUtc('2026-11-16T04:59:59.000Z')).toBe('2026-11-16T04:59:59.000Z');
-      expect(normalizarFechaUtc('2026-11-15T23:59:59-05:00')).toBe('2026-11-15T23:59:59-05:00');
-      expect(normalizarFechaUtc('2026-11-15')).toBe('2026-11-15');
+      expect(parseFechaBackend('2026-11-16T04:59:59Z')).toBe('2026-11-16T04:59:59Z');
+      expect(parseFechaBackend('2026-11-16T04:59:59.000Z')).toBe('2026-11-16T04:59:59.000Z');
+      expect(parseFechaBackend('2026-11-15T23:59:59-05:00')).toBe('2026-11-15T23:59:59-05:00');
+      expect(parseFechaBackend('2026-11-15')).toBe('2026-11-15');
     });
 
     it('retorna null para valores vacíos', () => {
-      expect(normalizarFechaUtc(null)).toBeNull();
-      expect(normalizarFechaUtc(undefined)).toBeNull();
-      expect(normalizarFechaUtc('')).toBeNull();
+      expect(parseFechaBackend(null)).toBeNull();
+      expect(parseFechaBackend(undefined)).toBeNull();
+      expect(parseFechaBackend('')).toBeNull();
     });
 
     it('ida y vuelta: la fecha límite elegida por el supervisor se muestra igual al solicitante', () => {
@@ -41,6 +44,43 @@ describe('mappers.js', () => {
       expect(aFechaInput(new Date(mapped.fechaLimite))).toBe('2026-11-15');
       expect(aFechaInput(describirPlazo(mapped, new Date(2026, 10, 13, 10)).fecha)).toBe('2026-11-15');
       expect(formatFechaVisual(devuelta)).toBe('15 nov, 2026');
+    });
+
+    it('acepta offsets positivos y +00:00 sin modificarlos', () => {
+      expect(parseFechaBackend('2026-11-13T23:36:09+00:00')).toBe('2026-11-13T23:36:09+00:00');
+      expect(parseFechaBackend('2026-11-13T23:36:09+05:30')).toBe('2026-11-13T23:36:09+05:30');
+    });
+
+    it('"2026-11-13T23:36:09" del backend es el mismo instante que 18:36 en Lima (UTC-5)', () => {
+      const d = new Date(parseFechaBackend('2026-11-13T23:36:09'));
+      expect(d.toISOString()).toBe('2026-11-13T23:36:09.000Z');
+      expect(d.getTime()).toBe(Date.parse('2026-11-13T18:36:09-05:00'));
+    });
+
+    it('mapSolicitud convierte todos los campos de fecha', () => {
+      const m = mapSolicitud({
+        id: 11,
+        estado: 'CERRADA',
+        creadoEn:      '2026-11-13T23:36:09',
+        actualizadoEn: '2026-11-14T10:00:00',
+        resueltaEn:    '2026-11-14T12:00:00.5',
+        cerradaEn:     '2026-11-14T15:00:00Z',
+        fechaLimite:   '2026-11-16T04:59:59',
+      });
+      expect(m.creadoEn).toBe('2026-11-13T23:36:09Z');
+      expect(m.actualizadoEn).toBe('2026-11-14T10:00:00Z');
+      expect(m.resueltaEn).toBe('2026-11-14T12:00:00.5Z');
+      expect(m.cerradaEn).toBe('2026-11-14T15:00:00Z');
+      expect(m.fechaLimite).toBe('2026-11-16T04:59:59Z');
+    });
+
+    it('mapSeguimiento, mapHistorialItem y mapAsignacion convierten sus fechas', () => {
+      expect(mapSeguimiento({ id: 1, creadoEn: '2026-11-13T23:36:09' }).creadoEn).toBe('2026-11-13T23:36:09Z');
+      expect(mapHistorialItem({ id: 1, cambiadoEn: '2026-11-13T23:36:09' }).cambiadoEn).toBe('2026-11-13T23:36:09Z');
+      const a = mapAsignacion({ id: 1, asignadaEn: '2026-11-13T23:36:09', finalizadaEn: '2026-11-14T01:00:00' });
+      expect(a.asignadaEn).toBe('2026-11-13T23:36:09Z');
+      expect(a.finalizadaEn).toBe('2026-11-14T01:00:00Z');
+      expect(mapAsignacion({ id: 2 }).finalizadaEn).toBeNull();
     });
   });
 
