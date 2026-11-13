@@ -2,31 +2,54 @@
  * src/services/calificaciones.js — Calificación del servicio por el solicitante.
  *
  * El backend AÚN NO publica nada de calificación (ni endpoint, ni campo en
- * SolicitudResponse, ni métricas en DashboardResponse). Mientras tanto:
- *  - Modo mocks: funciona completo con src/mocks/calificaciones.js.
- *  - Modo API:   la funcionalidad se reporta como no disponible y la UI la oculta.
+ * SolicitudResponse, ni métricas en DashboardResponse). Hay tres modos:
+ *  - 'mocks': VITE_USE_MOCKS=true → src/mocks/calificaciones.js.
+ *  - 'local': API real SIN endpoint de calificación (situación actual) → se guarda
+ *             en el navegador (services/calificacionesLocal.js) para poder mostrar
+ *             la funcionalidad con solicitudes reales. Solo visible en ese navegador.
+ *  - 'api':   API real CON endpoint (cuando backend lo publique).
  *
- * Propuesta de contrato, a confirmar con backend (ajustar cuando se publique):
+ * Transición al endpoint real:
+ *  1. Poner CALIFICACION_API_DISPONIBLE = true.
+ *  2. Implementar las ramas 'api' con apiClient (abajo) y agregar mapCalificacion en mappers.js.
+ *  3. Eliminar calificacionesLocal.js y el aviso de "vista previa" en la UI.
+ *  Las vistas no cambian: solo usan las funciones de este archivo.
+ *
+ * Propuesta de contrato, a confirmar con backend:
  *  - GET  /api/solicitudes/{id}/calificacion  → { puntaje, comentario, creadoEn } | 404
  *  - POST /api/solicitudes/{id}/calificacion  ← { puntaje, comentario? }
  *  - GET  /api/dashboard → agregar calificacionPromedio, totalCalificaciones,
  *                          calificacionPorResponsable [{ responsable, promedio, total }]
- * Al publicarse: poner CALIFICACION_API_DISPONIBLE = true, implementar las ramas
- * de API con apiClient y agregar mapCalificacion en mappers.js.
  */
 import { CALIFICACION } from '../config/constants';
 import { esFinalizada } from '../config/vigencia';
+import {
+  getCalificacionLocal,
+  addCalificacionLocal,
+  getResumenCalificacionesLocal,
+} from './calificacionesLocal.js';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 /** Cambiar a true cuando backend publique el endpoint de calificación. */
 const CALIFICACION_API_DISPONIBLE = false;
 
-const NO_DISPONIBLE = 'La calificación del servicio aún no está disponible.';
+const PENDIENTE_API = 'La calificación del servicio aún no está conectada al servidor.';
 
-/** true si la funcionalidad de calificación puede usarse en el modo actual. */
+/** Modo actual: 'mocks' | 'local' | 'api'. */
+export function modoCalificacion() {
+  if (USE_MOCKS) return 'mocks';
+  return CALIFICACION_API_DISPONIBLE ? 'api' : 'local';
+}
+
+/** true si la funcionalidad puede usarse (hoy, en todos los modos). */
 export function calificacionDisponible() {
-  return USE_MOCKS || CALIFICACION_API_DISPONIBLE;
+  return true;
+}
+
+/** true si las calificaciones solo se guardan en este navegador (vista previa). */
+export function esVistaPreviaLocal() {
+  return modoCalificacion() === 'local';
 }
 
 /** Solo se califican solicitudes RESUELTA o CERRADA. */
@@ -39,12 +62,17 @@ export function esCalificable(solicitud) {
  * @returns {Promise<null | { puntaje: number, comentario: string, creadoEn: string }>}
  */
 export async function getCalificacion(solicitud) {
-  if (!solicitud || !calificacionDisponible()) return null;
-  if (USE_MOCKS) {
-    const { getCalificacionMock } = await import('../mocks/calificaciones.js');
-    return getCalificacionMock(solicitud.codigo);
+  if (!solicitud) return null;
+  switch (modoCalificacion()) {
+    case 'mocks': {
+      const { getCalificacionMock } = await import('../mocks/calificaciones.js');
+      return getCalificacionMock(solicitud.codigo);
+    }
+    case 'local':
+      return getCalificacionLocal(solicitud);
+    default:
+      throw new Error(PENDIENTE_API); // GET /api/solicitudes/{id}/calificacion
   }
-  return null; // Pendiente: GET /api/solicitudes/{id}/calificacion
 }
 
 /** Valida los datos de una calificación. Devuelve el mensaje de error o ''. */
@@ -61,10 +89,9 @@ export function validarCalificacion({ puntaje, comentario } = {}) {
 
 /**
  * Registra la calificación del solicitante (una sola vez, sin edición).
- * Las validaciones del front son de experiencia; la regla real la aplica el backend.
+ * Las validaciones del front son de experiencia; la regla real la aplicará el backend.
  */
 export async function calificarSolicitud(solicitud, { puntaje, comentario } = {}) {
-  if (!calificacionDisponible()) throw new Error(NO_DISPONIBLE);
   if (!solicitud) throw new Error('No se encontró la solicitud.');
   if (!esCalificable(solicitud)) {
     throw new Error('Solo puedes calificar una solicitud resuelta o cerrada.');
@@ -73,32 +100,40 @@ export async function calificarSolicitud(solicitud, { puntaje, comentario } = {}
   if (error) throw new Error(error);
 
   const texto = (comentario ?? '').trim();
+  const modo = modoCalificacion();
 
-  if (USE_MOCKS) {
-    const { getCalificacionMock, addCalificacionMock } = await import('../mocks/calificaciones.js');
-    if (getCalificacionMock(solicitud.codigo)) {
-      throw new Error('Esta solicitud ya fue calificada.');
-    }
+  if (modo === 'api') throw new Error(PENDIENTE_API); // POST /api/solicitudes/{id}/calificacion
+
+  if (await getCalificacion(solicitud)) {
+    throw new Error('Esta solicitud ya fue calificada.');
+  }
+
+  if (modo === 'mocks') {
+    const { addCalificacionMock } = await import('../mocks/calificaciones.js');
     return addCalificacionMock({ solicitudCodigo: solicitud.codigo, puntaje, comentario: texto });
   }
-  throw new Error(NO_DISPONIBLE); // Pendiente: POST /api/solicitudes/{id}/calificacion
+  return addCalificacionLocal(solicitud, { puntaje, comentario: texto });
 }
+
+const ordenarPorTecnico = (r) => ({
+  ...r,
+  porTecnico: [...r.porTecnico].sort((a, b) => b.promedio - a.promedio || b.total - a.total),
+});
 
 /**
  * Resumen para el dashboard del supervisor.
- * @returns {Promise<null | { promedio: number|null, total: number,
+ * @returns {Promise<{ promedio: number|null, total: number,
  *   porTecnico: Array<{ responsable: string, promedio: number, total: number }> }>}
- *   null si la funcionalidad no está disponible.
  */
 export async function getResumenCalificaciones() {
-  if (!calificacionDisponible()) return null;
-  if (USE_MOCKS) {
-    const { getResumenCalificacionesMock } = await import('../mocks/calificaciones.js');
-    const r = getResumenCalificacionesMock();
-    return {
-      ...r,
-      porTecnico: [...r.porTecnico].sort((a, b) => b.promedio - a.promedio || b.total - a.total),
-    };
+  switch (modoCalificacion()) {
+    case 'mocks': {
+      const { getResumenCalificacionesMock } = await import('../mocks/calificaciones.js');
+      return ordenarPorTecnico(getResumenCalificacionesMock());
+    }
+    case 'local':
+      return ordenarPorTecnico(getResumenCalificacionesLocal());
+    default:
+      throw new Error(PENDIENTE_API); // campos de calificación en GET /api/dashboard
   }
-  return null; // Pendiente: campos de calificación en GET /api/dashboard
 }

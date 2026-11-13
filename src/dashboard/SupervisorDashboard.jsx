@@ -5,7 +5,7 @@ import { getSolicitudesMock, SUPERVISOR_KPIS, CARGA_POR_CATEGORIA } from '../moc
 import { esVencida } from '../config/vigencia';
 import { getDashboard } from '../services/dashboard.js';
 import { getSolicitudes } from '../services/solicitudes.js';
-import { calificacionDisponible, getResumenCalificaciones } from '../services/calificaciones.js';
+import { calificacionDisponible, esVistaPreviaLocal, getResumenCalificaciones } from '../services/calificaciones.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import KpiCard from '../components/KpiCard';
@@ -171,6 +171,9 @@ export default function SupervisorDashboard() {
             <div>
               <h2 id="cal-tecnicos-titulo">Calificación por técnico</h2>
               <p>Promedio de las calificaciones de los solicitantes (1 a 5)</p>
+              {esVistaPreviaLocal() && (
+                <p className="muted-note">Vista previa: solo incluye calificaciones registradas en este navegador.</p>
+              )}
             </div>
           </div>
           {loadingCal ? (

@@ -2,7 +2,8 @@
  * CalificacionServicio.jsx — Calificación del servicio (1–5 + comentario opcional).
  *
  * - Solo aplica a solicitudes RESUELTA o CERRADA; en otro estado no renderiza nada.
- * - Si la funcionalidad no está disponible (modo API sin endpoint en backend), no renderiza nada.
+ * - Si la funcionalidad no está disponible, no renderiza nada. En modo API sin endpoint
+ *   de backend funciona como vista previa local (ver services/calificaciones.js).
  * - `puedeCalificar`: el solicitante dueño de la solicitud ve el formulario si aún no calificó.
  *   El resto (supervisor, administrador) ve la calificación en solo lectura.
  * - Una sola calificación por solicitud, sin edición.
@@ -13,6 +14,7 @@ import Icon from './Icon';
 import { CALIFICACION } from '../config/constants';
 import {
   calificacionDisponible,
+  esVistaPreviaLocal,
   esCalificable,
   getCalificacion,
   calificarSolicitud,
@@ -167,6 +169,11 @@ export default function CalificacionServicio({ solicitud, puedeCalificar = false
     <section className="panel status-panel calificacion-panel" aria-labelledby="calificacion-titulo">
       <h2 id="calificacion-titulo" className="card-label">Calificación del servicio</h2>
       {contenido}
+      {!loading && !error && esVistaPreviaLocal() && (
+        <small className="muted-note calificacion-aviso">
+          Vista previa: la calificación se guarda solo en este navegador.
+        </small>
+      )}
     </section>
   );
 }

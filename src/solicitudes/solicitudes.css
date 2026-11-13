@@ -955,3 +955,8 @@ button.upload:hover {
   font-style: italic;
   margin: 10px 0 6px;
 }
+
+.calificacion-aviso {
+  display: block;
+  margin-top: 12px;
+}
