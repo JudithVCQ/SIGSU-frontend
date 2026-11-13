@@ -15,6 +15,7 @@ import { formatFechaVisual } from '../services/mappers.js';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
+import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -365,6 +366,15 @@ export default function DetalleSolicitud() {
               <p className="muted-note">Todavía no hay un responsable asignado.</p>
             )}
           </section>
+
+          {/* Otras solicitudes de este solicitante (duplicados) */}
+          {(isSupervisor || user?.rol === ROLES.ADMIN) && (
+            <SolicitudesSolicitantePanel
+              solicitanteId={solicitud.solicitanteId}
+              solicitanteNombre={solicitud.solicitante}
+              excluirSolicitudId={solicitud.id ?? solicitud.codigo ?? id}
+            />
+          )}
         </aside>
       </div>
     </div>
