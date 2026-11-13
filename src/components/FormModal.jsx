@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Icon from './Icon';
 import ConfirmModal from './ConfirmModal';
 
@@ -15,14 +15,14 @@ export default function FormModal({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Cierre controlado: verifica cambios y estado de guardado
-  const requestClose = () => {
+  const requestClose = useCallback(() => {
     if (isSubmitting) return; // Mientras se guarda no se puede cerrar
     if (hasChanges) {
       setShowDiscardConfirm(true);
     } else {
       onClose();
     }
-  };
+  }, [isSubmitting, hasChanges, onClose]);
 
   // Escuchar la tecla Escape
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function FormModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, showDiscardConfirm, hasChanges, isSubmitting]);
+  }, [isOpen, showDiscardConfirm, requestClose]);
 
   if (!isOpen) return null;
 
