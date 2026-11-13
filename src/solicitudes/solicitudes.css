@@ -887,3 +887,71 @@ button.upload:hover {
   color: var(--peligro);
   font-weight: 600;
 }
+
+/* Calificación del servicio (CalificacionServicio) */
+.calificacion-panel .card-label {
+  margin-top: 0;
+}
+
+.calificacion-estrellas {
+  border: 0;
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+.calificacion-estrellas legend {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.calificacion-opciones {
+  display: flex;
+  gap: 4px;
+}
+
+.calificacion-opciones label {
+  cursor: pointer;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--borde);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.calificacion-opciones label.activa,
+.calificacion-estrellas-lectura .activa {
+  color: var(--dorado);
+}
+
+.calificacion-opciones label:focus-within {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.calificacion-form .field {
+  margin-bottom: 12px;
+}
+
+.calificacion-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.calificacion-contador {
+  justify-self: end;
+}
+
+.calificacion-estrellas-lectura {
+  display: inline-flex;
+  gap: 2px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--borde);
+}
+
+.calificacion-comentario {
+  font-size: 12px;
+  font-style: italic;
+  margin: 10px 0 6px;
+}

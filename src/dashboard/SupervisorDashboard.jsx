@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getSolicitudesMock, SUPERVISOR_KPIS, CARGA_POR_CATEGORIA } from '../mocks/solicitudes';
 import { esVencida } from '../config/vigencia';
 import { getDashboard } from '../services/dashboard.js';
 import { getSolicitudes } from '../services/solicitudes.js';
+import { calificacionDisponible, esVistaPreviaLocal, getResumenCalificaciones } from '../services/calificaciones.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import KpiCard from '../components/KpiCard';
@@ -13,6 +14,8 @@ import Icon from '../components/Icon';
 import './dashboard.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
+
+const formatPromedio = (n) => (typeof n === 'number' ? n.toFixed(1) : '—');
 
 export default function SupervisorDashboard() {
   const navigate  = useNavigate();
@@ -23,6 +26,28 @@ export default function SupervisorDashboard() {
   const [loading,    setLoading]    = useState(!USE_MOCKS);
   const [error,      setError]      = useState('');
   const [cargaCat,   setCargaCat]   = useState([]);
+
+  // Calificación del servicio: se carga aparte para que un fallo no afecte al resto del dashboard
+  const mostrarCalificacion = calificacionDisponible();
+  const [resumenCal, setResumenCal] = useState(null);
+  const [loadingCal, setLoadingCal] = useState(mostrarCalificacion);
+  const [errorCal,   setErrorCal]   = useState('');
+
+  const cargarCalificaciones = useCallback(async () => {
+    setLoadingCal(true);
+    setErrorCal('');
+    try {
+      setResumenCal(await getResumenCalificaciones());
+    } catch (err) {
+      setErrorCal(err?.message || 'No se pudieron cargar las calificaciones.');
+    } finally {
+      setLoadingCal(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mostrarCalificacion) cargarCalificaciones();
+  }, [mostrarCalificacion, cargarCalificaciones]);
 
   const firstName = user?.nombre ? user.nombre.split(' ')[0] : 'Ana';
 
@@ -78,6 +103,19 @@ export default function SupervisorDashboard() {
         <KpiCard number={loading ? '…' : String(kpis?.atendidas ?? 0)}  label="En atención"          change="Activas ahora" tone="dark" />
         <KpiCard number={loading ? '…' : `${kpis?.porcentajeResuelto ?? 0}%`} label="Resueltas a tiempo" change="+4% vs. período anterior" tone="gold" />
         <KpiCard number={loading ? '…' : String(kpis?.vencidas ?? 0)}   label="Vencidas"             change="Superan plazo de atención" tone="danger" icon="alert" />
+        {mostrarCalificacion && (
+          <KpiCard
+            number={loadingCal ? '…' : (resumenCal?.total ? `${formatPromedio(resumenCal.promedio)} / 5` : '—')}
+            label="Calificación promedio"
+            change={
+              errorCal ? 'No se pudo cargar'
+                : loadingCal ? ''
+                : resumenCal?.total ? `${resumenCal.total} ${resumenCal.total === 1 ? 'calificación' : 'calificaciones'}`
+                : 'Sin calificaciones aún'
+            }
+            icon="check"
+          />
+        )}
       </div>
 
       <div className="dashboard-grid">
@@ -126,6 +164,46 @@ export default function SupervisorDashboard() {
           )}
         </aside>
       </div>
+
+      {mostrarCalificacion && (
+        <section className="panel workload calificacion-tecnicos" aria-labelledby="cal-tecnicos-titulo">
+          <div className="panel-head">
+            <div>
+              <h2 id="cal-tecnicos-titulo">Calificación por técnico</h2>
+              <p>Promedio de las calificaciones de los solicitantes (1 a 5)</p>
+              {esVistaPreviaLocal() && (
+                <p className="muted-note">Vista previa: solo incluye calificaciones registradas en este navegador.</p>
+              )}
+            </div>
+          </div>
+          {loadingCal ? (
+            <p className="muted-note" role="status">Cargando calificaciones…</p>
+          ) : errorCal ? (
+            <div className="work-row">
+              <div className="message error" role="alert">
+                <Icon name="alert" /><div><strong>{errorCal}</strong></div>
+              </div>
+              <Button variant="secondary" onClick={cargarCalificaciones}>Reintentar</Button>
+            </div>
+          ) : !resumenCal?.porTecnico?.length ? (
+            <p className="muted-note work-row">Aún no hay calificaciones registradas.</p>
+          ) : (
+            resumenCal.porTecnico.map((t) => (
+              <div className="work-row" key={t.responsable}>
+                <div>
+                  <span>{t.responsable}</span>
+                  <b>
+                    {formatPromedio(t.promedio)} / 5 · {t.total} {t.total === 1 ? 'calificación' : 'calificaciones'}
+                  </b>
+                </div>
+                <div className="bar">
+                  <i style={{ width: `${Math.round((t.promedio / 5) * 100)}%` }} />
+                </div>
+              </div>
+            ))
+          )}
+        </section>
+      )}
     </div>
   );
 }

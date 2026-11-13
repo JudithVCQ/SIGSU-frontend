@@ -56,3 +56,8 @@
     padding-inline: 16px;
   }
 }
+
+/* Calificación por técnico */
+.calificacion-tecnicos {
+  margin-top: 18px;
+}
