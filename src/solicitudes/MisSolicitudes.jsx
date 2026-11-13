@@ -74,7 +74,6 @@ export default function MisSolicitudes() {
 
   // Opciones para los selects
   const catOptions  = USE_MOCKS ? [] : categorias.map(c => ({ label: c.nombre, value: String(c.id) }));
-  const prioOptions = USE_MOCKS ? [] : prioridades.map(p => ({ label: p.nombre, value: String(p.id) }));
 
   return (
     <div>

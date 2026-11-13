@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getSolicitudesMock, ESTADO_NIVEL as ESTADO_NIVEL_MOCK } from '../mocks/solicitudes';
+import { getSolicitudesMock } from '../mocks/solicitudes';
 import { getSolicitudes } from '../services/solicitudes.js';
-import { ESTADO_NIVEL } from '../services/mappers.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import KpiCard from '../components/KpiCard';

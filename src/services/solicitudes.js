@@ -1,5 +1,5 @@
 /** src/services/solicitudes.js — CRUD de solicitudes y recursos anidados */
-import { apiGet, apiPost, apiPut, apiUpload } from './apiClient.js';
+import { apiGet, apiPost, apiPut } from './apiClient.js';
 import {
   mapSolicitud,
   mapSeguimiento,

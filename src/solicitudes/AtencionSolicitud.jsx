@@ -282,7 +282,7 @@ export default function AtencionSolicitud() {
             <section className="panel info-panel">
               <h2>Registrar solución técnica</h2>
               <p className="hint-text" style={{ marginBottom: '16px' }}>
-                RN-006: Solo con solución registrada la solicitud puede pasar a "Resuelta".
+                RN-006: Solo con solución registrada la solicitud puede pasar a &quot;Resuelta&quot;.
               </p>
               {solucionError && (
                 <div className="message error" role="alert" style={{ marginBottom: '16px' }}>

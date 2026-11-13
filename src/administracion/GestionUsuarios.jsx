@@ -643,7 +643,7 @@ function CreateUserModal({ roles, areas, onClose, onSuccess, onAreaAssignFailed 
             activo:    true,
           });
           onSuccess();
-        } catch (putErr) {
+        } catch {
           // Si el POST funciona y el PUT de área falla, NO repetimos el POST.
           // Notificamos y abrimos el modal de edición de ese usuario para asignarla.
           if (onAreaAssignFailed) {

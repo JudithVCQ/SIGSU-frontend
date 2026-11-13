@@ -179,7 +179,9 @@ export function parseNivel(val) {
     const decoded = atob(String(val).trim());
     const decodedNum = parseInt(decoded, 10);
     if (!isNaN(decodedNum)) return decodedNum;
-  } catch {}
+  } catch {
+    /* ignorar error si no es base64 */
+  }
   return val;
 }
 
