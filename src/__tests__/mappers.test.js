@@ -10,6 +10,8 @@ import {
   mapSeguimiento,
   mapHistorialItem,
   mapAsignacion,
+  mapEvidencia,
+  formatTamano,
 } from '../services/mappers.js';
 import { aFechaInput, fechaInputAIso, describirPlazo } from '../config/vigencia.js';
 
@@ -137,6 +139,56 @@ describe('mappers.js', () => {
     it('mapSolicitud deja fechaLimite en null si el backend no la devuelve', () => {
       const raw = { id: 4, codigo: 'SOL-004', estado: 'ASIGNADA' };
       expect(mapSolicitud(raw).fechaLimite).toBeNull();
+    });
+  });
+
+  describe('mapEvidencia', () => {
+    const raw = {
+      id: 31,
+      solicitudId: 11,
+      seguimientoId: null,
+      nombreArchivo: 'proyector.jpg',
+      tipoMime: 'image/jpeg',
+      tamanoBytes: 1887436,
+      archivoUrl: 'https://res.cloudinary.com/demo/image/upload/v1/solicitud_11_abc.jpg',
+      cargadoPorId: 5,
+      cargadoPorNombre: 'Camila Rojas',
+      creadoEn: '2026-11-13T23:36:09',
+    };
+
+    it('conserva archivoUrl, tipoMime, nombreArchivo y tamanoBytes', () => {
+      const m = mapEvidencia(raw);
+      expect(m).toMatchObject({
+        id: 31,
+        solicitudId: 11,
+        archivoUrl: raw.archivoUrl,
+        tipoMime: 'image/jpeg',
+        nombreArchivo: 'proyector.jpg',
+        tamanoBytes: 1887436,
+        // alias usados por los componentes
+        url: raw.archivoUrl,
+        nombre: 'proyector.jpg',
+        tamano: '1.8 MB',
+        cargadoPor: 'Camila Rojas',
+      });
+    });
+
+    it('convierte creadoEn como UTC', () => {
+      expect(mapEvidencia(raw).creadoEn).toBe('2026-11-13T23:36:09Z');
+    });
+
+    it('usa respaldos si faltan campos', () => {
+      const m = mapEvidencia({ id: 1 });
+      expect(m).toMatchObject({ nombreArchivo: 'archivo', archivoUrl: null, tipoMime: '', tamanoBytes: null, tamano: '', creadoEn: null });
+      expect(mapEvidencia(null)).toBeNull();
+    });
+
+    it('formatTamano usa KB por debajo de 1 MB', () => {
+      expect(formatTamano(655360)).toBe('640 KB');
+      expect(formatTamano(200)).toBe('1 KB');
+      expect(formatTamano(5 * 1024 * 1024)).toBe('5.0 MB');
+      expect(formatTamano(0)).toBe('');
+      expect(formatTamano(null)).toBe('');
     });
   });
 
