@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ROLES, VIGENCIA } from '../config/constants';
+import { aFechaInput, fechaInputAIso } from '../config/vigencia';
 import { useAuth } from '../hooks/useAuth';
 import { getSolicitudByCodigo as getMock, SOLICITUDES_MOCK } from '../mocks/solicitudes';
 import {
@@ -89,7 +90,7 @@ export default function ClasificarSolicitud() {
       }
       if (s.fechaLimite) {
         const d = new Date(s.fechaLimite);
-        if (!isNaN(d.getTime())) setFechaLimite(d.toISOString().split('T')[0]);
+        if (!isNaN(d.getTime())) setFechaLimite(aFechaInput(d));
       }
 
       setLoading(false);
@@ -136,14 +137,14 @@ export default function ClasificarSolicitud() {
 
         if (sol.fechaLimite) {
           const d = new Date(sol.fechaLimite);
-          if (!isNaN(d.getTime())) setFechaLimite(d.toISOString().split('T')[0]);
+          if (!isNaN(d.getTime())) setFechaLimite(aFechaInput(d));
         } else if (sol.prioridadId || sol.prioridad) {
           const prioObj = priosActivas.find((p) => String(p.id) === String(sol.prioridadId) || p.nombre === sol.prioridad);
           const prioNombre = prioObj?.nombre || sol.prioridad || 'Media';
           const dias = VIGENCIA.plazoDiasPorPrioridad[prioNombre] ?? VIGENCIA.plazoDiasSinPrioridad;
           const fechaBase = sol.creadoEn ? new Date(sol.creadoEn) : new Date();
           fechaBase.setDate(fechaBase.getDate() + dias);
-          setFechaLimite(fechaBase.toISOString().split('T')[0]);
+          setFechaLimite(aFechaInput(fechaBase));
         }
       })
       .catch((err) => {
@@ -161,7 +162,7 @@ export default function ClasificarSolicitud() {
 
     const fechaBase = new Date();
     fechaBase.setDate(fechaBase.getDate() + dias);
-    const sugerida = fechaBase.toISOString().split('T')[0];
+    const sugerida = aFechaInput(fechaBase);
     setFechaLimite(sugerida);
   };
 
@@ -209,6 +210,8 @@ export default function ClasificarSolicitud() {
       const prio = prioridades.find((p) => String(p.id) === String(prioridadId))?.nombre || '';
       const area = areas.find((a) => String(a.id) === String(areaId))?.nombre || '';
 
+      const fechaLimiteIso = fechaInputAIso(fechaLimite);
+
       const target = SOLICITUDES_MOCK.find((s) => s.codigo === (solicitud.codigo || id));
       if (target) {
         target.categoria = cat;
@@ -218,6 +221,7 @@ export default function ClasificarSolicitud() {
         target.area = area;
         target.areaId = Number(areaId);
         target.estado = 'En evaluación';
+        target.fechaLimite = fechaLimiteIso;
       }
 
       setSolicitud((prev) => ({
@@ -229,6 +233,7 @@ export default function ClasificarSolicitud() {
         area,
         areaId: Number(areaId),
         estado: 'En evaluación',
+        fechaLimite: fechaLimiteIso,
       }));
 
       setSuccessInfo({
@@ -241,12 +246,8 @@ export default function ClasificarSolicitud() {
     }
 
     try {
-      // Formatear fecha límite en ISO si fue seleccionada
-      let fechaIso = null;
-      if (fechaLimite) {
-        const d = new Date(`${fechaLimite}T23:59:59`);
-        fechaIso = !isNaN(d.getTime()) ? d.toISOString() : null;
-      }
+      // Fecha límite en ISO (fin del día local) si fue seleccionada
+      const fechaIso = fechaInputAIso(fechaLimite);
 
       // 1. Invocar PUT /api/solicitudes/{id}/clasificacion
       await clasificarSolicitud(solicitud.id, {
@@ -522,7 +523,7 @@ export default function ClasificarSolicitud() {
                     type="date"
                     value={fechaLimite}
                     onChange={(e) => setFechaLimite(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={aFechaInput(new Date())}
                   />
                   <span className="field-hint" style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
                     Plazo sugerido según prioridad. Puedes ajustarlo libremente.
