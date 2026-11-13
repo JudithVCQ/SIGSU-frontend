@@ -14,7 +14,6 @@ import Icon from './Icon';
 import { CALIFICACION } from '../config/constants';
 import {
   calificacionDisponible,
-  esVistaPreviaLocal,
   esCalificable,
   getCalificacion,
   calificarSolicitud,
@@ -169,11 +168,6 @@ export default function CalificacionServicio({ solicitud, puedeCalificar = false
     <section className="panel status-panel calificacion-panel" aria-labelledby="calificacion-titulo">
       <h2 id="calificacion-titulo" className="card-label">Calificación del servicio</h2>
       {contenido}
-      {!loading && !error && esVistaPreviaLocal() && (
-        <small className="muted-note calificacion-aviso">
-          Vista previa: la calificación se guarda solo en este navegador.
-        </small>
-      )}
     </section>
   );
 }
