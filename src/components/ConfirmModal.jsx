@@ -11,12 +11,15 @@ export default function ConfirmModal({
   onCancel,
   isDestructive = true,
   icon = 'alert',
+  cancelVariant = 'secondary',
+  confirmVariant,
 }) {
   if (!isOpen) return null;
 
   return (
     <div
       className="modal-layer"
+      style={{ zIndex: 1100 }}
       onClick={onCancel}
       role="dialog"
       aria-modal="true"
@@ -29,10 +32,10 @@ export default function ConfirmModal({
         <h3 id="modal-title">{title}</h3>
         {message && <p>{message}</p>}
         <div className="modal-actions">
-          <Button variant="secondary" onClick={onCancel}>
+          <Button variant={cancelVariant} onClick={onCancel}>
             {cancelText}
           </Button>
-          <Button variant={isDestructive ? 'danger' : 'primary'} onClick={onConfirm}>
+          <Button variant={confirmVariant || (isDestructive ? 'danger' : 'primary')} onClick={onConfirm}>
             {confirmText}
           </Button>
         </div>

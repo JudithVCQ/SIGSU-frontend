@@ -47,12 +47,14 @@ export const ESTADO_NIVEL = {
 export function mapUsuario(u) {
   if (!u) return null;
   return {
-    id:       u.id,
-    nombre:   [u.nombres, u.apellidos].filter(Boolean).join(' ').trim() || 'Usuario',
-    correo:   u.correo ?? '',
-    rol:      u.rol ?? '',
-    areaId:   u.areaId ?? null,
-    activo:   u.activo ?? true,
+    id:        u.id,
+    nombre:    [u.nombres, u.apellidos].filter(Boolean).join(' ').trim() || 'Usuario',
+    nombres:   u.nombres ?? '',
+    apellidos: u.apellidos ?? '',
+    correo:    u.correo ?? '',
+    rol:       u.rol ?? '',
+    areaId:    u.areaId ?? null,
+    activo:    u.activo ?? true,
   };
 }
 
@@ -168,14 +170,28 @@ export function mapHistorialItem(h) {
 // Catálogos (Categoría / Área / Prioridad)
 // ---------------------------------------------------------------------------
 
+export function parseNivel(val) {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return val;
+  const parsed = parseInt(val, 10);
+  if (!isNaN(parsed)) return parsed;
+  try {
+    const decoded = atob(String(val).trim());
+    const decodedNum = parseInt(decoded, 10);
+    if (!isNaN(decodedNum)) return decodedNum;
+  } catch {}
+  return val;
+}
+
 export function mapCatalogo(c) {
   if (!c) return null;
   return {
-    id:     c.id,
-    codigo: c.codigo ?? '',
-    nombre: c.nombre ?? '',
-    nivel:  c.nivel ?? null,
-    activo: c.activo ?? true,
+    id:       c.id,
+    codigo:   c.codigo ?? '',
+    nombre:   c.nombre ?? '',
+    nivel:    parseNivel(c.nivel),
+    nivelRaw: c.nivel,
+    activo:   c.activo ?? true,
   };
 }
 

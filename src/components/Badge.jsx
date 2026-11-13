@@ -15,6 +15,10 @@ const TYPE_TO_TEXT = {
   high:       'Alta',
   medium:     'Media',
   low:        'Baja',
+  activo:     'Activo',
+  inactivo:   'Inactivo',
+  active:     'Activo',
+  inactive:   'Inactivo',
 };
 
 const slug = (t) => {

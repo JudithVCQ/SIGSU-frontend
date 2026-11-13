@@ -23,6 +23,7 @@ export default function Icon({ name, size = 20 }) {
       </>
     ),
     plus: <path d="M12 5v14M5 12h14" />,
+    edit: <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />,
     users: (
       <>
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />

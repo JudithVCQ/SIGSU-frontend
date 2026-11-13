@@ -820,7 +820,7 @@ h2, h3 {
   background: rgba(23, 31, 29, 0.52);
   display: grid;
   place-items: center;
-  z-index: 100;
+  z-index: 1100;
   padding: 20px;
 }
 
@@ -831,6 +831,7 @@ h2, h3 {
   padding: 30px;
   text-align: center;
   border: 1px solid var(--borde);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
 }
 
 .modal-icon {
