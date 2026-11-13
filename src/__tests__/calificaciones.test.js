@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   calificacionDisponible,
@@ -72,23 +73,71 @@ describe('services/calificaciones.js (modo mocks)', () => {
   });
 });
 
-describe('services/calificaciones.js (modo API real, sin endpoint en backend)', () => {
+describe('services/calificaciones.js (modo API real sin endpoint: vista previa local)', () => {
+  let svc;
+  let local;
+
+  beforeEach(async () => {
+    vi.stubEnv('VITE_USE_MOCKS', 'false');
+    vi.resetModules();
+    svc = await import('../services/calificaciones.js');
+    local = await import('../services/calificacionesLocal.js');
+    local.resetCalificacionesLocal();
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
     vi.resetModules();
   });
 
-  it('no está disponible, no llama a fetch y devuelve null', async () => {
-    vi.stubEnv('VITE_USE_MOCKS', 'false');
-    vi.resetModules();
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    const svc = await import('../services/calificaciones.js');
+  // Solicitudes como las devuelve mapSolicitud en modo API
+  const real1 = { id: 501, codigo: 'SOL-501', estadoApi: 'CERRADA', responsable: 'Ana Torres', responsableId: 7 };
+  const real2 = { id: 502, codigo: 'SOL-502', estadoApi: 'RESUELTA', responsable: 'Ana Torres', responsableId: 7 };
+  const real3 = { id: 503, codigo: 'SOL-503', estadoApi: 'RESUELTA', responsable: 'Luis Ramos', responsableId: 8 };
 
-    expect(svc.calificacionDisponible()).toBe(false);
-    expect(await svc.getCalificacion(resuelta)).toBeNull();
-    expect(await svc.getResumenCalificaciones()).toBeNull();
-    await expect(svc.calificarSolicitud(resuelta, { puntaje: 5 })).rejects.toThrow('no está disponible');
+  it('funciona como vista previa local y no llama a fetch', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    expect(svc.modoCalificacion()).toBe('local');
+    expect(svc.calificacionDisponible()).toBe(true);
+    expect(svc.esVistaPreviaLocal()).toBe(true);
+
+    expect(await svc.getCalificacion(real1)).toBeNull();
+    await svc.calificarSolicitud(real1, { puntaje: 4, comentario: 'Bien' });
+    expect(await svc.getCalificacion(real1)).toMatchObject({ puntaje: 4, comentario: 'Bien', responsable: 'Ana Torres' });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('guarda en localStorage (persiste entre recargas del módulo)', async () => {
+    await svc.calificarSolicitud(real1, { puntaje: 5 });
+    expect(JSON.parse(localStorage.getItem('sigsu.calificaciones.local'))).toHaveLength(1);
+
+    vi.resetModules();
+    const svc2 = await import('../services/calificaciones.js');
+    expect(await svc2.getCalificacion(real1)).toMatchObject({ puntaje: 5 });
+  });
+
+  it('no permite calificar dos veces la misma solicitud', async () => {
+    await svc.calificarSolicitud(real1, { puntaje: 5 });
+    await expect(svc.calificarSolicitud(real1, { puntaje: 1 })).rejects.toThrow('ya fue calificada');
+  });
+
+  it('el resumen agrupa por técnico real', async () => {
+    await svc.calificarSolicitud(real1, { puntaje: 5 });
+    await svc.calificarSolicitud(real2, { puntaje: 3 });
+    await svc.calificarSolicitud(real3, { puntaje: 5 });
+
+    const r = await svc.getResumenCalificaciones();
+    expect(r.total).toBe(3);
+    expect(r.promedio).toBeCloseTo(13 / 3);
+    expect(r.porTecnico).toEqual([
+      { responsable: 'Luis Ramos', promedio: 5, total: 1 },
+      { responsable: 'Ana Torres', promedio: 4, total: 2 },
+    ]);
+  });
+
+  it('resumen vacío sin calificaciones', async () => {
+    expect(await svc.getResumenCalificaciones()).toEqual({ promedio: null, total: 0, porTecnico: [] });
   });
 });
