@@ -52,3 +52,10 @@ export const VIGENCIA = {
   plazoDiasPorPrioridad: { Alta: 2, Media: 5, Baja: 10 },
   plazoDiasSinPrioridad: 2,
 };
+
+// Calificación del servicio (reglas definidas por el equipo; backend sin endpoint aún)
+export const CALIFICACION = {
+  puntajeMin:    1,
+  puntajeMax:    5,
+  maxComentario: 500,
+};
