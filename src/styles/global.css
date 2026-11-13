@@ -434,6 +434,13 @@ h2, h3 {
   text-decoration: none;
 }
 
+.btn span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 .btn:hover {
   transform: translateY(-1px);
 }
@@ -511,7 +518,10 @@ h2, h3 {
   background: currentColor;
 }
 
-/* Mapeo bilingüe estado/prioridad */
+/* Mapeo de estados backend ↔ UI */
+/* Registrada y En evaluación: amarillo (como "Pendiente") */
+.badge-registrada,
+.badge-en-evaluacion,
 .badge-pendiente,
 .badge-pending,
 .badge-media,
@@ -543,9 +553,25 @@ h2, h3 {
 }
 
 .badge-alta,
-.badge-high {
+.badge-high,
+.badge-vencida {
   background: var(--peligro-fondo);
   color: #8B2C2C;
+}
+
+.badge-vencida {
+  border: 1px solid rgba(185, 69, 69, 0.35);
+  font-weight: 700;
+}
+
+.badge-activo {
+  background: var(--verde-suave);
+  color: #2F6B3A;
+}
+
+.badge-inactivo {
+  background: #E4E4E2;
+  color: #666;
 }
 
 /* ───────── Formularios ───────── */
@@ -569,15 +595,19 @@ h2, h3 {
   border-radius: 8px;
   background: #fff;
   min-height: 42px;
+  height: 42px;
   padding: 0 12px;
   color: var(--carbon);
   outline: none;
   font-size: 12px;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .field textarea {
   padding-top: 12px;
   min-height: 110px;
+  height: auto;
   resize: vertical;
 }
 
@@ -587,6 +617,13 @@ h2, h3 {
 .search-field:focus-within {
   border-color: var(--verde);
   box-shadow: 0 0 0 3px rgba(31, 78, 67, 0.08);
+  outline: none;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible,
+.field select:focus-visible {
+  outline: none;
 }
 
 .field input::placeholder,
@@ -617,10 +654,14 @@ h2, h3 {
 
 .select-wrap {
   position: relative;
+  display: block;
+  width: 100%;
 }
 
 .select-wrap select {
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   padding-right: 36px;
   cursor: pointer;
 }
@@ -779,7 +820,7 @@ h2, h3 {
   background: rgba(23, 31, 29, 0.52);
   display: grid;
   place-items: center;
-  z-index: 100;
+  z-index: 1100;
   padding: 20px;
 }
 
@@ -790,6 +831,7 @@ h2, h3 {
   padding: 30px;
   text-align: center;
   border: 1px solid var(--borde);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
 }
 
 .modal-icon {
@@ -825,7 +867,7 @@ h2, h3 {
 /* ───────── Tarjetas KPI ───────── */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 18px;
 }
 
@@ -858,6 +900,11 @@ h2, h3 {
 .kpi-icon.dark {
   color: #fff;
   background: var(--verde);
+}
+
+.kpi-icon.danger {
+  color: var(--peligro);
+  background: var(--peligro-fondo);
 }
 
 .kpi-number {
@@ -1012,6 +1059,65 @@ td:first-child {
 
 .filters-3 {
   grid-template-columns: 1.6fr 0.7fr 0.7fr;
+}
+
+.filters-supervisor {
+  grid-template-columns: 1.4fr repeat(3, 0.7fr) auto;
+}
+
+.filter-vencidas {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #ccd1ce;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--texto);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.filter-vencidas:hover {
+  border-color: #9aa19d;
+}
+
+.filter-vencidas input[type="checkbox"] {
+  accent-color: var(--peligro);
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.filter-vencidas.active {
+  border-color: var(--peligro);
+  background: var(--peligro-fondo);
+  color: #8B2C2C;
+  font-weight: 600;
+}
+
+.vencida-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-top: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--peligro-fondo);
+  border: 1px solid rgba(185, 69, 69, 0.3);
+  color: #8B2C2C;
+  font-size: 13px;
+}
+
+.vencida-alert-banner strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
 }
 
 .search-field {
@@ -1217,7 +1323,8 @@ td:first-child {
     padding: 14px;
   }
 
-  .filters-3 {
+  .filters-3,
+  .filters-supervisor {
     grid-template-columns: 1fr;
   }
 

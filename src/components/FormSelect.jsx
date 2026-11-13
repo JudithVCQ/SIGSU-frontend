@@ -23,11 +23,15 @@ export default function FormSelect({
           onChange={(e) => onChange(e.target.value)}
         >
           <option value="">{placeholder}</option>
-          {options.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
+          {options.map((o) => {
+            const val = typeof o === 'object' && o !== null ? (o.value ?? o.id) : o;
+            const text = typeof o === 'object' && o !== null ? (o.label ?? o.nombre) : o;
+            return (
+              <option key={String(val)} value={String(val)}>
+                {text}
+              </option>
+            );
+          })}
         </select>
         <Icon name="down" size={16} />
       </span>
