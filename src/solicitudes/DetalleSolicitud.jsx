@@ -17,6 +17,7 @@ import PlazoSolicitud from '../components/PlazoSolicitud';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
 import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
+import CalificacionServicio from '../components/CalificacionServicio';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -102,6 +103,12 @@ export default function DetalleSolicitud() {
   const isSupervisor    = user?.rol === ROLES.SUPERVISOR;
   const isTecnico       = user?.rol === ROLES.TECNICO;
   const esMiSolicitud   = isTecnico && solicitud.responsableId === user?.id;
+  const isAdmin         = user?.rol === ROLES.ADMIN;
+  const isSolicitante   = user?.rol === ROLES.SOLICITANTE;
+  // En mocks el login simulado no coincide con los solicitanteId de los datos: basta el rol.
+  const esDuenoSolicitud = isSolicitante && (
+    USE_MOCKS || solicitud.solicitanteId == null || String(solicitud.solicitanteId) === String(user?.id)
+  );
 
   const estadoUi  = solicitud.estado ?? '';
   const nivel     = ESTADO_NIVEL[estadoUi] ?? (USE_MOCKS ? (ESTADO_NIVEL_MOCK?.[estadoUi] ?? 0) : 0);
@@ -342,6 +349,11 @@ export default function DetalleSolicitud() {
               <span>Resuelta</span>
             </div>
           </section>
+
+          {/* Calificación del servicio: el solicitante califica; supervisor y admin la ven */}
+          {(isSolicitante || isSupervisor || isAdmin) && (
+            <CalificacionServicio solicitud={solicitud} puedeCalificar={esDuenoSolicitud} />
+          )}
 
           {/* Responsable */}
           <section className="panel contact-panel">
