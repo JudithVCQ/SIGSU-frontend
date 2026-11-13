@@ -7,6 +7,18 @@ function haceDias(diasAtras) {
   return d;
 }
 
+/**
+ * fechaLimite tal como la enviaría el supervisor al clasificar (fin del día local, ISO).
+ * Simula el campo que el backend devolverá en SolicitudResponse. Las solicitudes
+ * sin fechaLimite usan el respaldo de VIGENCIA (ver config/vigencia.js).
+ */
+function fechaLimiteEn(diasDesdeHoy) {
+  const d = new Date();
+  d.setDate(d.getDate() + diasDesdeHoy);
+  d.setHours(23, 59, 59, 0);
+  return d.toISOString();
+}
+
 export const INITIAL_SOLICITUDES = [
   {
     id: 133,
@@ -71,8 +83,9 @@ export const INITIAL_SOLICITUDES = [
     categoria: 'Soporte informático',
     estado: 'Asignada',
     estadoApi: 'ASIGNADA',
-    prioridad: 'Alta', // Plazo 2 días. Registrada hace 1 día -> EN PLAZO
+    prioridad: 'Alta', // fechaLimite explícita: vence hoy -> EN PLAZO
     fechaRegistro: haceDias(1),
+    fechaLimite: fechaLimiteEn(0),
     fecha: formatearFechaVisual(haceDias(1)),
     ubicacion: 'Pabellón B - Laboratorio 4',
     responsable: 'Diego Morales',
@@ -111,8 +124,9 @@ export const INITIAL_SOLICITUDES = [
     categoria: 'Soporte informático',
     estado: 'Asignada',
     estadoApi: 'ASIGNADA',
-    prioridad: 'Media', // Plazo 5 días. Registrada hace 2 días -> EN PLAZO
+    prioridad: 'Media', // fechaLimite explícita (ajustada por el supervisor): vence en 1 día -> EN PLAZO
     fechaRegistro: haceDias(2),
+    fechaLimite: fechaLimiteEn(1),
     fecha: formatearFechaVisual(haceDias(2)),
     ubicacion: 'Pabellón A - Sala de Profesores',
     responsable: 'Diego Morales',
@@ -153,6 +167,7 @@ export const INITIAL_SOLICITUDES = [
     estadoApi: 'RESUELTA',
     prioridad: 'Media',
     fechaRegistro: haceDias(9),
+    fechaLimite: fechaLimiteEn(-4), // Resuelta: se muestra la fecha sin cuenta regresiva
     fecha: formatearFechaVisual(haceDias(9)),
     ubicacion: 'Biblioteca Central - Sala 2',
     responsable: 'Carlos Peña',

@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import KpiCard from '../components/KpiCard';
 import FormSelect from '../components/FormSelect';
 import Badge from '../components/Badge';
+import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
 import './solicitudes.css';
 
@@ -128,7 +129,7 @@ export default function MisAsignaciones() {
                 <thead>
                   <tr>
                     <th>Solicitud</th><th>Categoría</th><th>Estado</th>
-                    <th>Prioridad</th><th>Fecha</th>
+                    <th>Prioridad</th><th>Fecha</th><th>Fecha límite</th>
                     <th style={{ textAlign: 'right' }}>Acción</th>
                   </tr>
                 </thead>
@@ -144,6 +145,7 @@ export default function MisAsignaciones() {
                       <td><Badge texto={r.estado} /></td>
                       <td><Badge texto={r.prioridad || '—'} /></td>
                       <td>{r.fecha}</td>
+                      <td><PlazoSolicitud solicitud={r} variant="inline" fallback="—" /></td>
                       <td className="act">
                         <Button
                           variant={isPrimaryAction(r) ? 'primary' : 'secondary'}
@@ -169,6 +171,7 @@ export default function MisAsignaciones() {
                   <div className="request-meta">
                     <div><small>Categoría</small><span>{r.categoria || '—'}</span></div>
                     <div><small>Prioridad</small><Badge texto={r.prioridad || '—'} /></div>
+                    <PlazoSolicitud solicitud={r} />
                   </div>
                   <Button
                     variant={isPrimaryAction(r) ? 'primary' : 'secondary'}

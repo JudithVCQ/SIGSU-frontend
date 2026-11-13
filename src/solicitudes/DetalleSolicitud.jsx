@@ -13,6 +13,7 @@ import {
 import { ESTADO_NIVEL } from '../services/mappers.js';
 import { formatFechaVisual } from '../services/mappers.js';
 import Badge from '../components/Badge';
+import PlazoSolicitud from '../components/PlazoSolicitud';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
 import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
@@ -229,6 +230,7 @@ export default function DetalleSolicitud() {
               <div><small>Estado</small><Badge texto={estadoUi} /></div>
               {solicitud.prioridad && <div><small>Prioridad</small><Badge texto={solicitud.prioridad} /></div>}
               {solicitud.area && <div><small>Área responsable</small><span>{solicitud.area}</span></div>}
+              <PlazoSolicitud solicitud={solicitud} />
             </div>
             <div className="description">
               <small>Descripción</small>
