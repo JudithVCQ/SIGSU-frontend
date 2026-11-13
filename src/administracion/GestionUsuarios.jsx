@@ -19,6 +19,8 @@ import Icon from '../components/Icon';
 import ConfirmModal from '../components/ConfirmModal';
 import FormField from '../components/FormField';
 import FormSelect from '../components/FormSelect';
+import PasswordField from '../components/PasswordField';
+import FormModal from '../components/FormModal';
 import './administracion.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -592,12 +594,23 @@ function CreateUserModal({ roles, areas, onClose, onSuccess, onAreaAssignFailed 
       ? 'La contraseña es obligatoria'
       : contrasena.length < 8
       ? 'La contraseña debe tener al menos 8 caracteres'
+      : contrasena.length > 72
+      ? 'La contraseña no puede exceder 72 caracteres'
       : '',
     rol:        !rol ? 'Selecciona un rol' : '',
     areaId:     esTecnico && !areaId ? 'El área es obligatoria para el rol Técnico' : '',
   };
   const hasErrors = Object.values(errors).some(Boolean);
   const getErr = (k) => (tried ? errors[k] : '');
+
+  // Detección de cambios respecto al estado inicial
+  const hasChanges =
+    nombres !== '' ||
+    apellidos !== '' ||
+    correo !== '' ||
+    contrasena !== '' ||
+    rol !== ROLES.SOLICITANTE ||
+    areaId !== '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -659,100 +672,92 @@ function CreateUserModal({ roles, areas, onClose, onSuccess, onAreaAssignFailed 
   };
 
   return (
-    <div className="modal-form-layer" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-form" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-form-head">
-          <h3>Registrar nuevo usuario</h3>
-          <button type="button" className="modal-form-close" onClick={onClose} aria-label="Cerrar modal">
-            <Icon name="close" size={20} />
-          </button>
+    <FormModal
+      title="Registrar nuevo usuario"
+      onClose={onClose}
+      hasChanges={hasChanges}
+      isSubmitting={submitting}
+      onSubmit={handleSubmit}
+      actions={({ requestClose }) => (
+        <>
+          <Button variant="secondary" onClick={requestClose} disabled={submitting}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? 'Creando usuario…' : 'Crear usuario'}
+          </Button>
+        </>
+      )}
+    >
+      {errorMsg && (
+        <div className="message error" role="alert">
+          <Icon name="alert" />
+          <div><strong>{errorMsg}</strong></div>
         </div>
+      )}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="modal-form-body">
-            {errorMsg && (
-              <div className="message error" role="alert">
-                <Icon name="alert" />
-                <div><strong>{errorMsg}</strong></div>
-              </div>
-            )}
-
-            <div className="form-row-2">
-              <FormField
-                label="Nombres"
-                value={nombres}
-                onChange={setNombres}
-                placeholder="Ej. Carlos"
-                required
-                error={getErr('nombres')}
-              />
-              <FormField
-                label="Apellidos"
-                value={apellidos}
-                onChange={setApellidos}
-                placeholder="Ej. Mendoza"
-                required
-                error={getErr('apellidos')}
-              />
-            </div>
-
-            <FormField
-              label="Correo electrónico"
-              type="email"
-              value={correo}
-              onChange={setCorreo}
-              placeholder="usuario@universidad.edu"
-              required
-              error={getErr('correo')}
-            />
-
-            <FormField
-              label="Contraseña"
-              type="password"
-              value={contrasena}
-              onChange={setContrasena}
-              placeholder="Mínimo 8 caracteres"
-              required
-              hint="Debe tener al menos 8 caracteres."
-              error={getErr('contrasena')}
-            />
-
-            <div className="form-row-2">
-              <FormSelect
-                label="Rol del sistema"
-                value={rol}
-                onChange={(val) => {
-                  setRol(val);
-                  if (val !== ROLES.TECNICO && !areaId) setAreaId('');
-                }}
-                required
-                options={roles.map((r) => ({ value: r, label: ROLE_LABEL[r] || r }))}
-                error={getErr('rol')}
-              />
-
-              <FormSelect
-                label={esTecnico ? 'Área técnica *' : 'Área responsable'}
-                value={areaId}
-                onChange={setAreaId}
-                required={esTecnico}
-                placeholder={esTecnico ? 'Selecciona el área (obligatoria)' : 'Sin área asignada'}
-                options={areas.map((a) => ({ value: String(a.id), label: a.nombre }))}
-                error={getErr('areaId')}
-              />
-            </div>
-          </div>
-
-          <div className="modal-form-footer">
-            <Button variant="secondary" onClick={onClose} disabled={submitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Creando usuario…' : 'Crear usuario'}
-            </Button>
-          </div>
-        </form>
+      <div className="form-row-2">
+        <FormField
+          label="Nombres"
+          value={nombres}
+          onChange={setNombres}
+          placeholder="Ej. Carlos"
+          required
+          error={getErr('nombres')}
+        />
+        <FormField
+          label="Apellidos"
+          value={apellidos}
+          onChange={setApellidos}
+          placeholder="Ej. Mendoza"
+          required
+          error={getErr('apellidos')}
+        />
       </div>
-    </div>
+
+      <FormField
+        label="Correo electrónico"
+        type="email"
+        value={correo}
+        onChange={setCorreo}
+        placeholder="usuario@universidad.edu"
+        required
+        error={getErr('correo')}
+      />
+
+      <PasswordField
+        label="Contraseña"
+        value={contrasena}
+        onChange={setContrasena}
+        required
+        hint="Debe tener al menos 8 caracteres."
+        error={getErr('contrasena')}
+      />
+
+      <div className="form-row-2">
+        <FormSelect
+          label="Rol del sistema"
+          value={rol}
+          onChange={(val) => {
+            setRol(val);
+            if (val !== ROLES.TECNICO && !areaId) setAreaId('');
+          }}
+          required
+          options={roles.map((r) => ({ value: r, label: ROLE_LABEL[r] || r }))}
+          error={getErr('rol')}
+        />
+
+        <FormSelect
+          label={esTecnico ? 'Área técnica' : 'Área responsable'}
+          value={areaId}
+          onChange={setAreaId}
+          required={esTecnico}
+          placeholder={esTecnico ? 'Selecciona el área (obligatoria)' : 'Sin área asignada'}
+          options={areas.map((a) => ({ value: String(a.id), label: a.nombre }))}
+          error={getErr('areaId')}
+        />
+      </div>
+    </FormModal>
   );
 }
 
@@ -784,6 +789,22 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
   };
   const hasErrors = Object.values(errors).some(Boolean);
   const getErr = (k) => (tried ? errors[k] : '');
+
+  // Detección de cambios respecto a los valores iniciales cargados
+  const initialNombres  = user.nombres || user.nombre || '';
+  const initialApellidos = user.apellidos || '';
+  const initialCorreo   = user.correo || '';
+  const initialRol      = user.rol || ROLES.SOLICITANTE;
+  const initialAreaId   = user.areaId ? String(user.areaId) : '';
+  const initialActivo   = user.activo ?? true;
+
+  const hasChanges =
+    nombres !== initialNombres ||
+    apellidos !== initialApellidos ||
+    correo !== initialCorreo ||
+    rol !== initialRol ||
+    areaId !== initialAreaId ||
+    activo !== initialActivo;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -835,102 +856,100 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
   };
 
   return (
-    <div className="modal-form-layer" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-form" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-form-head">
-          <h3>Editar usuario #{user.id}</h3>
-          <button type="button" className="modal-form-close" onClick={onClose} aria-label="Cerrar modal">
-            <Icon name="close" size={20} />
-          </button>
+    <FormModal
+      title={`Editar usuario #${user.id}`}
+      onClose={onClose}
+      hasChanges={hasChanges}
+      isSubmitting={submitting}
+      onSubmit={handleSubmit}
+      actions={({ requestClose }) => (
+        <>
+          <Button variant="secondary" onClick={requestClose} disabled={submitting}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? 'Guardando cambios…' : 'Guardar cambios'}
+          </Button>
+        </>
+      )}
+    >
+      {errorMsg && (
+        <div className="message error" role="alert">
+          <Icon name="alert" />
+          <div><strong>{errorMsg}</strong></div>
         </div>
+      )}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="modal-form-body">
-            {errorMsg && (
-              <div className="message error" role="alert">
-                <Icon name="alert" />
-                <div><strong>{errorMsg}</strong></div>
-              </div>
-            )}
-
-            <div className="form-row-2">
-              <FormField
-                label="Nombres"
-                value={nombres}
-                onChange={setNombres}
-                required
-                error={getErr('nombres')}
-              />
-              <FormField
-                label="Apellidos"
-                value={apellidos}
-                onChange={setApellidos}
-                required
-                error={getErr('apellidos')}
-              />
-            </div>
-
-            <FormField
-              label="Correo electrónico"
-              type="email"
-              value={correo}
-              onChange={setCorreo}
-              required
-              error={getErr('correo')}
-            />
-
-            <div className="form-row-2">
-              <FormSelect
-                label="Rol del sistema"
-                value={rol}
-                onChange={setRol}
-                required
-                options={roles.map((r) => ({ value: r, label: ROLE_LABEL[r] || r }))}
-                error={isSelf ? 'No puedes cambiar tu propio rol' : ''}
-              />
-
-              <FormSelect
-                label={esTecnico ? 'Área técnica *' : 'Área responsable'}
-                value={areaId}
-                onChange={setAreaId}
-                required={esTecnico}
-                placeholder={esTecnico ? 'Selecciona el área (obligatoria)' : 'Sin área asignada'}
-                options={areas.map((a) => ({ value: String(a.id), label: a.nombre }))}
-                error={getErr('areaId')}
-              />
-            </div>
-
-            {/* Estado Activo / Inactivo */}
-            <label className={`toggle-field ${isSelf ? 'disabled' : ''}`}>
-              <input
-                type="checkbox"
-                checked={activo}
-                onChange={(e) => !isSelf && setActivo(e.target.checked)}
-                disabled={isSelf}
-              />
-              <div>
-                <strong>Usuario activo</strong>
-                <span style={{ display: 'block', fontSize: '11px', color: 'var(--muted)' }}>
-                  {isSelf
-                    ? 'No puedes desactivar tu propia cuenta de administrador.'
-                    : activo
-                    ? 'El usuario puede iniciar sesión y operar en el sistema.'
-                    : 'El usuario no podrá iniciar sesión (conserva su historial).'}
-                </span>
-              </div>
-            </label>
-          </div>
-
-          <div className="modal-form-footer">
-            <Button variant="secondary" onClick={onClose} disabled={submitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Guardando cambios…' : 'Guardar cambios'}
-            </Button>
-          </div>
-        </form>
+      <div className="form-row-2">
+        <FormField
+          label="Nombres"
+          value={nombres}
+          onChange={setNombres}
+          required
+          error={getErr('nombres')}
+        />
+        <FormField
+          label="Apellidos"
+          value={apellidos}
+          onChange={setApellidos}
+          required
+          error={getErr('apellidos')}
+        />
       </div>
-    </div>
+
+      <FormField
+        label="Correo electrónico"
+        type="email"
+        value={correo}
+        onChange={setCorreo}
+        required
+        error={getErr('correo')}
+      />
+
+      <div className="form-row-2">
+        <FormSelect
+          label="Rol del sistema"
+          value={rol}
+          onChange={setRol}
+          required
+          options={roles.map((r) => ({ value: r, label: ROLE_LABEL[r] || r }))}
+          error={isSelf ? 'No puedes cambiar tu propio rol' : ''}
+        />
+
+        <FormSelect
+          label={esTecnico ? 'Área técnica' : 'Área responsable'}
+          value={areaId}
+          onChange={setAreaId}
+          required={esTecnico}
+          placeholder={esTecnico ? 'Selecciona el área (obligatoria)' : 'Sin área asignada'}
+          options={areas.map((a) => ({ value: String(a.id), label: a.nombre }))}
+          error={getErr('areaId')}
+        />
+      </div>
+
+      {/* Estado Activo / Inactivo */}
+      <label className={`toggle-field ${isSelf ? 'disabled' : ''}`}>
+        <input
+          type="checkbox"
+          checked={activo}
+          onChange={(e) => !isSelf && setActivo(e.target.checked)}
+          disabled={isSelf}
+        />
+        <div>
+          <strong>Usuario activo</strong>
+          <span style={{ display: 'block', fontSize: '11px', color: 'var(--muted)' }}>
+            {isSelf
+              ? 'No puedes desactivar tu propia cuenta de administrador.'
+              : activo
+              ? 'El usuario puede iniciar sesión y operar en el sistema.'
+              : 'El usuario no podrá iniciar sesión (conserva su historial).'}
+          </span>
+        </div>
+      </label>
+
+      <p className="hint-text" style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'var(--muted)' }}>
+        La contraseña no se puede modificar desde aquí.
+      </p>
+    </FormModal>
   );
 }
