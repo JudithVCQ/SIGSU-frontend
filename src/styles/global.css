@@ -434,6 +434,13 @@ h2, h3 {
   text-decoration: none;
 }
 
+.btn span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 .btn:hover {
   transform: translateY(-1px);
 }
@@ -557,6 +564,16 @@ h2, h3 {
   font-weight: 700;
 }
 
+.badge-activo {
+  background: var(--verde-suave);
+  color: #2F6B3A;
+}
+
+.badge-inactivo {
+  background: #E4E4E2;
+  color: #666;
+}
+
 /* ───────── Formularios ───────── */
 .field {
   display: grid;
@@ -578,15 +595,19 @@ h2, h3 {
   border-radius: 8px;
   background: #fff;
   min-height: 42px;
+  height: 42px;
   padding: 0 12px;
   color: var(--carbon);
   outline: none;
   font-size: 12px;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .field textarea {
   padding-top: 12px;
   min-height: 110px;
+  height: auto;
   resize: vertical;
 }
 
@@ -596,6 +617,13 @@ h2, h3 {
 .search-field:focus-within {
   border-color: var(--verde);
   box-shadow: 0 0 0 3px rgba(31, 78, 67, 0.08);
+  outline: none;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible,
+.field select:focus-visible {
+  outline: none;
 }
 
 .field input::placeholder,
@@ -626,10 +654,14 @@ h2, h3 {
 
 .select-wrap {
   position: relative;
+  display: block;
+  width: 100%;
 }
 
 .select-wrap select {
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   padding-right: 36px;
   cursor: pointer;
 }
