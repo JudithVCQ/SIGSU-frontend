@@ -22,6 +22,7 @@ import Button from '../components/Button';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
+import EvidenciaCard from '../components/EvidenciaCard';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
 
@@ -378,11 +379,7 @@ export default function AtencionSolicitud() {
             ) : (
               <div className="evidence-grid">
                 {evidencias.map((f, i) => (
-                  <div className="evidence" key={f.id ?? i}>
-                    <div className="evidence-thumb"><Icon name="image" size={26} /></div>
-                    <strong>{f.nombre || f.name}</strong>
-                    <small>{f.tamano || f.size}</small>
-                  </div>
+                  <EvidenciaCard key={f.id ?? i} evidencia={f} />
                 ))}
               </div>
             )}

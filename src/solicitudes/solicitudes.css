@@ -587,6 +587,75 @@ button.upload:hover {
   padding: 0 4px;
 }
 
+/* Evidencias con archivo real (EvidenciaCard) */
+.evidence-thumb {
+  overflow: hidden;
+}
+
+.evidence-thumb-img {
+  background: var(--neutro);
+}
+
+.evidence-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.evidence-pdf {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: var(--peligro);
+}
+
+.evidence-pdf > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.evidence-generico {
+  display: grid;
+  place-items: center;
+}
+
+.evidence-link {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 7px;
+}
+
+.evidence-link:hover strong {
+  text-decoration: underline;
+}
+
+.evidence-link:focus-visible,
+.evidence-descargar:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.evidence-descargar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 4px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--verde);
+  text-decoration: none;
+  justify-self: start;
+}
+
+.evidence-descargar:hover {
+  text-decoration: underline;
+}
+
 /* ───────── Responsive Solicitudes ───────── */
 @media (max-width: 900px) {
   .detail-grid {

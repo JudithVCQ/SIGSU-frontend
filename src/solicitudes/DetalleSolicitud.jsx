@@ -16,6 +16,7 @@ import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
+import EvidenciaCard from '../components/EvidenciaCard';
 import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
 import CalificacionServicio from '../components/CalificacionServicio';
 import './solicitudes.css';
@@ -322,11 +323,7 @@ export default function DetalleSolicitud() {
             ) : (
               <div className="evidence-grid">
                 {evidencias.map((f, i) => (
-                  <div className="evidence" key={f.id ?? i}>
-                    <div className="evidence-thumb"><Icon name="image" size={26} /></div>
-                    <strong>{f.nombre || f.name}</strong>
-                    <small>{f.tamano || f.size}</small>
-                  </div>
+                  <EvidenciaCard key={f.id ?? i} evidencia={f} />
                 ))}
               </div>
             )}
