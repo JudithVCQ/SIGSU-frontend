@@ -20,11 +20,11 @@ export default function MisAsignaciones() {
 
   const [misAsignaciones, setMisAsignaciones] = useState([]);
   const [loading, setLoading] = useState(!USE_MOCKS);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
 
-  const [query,          setQuery]          = useState('');
-  const [estadoFilter,   setEstadoFilter]   = useState('');
-  const [prioridadFilter,setPrioridadFilter] = useState('');
+  const [query, setQuery] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState('');
+  const [prioridadFilter, setPrioridadFilter] = useState('');
 
   useEffect(() => {
     if (USE_MOCKS) {
@@ -40,14 +40,14 @@ export default function MisAsignaciones() {
       .then(setMisAsignaciones)
       .catch(err => setError(err.message ?? 'No se pudieron cargar las asignaciones.'))
       .finally(() => setLoading(false));
-  }, [user?.id]);
+  }, [user?.id, user?.nombre]);
 
-  const asignadasCount  = misAsignaciones.filter(r => r.estadoApi === 'ASIGNADA'    || r.estado === 'Asignada').length;
+  const asignadasCount = misAsignaciones.filter(r => r.estadoApi === 'ASIGNADA' || r.estado === 'Asignada').length;
   const enAtencionCount = misAsignaciones.filter(r => r.estadoApi === 'EN_ATENCION' || r.estado === 'En atención').length;
-  const resueltasCount  = misAsignaciones.filter(r => r.estadoApi === 'RESUELTA'    || r.estado === 'Resuelta').length;
+  const resueltasCount = misAsignaciones.filter(r => r.estadoApi === 'RESUELTA' || r.estado === 'Resuelta').length;
 
   const filtered = misAsignaciones.filter((r) => {
-    const matchEstado    = !estadoFilter    || r.estado === estadoFilter;
+    const matchEstado = !estadoFilter || r.estado === estadoFilter;
     const matchPrioridad = !prioridadFilter || r.prioridad === prioridadFilter;
     const target = `${r.codigo} ${r.titulo} ${r.categoria} ${r.ubicacion || ''}`.toLowerCase();
     const matchQuery = !query.trim() || target.includes(query.trim().toLowerCase());
@@ -56,7 +56,7 @@ export default function MisAsignaciones() {
 
   const getActionLabel = (r) => {
     const e = r.estadoApi ?? r.estado;
-    if (e === 'ASIGNADA'    || e === 'Asignada')    return 'Iniciar atención';
+    if (e === 'ASIGNADA' || e === 'Asignada') return 'Iniciar atención';
     if (e === 'EN_ATENCION' || e === 'En atención') return 'Atender';
     return 'Ver detalle';
   };
@@ -75,9 +75,9 @@ export default function MisAsignaciones() {
       />
 
       <div className="kpi-grid">
-        <KpiCard icon="clock"  number={String(asignadasCount)}  label="Asignadas"    change="Pendientes de iniciar" />
-        <KpiCard icon="layers" number={String(enAtencionCount)} label="En atención"  change="Trabajos en curso" tone="dark" />
-        <KpiCard icon="check"  number={String(resueltasCount)}  label="Resueltas"    change="Completadas recientemente" tone="gold" />
+        <KpiCard icon="clock" number={String(asignadasCount)} label="Asignadas" change="Pendientes de iniciar" />
+        <KpiCard icon="layers" number={String(enAtencionCount)} label="En atención" change="Trabajos en curso" tone="dark" />
+        <KpiCard icon="check" number={String(resueltasCount)} label="Resueltas" change="Completadas recientemente" tone="gold" />
       </div>
 
       <section className="panel table-panel" style={{ marginTop: '24px' }}>
@@ -91,8 +91,8 @@ export default function MisAsignaciones() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </label>
-          <FormSelect label="Estado"    value={estadoFilter}    onChange={setEstadoFilter}    options={ESTADOS} placeholder="Todos los estados" />
-          <FormSelect label="Prioridad" value={prioridadFilter} onChange={setPrioridadFilter} options={['Alta','Media','Baja']} placeholder="Todas las prioridades" />
+          <FormSelect label="Estado" value={estadoFilter} onChange={setEstadoFilter} options={ESTADOS} placeholder="Todos los estados" />
+          <FormSelect label="Prioridad" value={prioridadFilter} onChange={setPrioridadFilter} options={['Alta', 'Media', 'Baja']} placeholder="Todas las prioridades" />
         </div>
 
         {error && (

@@ -8,6 +8,8 @@ import {
   mapAsignacion,
 } from './mappers.js';
 
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
+
 // ---------------------------------------------------------------------------
 // Solicitudes
 // ---------------------------------------------------------------------------
@@ -52,6 +54,40 @@ export async function getSolicitudAny(param) {
 /** GET /api/solicitudes/estados */
 export async function getEstados() {
   return apiGet('/api/solicitudes/estados');
+}
+
+// ---------------------------------------------------------------------------
+// FUTURO: cuando el backend soporte filtro solicitanteId en /api/solicitudes?solicitanteId=X,
+// cambiar solo esta función para llamar a getSolicitudes({ solicitanteId }) en lugar de
+// filtrar en el cliente.
+// ---------------------------------------------------------------------------
+
+/**
+ * Devuelve las solicitudes del mismo solicitante, excluyendo la actual.
+ * Filtra en el cliente porque el backend actual aún no dispone de ?solicitanteId.
+ * @param {number|string|null} solicitanteId - ID del solicitante
+ * @param {number|string|null} excluirSolicitudId - ID numérico o código a excluir
+ * @returns {Promise<Array>}
+ */
+export async function getSolicitudesPorSolicitante(solicitanteId, excluirSolicitudId = null) {
+  if (!solicitanteId) return [];
+
+  let solicitudes = [];
+  if (USE_MOCKS) {
+    const { getSolicitudesPorSolicitanteMock } = await import('../mocks/solicitudes.js');
+    return getSolicitudesPorSolicitanteMock(solicitanteId, excluirSolicitudId);
+  }
+
+  solicitudes = await getSolicitudes();
+
+  return solicitudes.filter((s) => {
+    if (String(s.solicitanteId) !== String(solicitanteId)) return false;
+    if (excluirSolicitudId != null) {
+      if (s.id != null && String(s.id) === String(excluirSolicitudId)) return false;
+      if (s.codigo && String(s.codigo) === String(excluirSolicitudId)) return false;
+    }
+    return true;
+  });
 }
 
 /**

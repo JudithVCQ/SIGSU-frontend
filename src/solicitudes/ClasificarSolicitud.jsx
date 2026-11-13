@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { VIGENCIA } from '../config/constants';
+import { ROLES, VIGENCIA } from '../config/constants';
+import { useAuth } from '../hooks/useAuth';
 import { getSolicitudByCodigo as getMock, SOLICITUDES_MOCK } from '../mocks/solicitudes';
 import {
   getSolicitudAny,
@@ -12,6 +13,7 @@ import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -19,6 +21,8 @@ const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 export default function ClasificarSolicitud() {
   const { id }     = useParams();
   const navigate   = useNavigate();
+  const { user }   = useAuth();
+  const esSupervisorOAdmin = user?.rol === ROLES.SUPERVISOR || user?.rol === ROLES.ADMIN;
 
   const [solicitud,   setSolicitud]   = useState(null);
   const [categorias,  setCategorias]  = useState([]);
@@ -334,6 +338,15 @@ export default function ClasificarSolicitud() {
           {solicitud?.descripcion}
         </p>
       </section>
+
+      {/* Detección de duplicados: otras solicitudes del mismo solicitante */}
+      {esSupervisorOAdmin && (
+        <SolicitudesSolicitantePanel
+          solicitanteId={solicitud?.solicitanteId}
+          solicitanteNombre={solicitud?.solicitante}
+          excluirSolicitudId={solicitud?.id ?? solicitud?.codigo ?? id}
+        />
+      )}
 
       {/* BLOQUEO: Si ya hay técnico asignado, no se ofrece edición */}
       {tieneTecnicoAsignado ? (
