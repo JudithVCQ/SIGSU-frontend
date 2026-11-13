@@ -133,14 +133,31 @@ export function mapSeguimiento(s) {
 // Evidencia
 // ---------------------------------------------------------------------------
 
+/** Tamaño legible: "640 KB" por debajo de 1 MB, "1.8 MB" en adelante. */
+export function formatTamano(bytes) {
+  if (typeof bytes !== 'number' || !Number.isFinite(bytes) || bytes <= 0) return '';
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${Math.max(1, Math.round(kb))} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
+
 export function mapEvidencia(e) {
   if (!e) return null;
+  const nombreArchivo = e.nombreArchivo ?? 'archivo';
+  const archivoUrl    = e.archivoUrl ?? null;
+  const tamanoBytes   = typeof e.tamanoBytes === 'number' ? e.tamanoBytes : null;
   return {
-    id:           e.id,
-    nombre:       e.nombreArchivo ?? 'archivo',
-    tamano:       e.tamanoBytes ? `${(e.tamanoBytes / 1024 / 1024).toFixed(1)} MB` : '',
-    tipoMime:     e.tipoMime ?? '',
-    url:          e.archivoUrl ?? null,
+    id:            e.id,
+    solicitudId:   e.solicitudId ?? null,
+    // Campos del backend conservados tal cual
+    nombreArchivo,
+    archivoUrl,
+    tipoMime:      e.tipoMime ?? '',
+    tamanoBytes,
+    // Alias usados por los componentes
+    nombre:        nombreArchivo,
+    url:           archivoUrl,
+    tamano:        formatTamano(tamanoBytes),
     seguimientoId: e.seguimientoId ?? null,
     cargadoPorId: e.cargadoPorId ?? null,
     cargadoPor:   e.cargadoPorNombre ?? '',
