@@ -94,6 +94,7 @@ export function mapSolicitud(s) {
     solicitanteId:      s.solicitanteId ?? null,
     solicitante:        s.solicitanteNombre ?? '',
     // Fechas ISO (conserva el formato del backend; formatea en el componente)
+    fechaLimite:        s.fechaLimite ?? null,
     creadoEn:           s.creadoEn ?? null,
     actualizadoEn:      s.actualizadoEn ?? null,
     resueltaEn:         s.resueltaEn ?? null,

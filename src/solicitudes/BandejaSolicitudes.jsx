@@ -103,34 +103,13 @@ export default function BandejaSolicitudes() {
       r.estado === 'Resuelta'      ? 'RESUELTA' :
       r.estado === 'Cerrada'       ? 'CERRADA' : r.estado
     );
+    const sinResponsable = !r.responsableId || !r.responsable || r.responsable === 'Sin asignar';
+    const estaClasificada = Boolean(
+      (r.categoriaId && r.areaId) ||
+      (r.categoria && r.categoria !== 'Sin categoría' && r.categoria !== '—')
+    );
 
-    // 1. Clasificar: si está en REGISTRADA o no tiene área ni categoría
-    if (e === 'REGISTRADA' || !r.categoriaId || !r.areaId) {
-      return (
-        <Button
-          variant="primary"
-          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
-          onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
-        >
-          Clasificar
-        </Button>
-      );
-    }
-
-    // 2. Asignar: si está en evaluación o no tiene técnico responsable
-    if (e === 'EN_EVALUACION' || !r.responsableId || r.responsable === 'Sin asignar') {
-      return (
-        <Button
-          variant="primary"
-          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
-          onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}
-        >
-          Asignar
-        </Button>
-      );
-    }
-
-    // 3. Revisar y cerrar: si el técnico ya documentó la solución
+    // 1. Revisar y cerrar: si el técnico ya documentó la solución
     if (e === 'RESUELTA' || r.estado === 'Resuelta') {
       return (
         <Button
@@ -143,7 +122,40 @@ export default function BandejaSolicitudes() {
       );
     }
 
-    // 4. Cualquier otro estado (En atención, Cerrada): ver detalle
+    // 2. Si está en REGISTRADA o EN_EVALUACION y NO tiene responsable
+    if ((e === 'REGISTRADA' || e === 'EN_EVALUACION') && sinResponsable) {
+      if (estaClasificada) {
+        return (
+          <div style={{ display: 'inline-flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <Button
+              variant="primary"
+              style={{ padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap' }}
+              onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}
+            >
+              Asignar
+            </Button>
+            <Button
+              variant="secondary"
+              style={{ padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap' }}
+              onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
+            >
+              Editar clasificación
+            </Button>
+          </div>
+        );
+      }
+      return (
+        <Button
+          variant="primary"
+          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+          onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
+        >
+          Clasificar
+        </Button>
+      );
+    }
+
+    // 3. Cualquier otro estado (En atención, Cerrada, Asignada): ver detalle
     return (
       <Button
         variant="secondary"

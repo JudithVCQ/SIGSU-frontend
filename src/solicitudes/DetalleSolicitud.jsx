@@ -165,37 +165,54 @@ export default function DetalleSolicitud() {
             solicitud.estado === 'Resuelta'      ? 'RESUELTA' :
             solicitud.estado === 'Cerrada'       ? 'CERRADA' : solicitud.estado
           );
+          const code = solicitud.codigo || solicitud.id;
+          const sinResponsable = !solicitud.responsableId || !solicitud.responsable || solicitud.responsable === 'Sin asignar';
+          const estaClasificada = Boolean(
+            (solicitud.categoriaId && solicitud.areaId) ||
+            (solicitud.categoria && solicitud.categoria !== 'Sin categoría' && solicitud.categoria !== '—')
+          );
 
-          if (e === 'REGISTRADA' || !solicitud.categoriaId || !solicitud.areaId) {
-            return (
-              <Button
-                variant="primary"
-                onClick={() => navigate(`/supervisor/solicitudes/${solicitud.codigo || solicitud.id}/clasificar`)}
-              >
-                Clasificar solicitud
-              </Button>
-            );
-          }
-          if (e === 'EN_EVALUACION' || !solicitud.responsableId || solicitud.responsable === 'Sin asignar') {
-            return (
-              <Button
-                variant="primary"
-                onClick={() => navigate(`/supervisor/solicitudes/${solicitud.codigo || solicitud.id}/asignar`)}
-              >
-                Asignar técnico
-              </Button>
-            );
-          }
           if (e === 'RESUELTA' || solicitud.estado === 'Resuelta') {
             return (
               <Button
                 variant="primary"
-                onClick={() => navigate(`/supervisor/solicitudes/${solicitud.codigo || solicitud.id}/cerrar`)}
+                onClick={() => navigate(`/supervisor/solicitudes/${code}/cerrar`)}
               >
                 Revisar y cerrar
               </Button>
             );
           }
+
+          if ((e === 'REGISTRADA' || e === 'EN_EVALUACION') && sinResponsable) {
+            return (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {estaClasificada ? (
+                  <>
+                    <Button
+                      variant="primary"
+                      onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}
+                    >
+                      Asignar técnico
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
+                    >
+                      Editar clasificación
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="primary"
+                    onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
+                  >
+                    Clasificar solicitud
+                  </Button>
+                )}
+              </div>
+            );
+          }
+
           return null;
         })()}
       </div>
