@@ -52,6 +52,16 @@ describe('mappers.js', () => {
       expect(mapSolicitud(null)).toBeNull();
       expect(mapSolicitud(undefined)).toBeNull();
     });
+
+    it('mapSolicitud conserva fechaLimite cuando el backend la devuelve', () => {
+      const raw = { id: 3, codigo: 'SOL-003', estado: 'ASIGNADA', fechaLimite: '2026-11-16T04:59:59.000Z' };
+      expect(mapSolicitud(raw).fechaLimite).toBe('2026-11-16T04:59:59.000Z');
+    });
+
+    it('mapSolicitud deja fechaLimite en null si el backend no la devuelve', () => {
+      const raw = { id: 4, codigo: 'SOL-004', estado: 'ASIGNADA' };
+      expect(mapSolicitud(raw).fechaLimite).toBeNull();
+    });
   });
 
   describe('mapUsuario (nombres + apellidos y campos requeridos)', () => {
