@@ -96,11 +96,11 @@ export function mapSolicitud(s) {
     solicitanteId:      s.solicitanteId ?? null,
     solicitante:        s.solicitanteNombre ?? '',
     // Fechas ISO (conserva el formato del backend; formatea en el componente)
-    fechaLimite:        s.fechaLimite ?? null,
-    creadoEn:           s.creadoEn ?? null,
-    actualizadoEn:      s.actualizadoEn ?? null,
-    resueltaEn:         s.resueltaEn ?? null,
-    cerradaEn:          s.cerradaEn ?? null,
+    fechaLimite:        normalizarFechaUtc(s.fechaLimite),
+    creadoEn:           normalizarFechaUtc(s.creadoEn),
+    actualizadoEn:      normalizarFechaUtc(s.actualizadoEn),
+    resueltaEn:         normalizarFechaUtc(s.resueltaEn),
+    cerradaEn:          normalizarFechaUtc(s.cerradaEn),
     // Alias de compatibilidad para componentes que usan r.fecha
     fecha:              s.creadoEn ? formatFechaVisual(s.creadoEn) : '',
     // Alias de compatibilidad para responsable (mocks usan r.rolResponsable)
@@ -125,7 +125,7 @@ export function mapSeguimiento(s) {
     creadoPorId:  s.creadoPorId ?? null,
     rol:          '',           // el backend no devuelve el rol en SeguimientoResponse
     tiempo:       s.creadoEn ? formatFechaVisual(s.creadoEn, true) : 'Ahora',
-    creadoEn:     s.creadoEn ?? null,
+    creadoEn:     normalizarFechaUtc(s.creadoEn),
   };
 }
 
@@ -144,7 +144,7 @@ export function mapEvidencia(e) {
     seguimientoId: e.seguimientoId ?? null,
     cargadoPorId: e.cargadoPorId ?? null,
     cargadoPor:   e.cargadoPorNombre ?? '',
-    creadoEn:     e.creadoEn ?? null,
+    creadoEn:     normalizarFechaUtc(e.creadoEn),
   };
 }
 
@@ -162,7 +162,7 @@ export function mapHistorialItem(h) {
     cambiadoPorId:  h.cambiadoPorId ?? null,
     observacion:    h.observacion ?? '',
     tiempo:         h.cambiadoEn ? formatFechaVisual(h.cambiadoEn, true) : '',
-    cambiadoEn:     h.cambiadoEn ?? null,
+    cambiadoEn:     normalizarFechaUtc(h.cambiadoEn),
   };
 }
 
@@ -211,7 +211,7 @@ export function mapAsignacion(a) {
     tecnico:         a.tecnicoNombre ?? '',
     asignadoPorId:   a.asignadoPorId ?? null,
     asignadoPor:     a.asignadoPorNombre ?? '',
-    asignadaEn:      a.asignadaEn ?? null,
+    asignadaEn:      normalizarFechaUtc(a.asignadaEn),
   };
 }
 
@@ -244,9 +244,23 @@ function mapIndicador(i) {
 
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','set','oct','nov','dic'];
 
+/**
+ * El backend devuelve las fechas en UTC pero sin designador de zona
+ * (ej. "2026-11-16T04:59:59", LocalDateTime de Java). JavaScript interpreta ese
+ * formato como hora LOCAL, lo que desplaza la fecha (en Lima, +5 h: una fecha
+ * límite del 15/11 a las 23:59 se mostraba como 16/11). Esta función agrega la
+ * "Z" para que se interprete como UTC. Si ya trae zona (Z u offset), o es solo
+ * fecha, la deja igual.
+ */
+export function normalizarFechaUtc(valor) {
+  if (valor == null || valor === '') return null;
+  if (typeof valor !== 'string') return valor;
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(valor) ? `${valor}Z` : valor;
+}
+
 export function formatFechaVisual(isoString, incluirHora = false) {
   if (!isoString) return '';
-  const d = new Date(isoString);
+  const d = new Date(normalizarFechaUtc(isoString));
   if (isNaN(d.getTime())) return '';
   const dia  = String(d.getDate()).padStart(2, '0');
   const mes  = MESES[d.getMonth()];

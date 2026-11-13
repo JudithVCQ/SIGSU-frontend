@@ -5,9 +5,45 @@ import {
   mapSolicitud,
   mapUsuario,
   parseNivel,
+  normalizarFechaUtc,
+  formatFechaVisual,
 } from '../services/mappers.js';
+import { aFechaInput, fechaInputAIso, describirPlazo } from '../config/vigencia.js';
 
 describe('mappers.js', () => {
+  describe('normalizarFechaUtc (fechas del backend en UTC sin zona)', () => {
+    it('agrega "Z" a fechas sin designador de zona', () => {
+      expect(normalizarFechaUtc('2026-11-16T04:59:59')).toBe('2026-11-16T04:59:59Z');
+      expect(normalizarFechaUtc('2026-11-16T04:59:59.123')).toBe('2026-11-16T04:59:59.123Z');
+      expect(normalizarFechaUtc('2026-11-16T04:59')).toBe('2026-11-16T04:59Z');
+    });
+
+    it('no modifica fechas que ya traen zona ni fechas sin hora', () => {
+      expect(normalizarFechaUtc('2026-11-16T04:59:59Z')).toBe('2026-11-16T04:59:59Z');
+      expect(normalizarFechaUtc('2026-11-16T04:59:59.000Z')).toBe('2026-11-16T04:59:59.000Z');
+      expect(normalizarFechaUtc('2026-11-15T23:59:59-05:00')).toBe('2026-11-15T23:59:59-05:00');
+      expect(normalizarFechaUtc('2026-11-15')).toBe('2026-11-15');
+    });
+
+    it('retorna null para valores vacíos', () => {
+      expect(normalizarFechaUtc(null)).toBeNull();
+      expect(normalizarFechaUtc(undefined)).toBeNull();
+      expect(normalizarFechaUtc('')).toBeNull();
+    });
+
+    it('ida y vuelta: la fecha límite elegida por el supervisor se muestra igual al solicitante', () => {
+      // El supervisor elige el 15/11; el front envía el fin de ese día local en UTC.
+      const enviada = fechaInputAIso('2026-11-15');
+      // El backend (LocalDateTime) la devuelve sin la "Z".
+      const devuelta = enviada.replace(/\.\d+Z$/, '').replace(/Z$/, '');
+      const mapped = mapSolicitud({ id: 9, estado: 'ASIGNADA', fechaLimite: devuelta });
+
+      expect(aFechaInput(new Date(mapped.fechaLimite))).toBe('2026-11-15');
+      expect(aFechaInput(describirPlazo(mapped, new Date(2026, 10, 13, 10)).fecha)).toBe('2026-11-15');
+      expect(formatFechaVisual(devuelta)).toBe('15 nov, 2026');
+    });
+  });
+
   describe('Mapeo de los 6 estados del backend', () => {
     const estadosBackend = [
       { api: 'REGISTRADA',    ui: 'Registrada' },
