@@ -13,7 +13,8 @@
   isolation: isolate;
   color: var(--sidebar-texto);
   min-height: 100vh;
-  padding: clamp(24px, 4vw, 48px);
+  /* Margen izquierdo moderado; a la derecha queda la zona de la decoración */
+  padding: clamp(24px, 4vw, 48px) clamp(32px, 6vw, 96px) clamp(24px, 4vw, 48px) clamp(32px, 5vw, 72px);
   display: flex;
   background-color: var(--sidebar-fondo);
   /* Brillo guinda suave desde la esquina inferior izquierda + trama de puntos muy tenue */
@@ -79,8 +80,6 @@
   gap: 32px;
   width: 100%;
   max-width: 520px;
-  margin-inline: auto;
-  padding-inline: clamp(32px, 6vw, 96px);
 }
 
 /* Logo arriba; título, subtítulo y pasos centrados en el alto disponible */
@@ -379,7 +378,6 @@
   .auth-contenido {
     gap: 24px;
     max-width: none;
-    padding-inline: 0;
   }
 
   /* Sin espacio a los lados: la decoración se oculta */
