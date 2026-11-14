@@ -802,6 +802,30 @@ h3 {
   color: var(--texto-terciario);
 }
 
+/* Campo deshabilitado: gris e informativo, no es un error */
+.field-disabled .field-label {
+  color: var(--texto-secundario);
+}
+
+.field select:disabled,
+.field input:disabled {
+  background: var(--superficie-alt);
+  color: var(--texto-secundario);
+  border-color: var(--borde);
+  cursor: not-allowed;
+}
+
+.field-disabled .select-wrap select {
+  cursor: not-allowed;
+}
+
+/* El texto del select nunca se corta de forma brusca */
+.select-wrap select {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 .field-error input,
 .field-error select,
 .field-error textarea {

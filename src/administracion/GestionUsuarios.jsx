@@ -755,7 +755,7 @@ function CreateUserModal({ roles, areas, onClose, onSuccess, onAreaAssignFailed 
           value={areaId}
           onChange={setAreaId}
           required={esTecnico}
-          placeholder={esTecnico ? 'Selecciona el área (obligatoria)' : 'Sin área asignada'}
+          placeholder={esTecnico ? 'Selecciona el área' : 'Sin área asignada'}
           options={areas.map((a) => ({ value: String(a.id), label: a.nombre }))}
           error={getErr('areaId')}
         />
@@ -825,11 +825,7 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
     };
 
     // Si cambió el rol, se solicita confirmación con ConfirmModal
-    if (rol !== user.rol) {
-      if (isSelf) {
-        setErrorMsg('No puedes cambiar tu propio rol de administrador.');
-        return;
-      }
+    if (rol !== user.rol && !isSelf) {
       onConfirmRoleChange({
         user,
         newRol: rol,
@@ -916,7 +912,8 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
           onChange={setRol}
           required
           options={roles.map((r) => ({ value: r, label: ROLE_LABEL[r] || r }))}
-          error={isSelf ? 'No puedes cambiar tu propio rol' : ''}
+          disabled={isSelf}
+          nota={isSelf ? 'No puedes cambiar tu propio rol de administrador.' : undefined}
         />
 
         <FormSelect

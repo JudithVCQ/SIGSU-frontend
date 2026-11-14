@@ -8,9 +8,11 @@ export default function FormSelect({
   placeholder = 'Selecciona una opción',
   error,
   required = false,
+  disabled = false,
+  nota,
 }) {
   return (
-    <label className={`field${error ? ' field-error' : ''}`}>
+    <label className={`field${error ? ' field-error' : ''}${disabled ? ' field-disabled' : ''}`}>
       <span className="field-label">
         {label}
         {required && ' *'}
@@ -20,6 +22,7 @@ export default function FormSelect({
           aria-label={label}
           value={value}
           aria-invalid={!!error}
+          disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
         >
           <option value="">{placeholder}</option>
@@ -35,6 +38,7 @@ export default function FormSelect({
         </select>
         <Icon name="down" size={16} />
       </span>
+      {nota && !error && <span className="hint-text">{nota}</span>}
       {error && (
         <span className="error-text" role="alert">
           <Icon name="alert" size={14} />
