@@ -5,7 +5,6 @@ import ProtectedRoute from './ProtectedRoute';
 import AppLayout from '../components/AppLayout';
 import { NotFoundPage } from './PaginasError';
 import LoginPage from '../auth/LoginPage';
-import RegisterPage from '../auth/RegisterPage';
 import SolicitanteDashboard from '../solicitudes/SolicitanteDashboard';
 import MisSolicitudes from '../solicitudes/MisSolicitudes';
 import NuevaSolicitud from '../solicitudes/NuevaSolicitud';
@@ -26,7 +25,6 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to={user ? ROLE_HOME[user.rol] : '/login'} replace />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/registro" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/solicitudes/:id" element={<DetalleSolicitud />} />
