@@ -351,7 +351,7 @@ export default function AtencionSolicitud() {
                 ))}
               </div>
             )}
-            {esEnAtencion && (
+            {(esAsignada || esEnAtencion) && (
               <form className="comment-form" onSubmit={handleAgregarAvance}>
                 <textarea
                   aria-label="Registrar nota de avance"

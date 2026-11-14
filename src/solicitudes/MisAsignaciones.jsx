@@ -137,7 +137,7 @@ export default function MisAsignaciones() {
                   {filtered.map((r) => (
                     <tr key={r.codigo || r.id}>
                       <td>
-                        <button type="button" className="request-link" onClick={() => navigate(`/solicitudes/${r.codigo}`)}>
+                        <button type="button" className="request-link" onClick={() => navigate(`/tecnico/atencion/${r.codigo}`)}>
                           <strong>{r.codigo}</strong><span>{r.titulo}</span>
                         </button>
                       </td>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ROLES } from '../config/constants';
 import { getSolicitudByCodigo as getMock, ESTADO_NIVEL as ESTADO_NIVEL_MOCK } from '../mocks/solicitudes';
@@ -103,8 +103,15 @@ export default function DetalleSolicitud() {
 
   const isSupervisor    = user?.rol === ROLES.SUPERVISOR;
   const isTecnico       = user?.rol === ROLES.TECNICO;
-  const esMiSolicitud   = isTecnico && solicitud.responsableId === user?.id;
+  const esMiSolicitud   = isTecnico
+    && solicitud.responsableId != null
+    && String(solicitud.responsableId) === String(user?.id);
   const isAdmin         = user?.rol === ROLES.ADMIN;
+
+  // El técnico responsable trabaja la solicitud desde su pantalla de atención
+  if (esMiSolicitud) {
+    return <Navigate to={`/tecnico/atencion/${solicitud.codigo}`} replace />;
+  }
   const isSolicitante   = user?.rol === ROLES.SOLICITANTE;
   // En mocks el login simulado no coincide con los solicitanteId de los datos: basta el rol.
   const esDuenoSolicitud = isSolicitante && (
@@ -159,11 +166,6 @@ export default function DetalleSolicitud() {
           <h1>{solicitud.titulo}</h1>
           <p>Registrada el {solicitud.fecha || formatFechaVisual(solicitud.creadoEn)}</p>
         </div>
-        {esMiSolicitud && (solicitud.estadoApi === 'ASIGNADA' || solicitud.estadoApi === 'EN_ATENCION') && (
-          <Button variant="primary" onClick={() => navigate(`/tecnico/atencion/${solicitud.codigo}`)}>
-            Ir a atención
-          </Button>
-        )}
 
         {/* Acción exclusiva para SUPERVISOR según el estado del ciclo */}
         {isSupervisor && (() => {
