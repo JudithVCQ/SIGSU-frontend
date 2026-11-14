@@ -10,7 +10,7 @@
   position: relative;
   overflow: hidden;
   background: var(--verde);
-  color: #fff;
+  color: var(--superficie);
   padding: 48px;
   display: flex;
   flex-direction: column;
@@ -31,13 +31,13 @@
 
 .auth-bars i {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--superficie) 5%, transparent);
   border-radius: 6px 6px 0 0;
 }
 
 .auth-bars i:nth-child(1) { height: 45%; }
 .auth-bars i:nth-child(2) { height: 80%; }
-.auth-bars i:nth-child(3) { height: 60%; background: rgba(181, 136, 63, 0.35); }
+.auth-bars i:nth-child(3) { height: 60%; background: color-mix(in srgb, var(--acento) 35%, transparent); }
 .auth-bars i:nth-child(4) { height: 100%; }
 
 .auth-aside > * {
@@ -48,13 +48,29 @@
   position: absolute;
 }
 
+.auth-aside .logo b {
+  color: var(--superficie);
+}
+
+.auth-aside .logo small {
+  color: var(--primario-anillo);
+}
+
+.auth-aside .logo-mark {
+  border-color: color-mix(in srgb, var(--superficie) 30%, transparent);
+}
+
+.auth-aside .eyebrow {
+  color: var(--acento);
+}
+
 .auth-pitch h2 {
   font-size: 34px;
   line-height: 1.15;
   letter-spacing: -0.03em;
   max-width: 360px;
   margin-bottom: 26px;
-  color: #fff;
+  color: var(--superficie);
 }
 
 .auth-pitch ul {
@@ -64,7 +80,7 @@
   display: grid;
   gap: 12px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--primario-suave);
 }
 
 .auth-pitch li {
@@ -74,11 +90,11 @@
 }
 
 .auth-pitch li .icon {
-  color: var(--dorado);
+  color: var(--acento);
 }
 
 .auth-foot {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--primario-anillo);
   font-size: 10px;
   letter-spacing: 0.02em;
 }
@@ -160,7 +176,7 @@
 .auth-dev {
   margin-top: 20px;
   padding: 14px;
-  background: #fff;
+  background: var(--superficie);
   border: 1px dashed var(--dorado);
   border-radius: var(--radio);
 }
@@ -168,7 +184,7 @@
 .auth-dev small {
   display: block;
   font-weight: 700;
-  color: var(--dorado);
+  color: var(--acento-texto);
   margin-bottom: 8px;
   font-size: 10px;
   letter-spacing: 0.08em;
