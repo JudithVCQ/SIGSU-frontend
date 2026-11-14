@@ -29,7 +29,7 @@
 
 .bar {
   height: 5px;
-  background: #eceeeb;
+  background: var(--borde);
   border-radius: 9px;
   overflow: hidden;
 }
