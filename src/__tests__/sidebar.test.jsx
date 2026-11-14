@@ -145,11 +145,11 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: 'Solicitudes' })).not.toHaveAttribute('aria-current');
   });
 
-  it('pie: notificaciones, nombre corto con el nombre completo como título, rol y cerrar sesión', async () => {
+  it('pie: sin notificaciones, nombre corto con el nombre completo como título, rol y cerrar sesión', async () => {
     const { Sidebar, NAV_BY_ROLE } = await cargarSidebar();
     const logout = vi.fn();
     renderSidebar(Sidebar, NAV_BY_ROLE, 'SUPERVISOR', { logout });
-    expect(screen.getByRole('button', { name: 'Notificaciones' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Notificaciones' })).toBeNull();
     const nombre = screen.getByText('Ana López');
     expect(nombre).toHaveAttribute('title', 'Ana María López García');
     expect(screen.getByText('Supervisor')).toBeInTheDocument();

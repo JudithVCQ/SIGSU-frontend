@@ -5,7 +5,7 @@
  * - Secciones "General" (opciones del rol) y "Vistas rápidas" (listas filtradas por ?vista=).
  * - Contadores de vistas rápidas: una sola llamada al montar (la misma que hace la lista);
  *   si falla, no se muestran.
- * - Abajo: notificaciones y el usuario (nombre corto, rol) con cerrar sesión.
+ * - Abajo: el usuario (nombre corto, rol) con cerrar sesión.
  * - Contraído: solo íconos; el nombre aparece como tooltip al pasar el mouse o con el foco.
  */
 import { useEffect, useState } from 'react';
@@ -128,30 +128,17 @@ export default function Sidebar({ user, items = [], logout, contraido = false, o
       </nav>
 
       <div className="sidebar-foot">
-        <button
-          type="button"
-          className="nav-item sidebar-notificaciones"
-          aria-label="Notificaciones"
-          data-tooltip={contraido ? 'Notificaciones' : undefined}
-        >
-          <span className="sidebar-notif-icono">
-            <Icon name="bell" />
-            <span className="sidebar-notif-punto" aria-hidden="true" />
-          </span>
-          <span className="nav-label" aria-hidden="true">Notificaciones</span>
-        </button>
-
         <div className="sidebar-profile">
           <div className={`avatar ${rol !== ROLES.SOLICITANTE ? 'staff' : ''}`} aria-hidden="true">
             {iniciales(user)}
           </div>
           <div className="sidebar-profile-datos">
             <strong title={user?.nombre || undefined}>{nombreCorto(user)}</strong>
-            <small>{ROLE_LABEL[rol] || rol}</small>
+            <small title={ROLE_LABEL[rol] || rol}>{ROLE_LABEL[rol] || rol}</small>
           </div>
           <button
             type="button"
-            className="icon-button dark"
+            className="icon-button dark sidebar-salir"
             aria-label="Cerrar sesión"
             data-tooltip={contraido ? 'Cerrar sesión' : undefined}
             onClick={logout}

@@ -301,9 +301,19 @@ h3 {
   margin-top: 12px;
 }
 
-.sidebar-profile > div:nth-child(2) {
+.sidebar-profile {
   min-width: 0;
+}
+
+.sidebar-profile .avatar,
+.sidebar-profile .sidebar-salir {
+  flex-shrink: 0;
+}
+
+/* Nombre y rol en una línea con puntos suspensivos; el botón de salir nunca se sale */
+.sidebar-profile-datos {
   flex: 1;
+  min-width: 0;
 }
 
 .sidebar-profile strong,
@@ -325,7 +335,7 @@ h3 {
   margin-top: 2px;
 }
 
-/* ───────── Sidebar: secciones, botón principal, notificaciones ───────── */
+/* ───────── Sidebar: secciones y botón principal ───────── */
 .sidebar-toggle {
   flex: 0 0 auto;
 }
@@ -345,23 +355,8 @@ h3 {
 
 .sidebar-foot {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
-}
-
-.sidebar-notif-icono {
-  position: relative;
-  display: inline-flex;
-}
-
-.sidebar-notif-punto {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--acento);
-  border: 1px solid var(--sidebar-fondo);
 }
 
 /* ───────── Sidebar contraído: solo íconos ───────── */

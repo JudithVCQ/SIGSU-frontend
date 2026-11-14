@@ -1,6 +1,6 @@
 /**
  * Header.jsx — Barra superior: muestra la ruta de navegación de la página actual.
- * El usuario, cerrar sesión y notificaciones están en el sidebar.
+ * El usuario y cerrar sesión están en el sidebar.
  */
 import { Fragment } from 'react';
 import { Link, useLocation } from 'react-router-dom';
