@@ -1,46 +1,95 @@
 import { createContext, useState, useCallback, useEffect } from 'react';
 import { loginApi, getPerfilApi, logoutApi } from '../services/auth.js';
+import { tokenVigente } from './jwt.js';
 
 const USE_MOCKS     = import.meta.env.VITE_USE_MOCKS === 'true';
 const SESSION_TOKEN = 'sigsu.token';
 const SESSION_USER  = 'sigsu.session';
+/** Reintento de /perfil mientras el servidor arranca y no hay usuario guardado */
+const REINTENTO_PERFIL_MS = 5000;
 
 export const AuthContext = createContext(null);
 
+function limpiarSesion() {
+  sessionStorage.removeItem(SESSION_TOKEN);
+  sessionStorage.removeItem(SESSION_USER);
+}
+
+function leerUsuarioGuardado() {
+  try {
+    const u = JSON.parse(sessionStorage.getItem(SESSION_USER));
+    return u && typeof u === 'object' ? u : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Estado inicial, calculado de forma síncrona para no mostrar pantallas de espera de más:
+ *  - mocks: usuario guardado, sin llamadas a la API.
+ *  - sin token: sin sesión.
+ *  - token vencido o ilegible: se limpia el almacenamiento y no se llama a la API.
+ *  - token vigente con usuario guardado: se restaura al instante (se valida después en segundo plano).
+ *  - token vigente sin usuario guardado: hay que esperar al servidor (loading = true).
+ */
+function estadoInicial() {
+  if (USE_MOCKS) return { user: leerUsuarioGuardado(), loading: false, validar: false };
+
+  const token = sessionStorage.getItem(SESSION_TOKEN);
+  if (!token) return { user: null, loading: false, validar: false };
+
+  if (!tokenVigente(token)) {
+    limpiarSesion();
+    return { user: null, loading: false, validar: false };
+  }
+
+  const guardado = leerUsuarioGuardado();
+  return { user: guardado, loading: !guardado, validar: true };
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null);
-  const [loading, setLoading] = useState(true); // true mientras se valida el token inicial
+  const [inicial] = useState(estadoInicial);
+  const [user, setUser]       = useState(inicial.user);
+  // true solo si hay un token vigente pero ningún usuario guardado: hay que esperar al servidor
+  const [loading, setLoading] = useState(inicial.loading);
 
-  // Al montar, si existe un token guardado, lo validamos contra /api/auth/perfil
+  // Validación en segundo plano: GET /api/auth/perfil
   useEffect(() => {
-    if (USE_MOCKS) {
-      // Modo mocks: restaurar directamente de sessionStorage sin llamar a la API
-      try {
-        const stored = JSON.parse(sessionStorage.getItem(SESSION_USER));
-        setUser(stored);
-      } catch {
-        setUser(null);
-      }
-      setLoading(false);
-      return;
-    }
+    if (!inicial.validar) return undefined;
+    const guardado = inicial.user;
 
-    const token = sessionStorage.getItem(SESSION_TOKEN);
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    let activo = true;
+    let temporizador = null;
 
-    getPerfilApi()
-      .then((u) => setUser(u))
-      .catch(() => {
-        // Token inválido o expirado: limpiar todo
-        sessionStorage.removeItem(SESSION_TOKEN);
-        sessionStorage.removeItem(SESSION_USER);
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    const validar = () => {
+      getPerfilApi()
+        .then((perfil) => {
+          if (!activo) return;
+          sessionStorage.setItem(SESSION_USER, JSON.stringify(perfil));
+          setUser(perfil);
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (!activo) return;
+          if (err?.status === 401) {
+            // apiClient ya redirige a /login con el aviso de sesión caducada
+            limpiarSesion();
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+          // Servidor iniciándose o sin conexión: con usuario guardado se sigue trabajando;
+          // sin él se mantiene la pantalla de espera y se reintenta.
+          if (!guardado) temporizador = setTimeout(validar, REINTENTO_PERFIL_MS);
+        });
+    };
+    validar();
+
+    return () => {
+      activo = false;
+      clearTimeout(temporizador);
+    };
+  }, [inicial]);
 
   /**
    * login():
@@ -66,13 +115,19 @@ export function AuthProvider({ children }) {
     if (!USE_MOCKS) {
       await logoutApi(); // llama POST /api/auth/logout; los errores se ignoran internamente
     }
-    sessionStorage.removeItem(SESSION_TOKEN);
-    sessionStorage.removeItem(SESSION_USER);
+    limpiarSesion();
     setUser(null);
   }, []);
 
+  /** Descarta la sesión solo en este navegador (sin llamar al servidor). */
+  const descartarSesion = useCallback(() => {
+    limpiarSesion();
+    setUser(null);
+    setLoading(false);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, descartarSesion }}>
       {children}
     </AuthContext.Provider>
   );
