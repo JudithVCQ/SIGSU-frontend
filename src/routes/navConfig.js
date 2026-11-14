@@ -5,7 +5,8 @@ export const NAV_BY_ROLE = {
   [R.SOLICITANTE]: [
     { to: '/solicitante', label: 'Inicio', short: 'Inicio', icon: 'home' },
     { to: '/solicitante/solicitudes', label: 'Mis solicitudes', short: 'Solicitudes', icon: 'file' },
-    { to: '/solicitante/nueva', label: 'Nueva solicitud', short: 'Nueva', icon: 'plus' },
+    // principal: en el sidebar se muestra como botón destacado arriba (BottomNav no cambia)
+    { to: '/solicitante/nueva', label: 'Nueva solicitud', short: 'Nueva', icon: 'plus', principal: true },
   ],
   [R.SUPERVISOR]: [
     { to: '/supervisor', label: 'Dashboard', short: 'Dashboard', icon: 'grid' },

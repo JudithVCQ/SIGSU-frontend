@@ -1,21 +1,35 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getSolicitudesMock } from '../mocks/solicitudes';
 import { esVencida } from '../config/vigencia';
 import { getSolicitudes } from '../services/solicitudes.js';
 import { getCategorias, getPrioridades } from '../services/catalogos.js';
-import { ESTADOS } from '../config/constants';
+import { ESTADOS, ROLES } from '../config/constants';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
 import RequestTable from '../components/RequestTable';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
+import { SkeletonFilas } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
+import VistaRapidaChip from '../components/VistaRapidaChip';
+import { buscarVista } from '../routes/vistasRapidas';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export default function BandejaSolicitudes() {
   const navigate = useNavigate();
+  // Vista rápida (?vista=) elegida desde el sidebar
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vista = buscarVista(ROLES.SUPERVISOR, searchParams.get('vista'));
+  const quitarVista = () => setSearchParams((p) => {
+    const n = new URLSearchParams(p);
+    n.delete('vista');
+    return n;
+  });
 
   const [items,       setItems]       = useState([]);
   const [categorias,  setCategorias]  = useState([]);
@@ -30,24 +44,24 @@ export default function BandejaSolicitudes() {
   // "Solo vencidas" solo disponible en modo mocks (backend no tiene ese filtro)
   const [soloVencidas,   setSoloVencidas]   = useState(false);
 
-  const [page, setPage]   = useState(0);
-  const PAGE_SIZE          = 15;
-
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       setItems(getSolicitudesMock());
       return;
     }
     setLoading(true);
+    setError('');
     Promise.all([getSolicitudes(), getCategorias(), getPrioridades()])
       .then(([sols, cats, prios]) => {
         setItems(sols);
         setCategorias(cats);
         setPrioridades(prios);
       })
-      .catch(err => setError(err.message ?? 'No se pudieron cargar las solicitudes.'))
+      .catch(() => setError('No pudimos cargar las solicitudes. Revisa tu conexión e inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Recargar al cambiar filtros en modo real (enviamos filtros al servidor)
   useEffect(() => {
@@ -69,13 +83,13 @@ export default function BandejaSolicitudes() {
 
     getSolicitudes(params)
       .then(sols => { setItems(sols); setPage(0); })
-      .catch(err => setError(err.message ?? 'Error al filtrar.'))
+      .catch(() => setError('No pudimos aplicar los filtros. Inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estadoFilter, categoriaId, prioridadId]);
 
   // Filtro local para texto en modo real, y todos los filtros en modo mocks
-  const filtered = USE_MOCKS
+  const filtradosBase = USE_MOCKS
     ? items.filter(r => {
         const matchEstado    = !estadoFilter || r.estado === estadoFilter;
         const matchCategoria = !categoriaId  || r.categoria === categoriaId;
@@ -88,9 +102,10 @@ export default function BandejaSolicitudes() {
     : query.trim()
       ? items.filter(r => `${r.codigo} ${r.titulo} ${r.descripcion}`.toLowerCase().includes(query.trim().toLowerCase()))
       : items;
+  const filtered = vista ? filtradosBase.filter(vista.filtro) : filtradosBase;
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged      = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  // Paginación (10 por página); vuelve a la primera al cambiar la vista rápida
+  const { pagina: page, setPagina: setPage, items: paged } = usePaginacion(filtered, vista?.id ?? '');
 
   // Acción contextual exclusiva para Supervisor según el estado de la solicitud
   const renderSupervisorAction = (r) => {
@@ -114,7 +129,7 @@ export default function BandejaSolicitudes() {
       return (
         <Button
           variant="primary"
-          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+          size="sm"
           onClick={() => navigate(`/supervisor/solicitudes/${code}/cerrar`)}
         >
           Revisar y cerrar
@@ -129,14 +144,14 @@ export default function BandejaSolicitudes() {
           <div style={{ display: 'inline-flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <Button
               variant="primary"
-              style={{ padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap' }}
+              size="sm"
               onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}
             >
               Asignar
             </Button>
             <Button
               variant="secondary"
-              style={{ padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap' }}
+              size="sm"
               onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
             >
               Editar clasificación
@@ -147,7 +162,7 @@ export default function BandejaSolicitudes() {
       return (
         <Button
           variant="primary"
-          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+          size="sm"
           onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
         >
           Clasificar
@@ -159,7 +174,7 @@ export default function BandejaSolicitudes() {
     return (
       <Button
         variant="secondary"
-        style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+        size="sm"
         onClick={() => navigate(`/solicitudes/${code}`)}
       >
         Ver
@@ -243,18 +258,26 @@ export default function BandejaSolicitudes() {
           )}
         </div>
 
-        {error && (
-          <div className="message error" role="alert" style={{ marginBottom: '16px' }}>
-            <Icon name="alert" /><div><strong>{error}</strong></div>
+        {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
+        <div className="tabla-encabezado">
+          <div className="results-label">
+            {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Ordenadas por más recientes
           </div>
-        )}
-
-        <div className="results-label">
-          {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Ordenadas por más recientes
+          <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="arriba" />
         </div>
 
         {loading ? (
-          <p className="muted-note">Cargando solicitudes…</p>
+          <SkeletonFilas filas={6} columnas={6} />
+        ) : error ? (
+          <ErrorState message={error} onRetry={cargar} />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon="search"
+            title={items.length === 0 ? 'Aún no hay solicitudes' : 'No hay solicitudes con estos filtros'}
+            text={items.length === 0
+              ? 'Cuando la comunidad registre solicitudes, aparecerán aquí.'
+              : 'Prueba con otra búsqueda o ajusta los filtros.'}
+          />
         ) : (
           <RequestTable
             requests={paged}
@@ -263,17 +286,7 @@ export default function BandejaSolicitudes() {
           />
         )}
 
-        <div className="pagination">
-          <span>Mostrando {paged.length} de {filtered.length}</span>
-          <div>
-            <Button variant="secondary" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
-              Anterior
-            </Button>
-            <Button variant="secondary" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
-              Siguiente
-            </Button>
-          </div>
-        </div>
+        <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="abajo" />
       </section>
     </div>
   );

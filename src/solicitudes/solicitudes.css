@@ -4,7 +4,7 @@
   position: relative;
   overflow: hidden;
   background: var(--verde);
-  color: #fff;
+  color: var(--superficie);
   border-radius: var(--radius);
   padding: 28px 32px;
   display: flex;
@@ -21,9 +21,9 @@
   bottom: 0;
   width: 70px;
   height: 70px;
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--superficie) 5%, transparent);
   border-radius: 8px 8px 0 0;
-  box-shadow: 86px 20px 0 rgba(181, 136, 63, 0.28), -86px 38px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 86px 20px 0 color-mix(in srgb, var(--acento) 28%, transparent), -86px 38px 0 color-mix(in srgb, var(--superficie) 4%, transparent);
   pointer-events: none;
 }
 
@@ -33,16 +33,15 @@
 }
 
 .cta-banner h2 {
-  font-size: 20px;
   letter-spacing: -0.02em;
   margin-bottom: 6px;
-  color: #fff;
+  color: var(--superficie);
 }
 
 .cta-banner p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 12px;
+  color: var(--primario-suave);
+  font-size: 15px;
   line-height: 1.6;
   max-width: 520px;
 }
@@ -50,7 +49,7 @@
 .cta-banner .btn {
   min-height: 48px;
   padding: 0 24px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .recent-panel {
@@ -66,7 +65,7 @@
   align-items: center;
   padding: 15px 22px;
   border: 0;
-  border-top: 1px solid #eceeeb;
+  border-top: 1px solid var(--borde);
   background: none;
   text-align: left;
   color: var(--muted);
@@ -76,7 +75,7 @@
 }
 
 .recent-item:hover {
-  background: #f9faf8;
+  background: var(--superficie-alt);
   color: var(--verde);
 }
 
@@ -87,20 +86,21 @@
 }
 
 .recent-main strong {
-  color: var(--verde);
-  font-size: 10px;
+  color: var(--texto-secundario);
+  font-size: 13px;
   letter-spacing: 0.03em;
+  font-family: var(--fuente-mono);
 }
 
 .recent-main span {
   color: var(--carbon);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .recent-main small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .recent-badges {
@@ -127,7 +127,7 @@
   align-items: center;
   gap: 8px;
   padding: 0;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   margin-bottom: 25px;
   cursor: pointer;
@@ -158,18 +158,17 @@
   place-items: center;
   border-radius: 50%;
   background: var(--verde);
-  color: #fff;
-  font-size: 10px;
+  color: var(--superficie);
+  font-size: 13px;
   font-weight: 700;
 }
 
 .form-section-head h2 {
-  font-size: 14px;
   margin: 2px 0 4px;
 }
 
 .form-section-head p {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   margin: 0;
 }
@@ -179,17 +178,17 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 28px;
-  background: #fafaf8;
+  background: var(--fondo);
 }
 
 .form-footer p {
-  font-size: 9px;
+  font-size: 13px;
   color: var(--muted);
   margin: 0;
 }
 
 .success-state {
-  background: #fff;
+  background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radius);
   text-align: center;
@@ -213,20 +212,21 @@
   letter-spacing: 0.08em;
   color: var(--verde);
   background: var(--verde-suave);
-  border: 1px dashed #aebbb6;
+  border: 1px dashed var(--borde-fuerte);
   padding: 7px 16px;
   border-radius: 8px;
   font-size: 14px;
   margin-bottom: 16px;
+  font-family: var(--fuente-mono);
 }
 
 .success-state h2 {
-  font-size: 20px;
+  margin-bottom: 8px;
 }
 
 .success-state p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.7;
   max-width: 480px;
   margin: 0 auto 24px;
@@ -251,7 +251,7 @@
   border: 1px solid var(--borde);
   border-radius: 8px;
   padding: 8px 8px 8px 12px;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--verde);
 }
 
@@ -265,12 +265,12 @@
 
 .file-list small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 button.upload {
   width: 100%;
-  background: #fafbf9;
+  background: var(--fondo);
   font: inherit;
 }
 
@@ -300,10 +300,11 @@ button.upload:hover {
 }
 
 .code {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--verde);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-secundario);
   letter-spacing: 0.04em;
+  font-family: var(--fuente-mono);
 }
 
 .detail-grid {
@@ -327,7 +328,6 @@ button.upload:hover {
 
 .info-panel h2,
 .timeline h2 {
-  font-size: 15px;
   padding-bottom: 17px;
   border-bottom: 1px solid var(--borde);
   margin-bottom: 4px;
@@ -343,14 +343,21 @@ button.upload:hover {
 .info-grid small,
 .description small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   display: block;
   margin-bottom: 7px;
 }
 
 .info-grid span,
 .description p {
-  font-size: 11px;
+  font-size: 15px;
+}
+
+/* Datos clave del panel (estado, prioridad, área, fecha límite): 14px y peso 500.
+   Aplica también a los badges y al plazo dentro del panel. */
+.info-grid span {
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .description {
@@ -361,7 +368,6 @@ button.upload:hover {
 .description p {
   line-height: 1.7;
   margin: 0;
-  max-width: 700px;
 }
 
 .timeline-item {
@@ -375,8 +381,8 @@ button.upload:hover {
 .timeline-dot {
   width: 24px;
   height: 24px;
-  border: 2px solid #bec5c2;
-  background: #fff;
+  border: 2px solid var(--borde-fuerte);
+  background: var(--superficie);
   border-radius: 50%;
   z-index: 1;
   display: grid;
@@ -384,7 +390,7 @@ button.upload:hover {
 }
 
 .timeline-dot.active {
-  color: #fff;
+  color: var(--superficie);
   border-color: var(--verde);
   background: var(--verde);
 }
@@ -392,26 +398,26 @@ button.upload:hover {
 .timeline-item > i {
   position: absolute;
   width: 1px;
-  background: #d7dbd8;
+  background: var(--borde);
   height: 30px;
   left: 12px;
   top: 34px;
 }
 
 .timeline-item strong {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--carbon);
 }
 
 .timeline-item p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   margin: 3px 0;
 }
 
 .timeline-item small {
-  color: #939a97;
-  font-size: 9px;
+  color: var(--texto-secundario);
+  font-size: 13px;
 }
 
 .status-panel .badge {
@@ -420,7 +426,7 @@ button.upload:hover {
 
 .status-panel p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.6;
 }
 
@@ -434,7 +440,7 @@ button.upload:hover {
 .progress span {
   height: 4px;
   border-radius: 4px;
-  background: #dfe2e0;
+  background: var(--borde);
 }
 
 .progress span.done {
@@ -444,7 +450,7 @@ button.upload:hover {
 .progress-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 8px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 7px;
 }
@@ -463,18 +469,20 @@ button.upload:hover {
 .contact strong,
 .contact span {
   display: block;
-  font-size: 11px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .contact span {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   margin-top: 3px;
+  font-weight: 400;
 }
 
 .muted-note {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   margin: 18px 0 0;
   line-height: 1.6;
 }
@@ -499,11 +507,11 @@ button.upload:hover {
 }
 
 .comment-head strong {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .comment-head span {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--verde);
   background: var(--verde-suave);
   padding: 2px 7px;
@@ -511,15 +519,15 @@ button.upload:hover {
 }
 
 .comment-head small {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .comment p {
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.6;
   margin: 5px 0 0;
-  color: #3e4442;
+  color: var(--texto-secundario);
 }
 
 .comment-form {
@@ -534,10 +542,10 @@ button.upload:hover {
 .comment-form textarea {
   width: 100%;
   min-height: 80px;
-  border: 1px solid #ccd1ce;
+  border: 1px solid var(--borde-fuerte);
   border-radius: 8px;
   padding: 11px 12px;
-  font-size: 12px;
+  font-size: 15px;
   outline: none;
   resize: vertical;
   color: var(--carbon);
@@ -545,7 +553,7 @@ button.upload:hover {
 
 .comment-form textarea:focus {
   border-color: var(--verde);
-  box-shadow: 0 0 0 3px rgba(31, 78, 67, 0.08);
+  box-shadow: 0 0 0 3px var(--primario-anillo);
 }
 
 .evidence-grid {
@@ -566,7 +574,7 @@ button.upload:hover {
 .evidence-thumb {
   height: 88px;
   border-radius: 7px;
-  background: linear-gradient(135deg, var(--verde-suave), #dbe6e1);
+  background: linear-gradient(135deg, var(--primario-suave), var(--primario-anillo));
   color: var(--verde);
   display: grid;
   place-items: center;
@@ -574,7 +582,7 @@ button.upload:hover {
 }
 
 .evidence strong {
-  font-size: 11px;
+  font-size: 13px;
   padding: 0 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -582,7 +590,7 @@ button.upload:hover {
 }
 
 .evidence small {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   padding: 0 4px;
 }
@@ -611,7 +619,7 @@ button.upload:hover {
 }
 
 .evidence-pdf > span {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -645,7 +653,7 @@ button.upload:hover {
   align-items: center;
   gap: 4px;
   margin: 6px 4px 0;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--verde);
   text-decoration: none;
@@ -677,8 +685,8 @@ button.upload:hover {
   height: 100vh;
   height: 100dvh; /* en móviles descuenta la barra del navegador */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  background: rgba(12, 14, 15, 0.94);
-  color: #fff;
+  background: color-mix(in srgb, var(--texto) 94%, transparent);
+  color: var(--superficie);
 }
 
 .visor-barra {
@@ -696,14 +704,14 @@ button.upload:hover {
 }
 
 .visor-info strong {
-  font-size: 13px;
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .visor-info span {
-  font-size: 11px;
+  font-size: 13px;
   opacity: 0.75;
 }
 
@@ -719,19 +727,19 @@ button.upload:hover {
   height: 40px;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: color-mix(in srgb, var(--superficie) 12%, transparent);
+  color: var(--superficie);
   cursor: pointer;
   text-decoration: none;
 }
 
 .visor-boton:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: color-mix(in srgb, var(--superficie) 22%, transparent);
 }
 
 .visor-boton:focus-visible,
 .visor-miniatura:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--superficie);
   outline-offset: 2px;
 }
 
@@ -791,7 +799,7 @@ button.upload:hover {
 }
 
 .visor-error a {
-  color: #fff;
+  color: var(--superficie);
 }
 
 .visor-miniaturas {
@@ -810,13 +818,13 @@ button.upload:hover {
   border: 2px solid transparent;
   border-radius: 6px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--superficie) 8%, transparent);
   cursor: pointer;
   opacity: 0.6;
 }
 
 .visor-miniatura.activa {
-  border-color: #fff;
+  border-color: var(--superficie);
   opacity: 1;
 }
 
@@ -836,7 +844,7 @@ button.upload:hover {
   .visor-nav {
     width: 40px;
     height: 40px;
-    background: rgba(0, 0, 0, 0.45);
+    background: color-mix(in srgb, var(--texto) 45%, transparent);
   }
 
   .visor-prev {
@@ -963,7 +971,7 @@ button.upload:hover {
 
 .atencion-banner {
   background: var(--verde-suave);
-  border: 1px solid #c2dcd3;
+  border: 1px solid var(--primario-anillo);
   border-radius: var(--radius);
   padding: 20px 24px;
   display: flex;
@@ -974,13 +982,11 @@ button.upload:hover {
 }
 
 .atencion-banner h3 {
-  font-size: 15px;
   margin: 0 0 4px;
-  color: var(--verde);
 }
 
 .atencion-banner p {
-  font-size: 11px;
+  font-size: 13px;
   margin: 0;
   color: var(--carbon);
 }
@@ -1016,14 +1022,14 @@ button.upload:hover {
 }
 
 .duplicados-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   margin: 0;
   color: var(--carbon);
 }
 
 .duplicados-subtitulo {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--muted);
   background: var(--fondo);
@@ -1096,7 +1102,7 @@ button.upload:hover {
 
 .duplicados-item:hover {
   border-color: var(--dorado);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--texto) 5%, transparent);
 }
 
 .duplicados-item-main {
@@ -1113,20 +1119,20 @@ button.upload:hover {
 }
 
 .duplicados-codigo {
-  font-family: monospace;
-  font-size: 12px;
+  font-family: var(--fuente-mono);
+  font-size: 13px;
   font-weight: 600;
-  color: var(--verde);
+  color: var(--texto-secundario);
 }
 
 .duplicados-fecha {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin-left: auto;
 }
 
 .duplicados-item-link {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--carbon);
   text-decoration: none;
@@ -1157,7 +1163,7 @@ button.upload:hover {
 
 .plazo-inline .plazo-texto {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .plazo-texto.plazo-vencida {
@@ -1177,7 +1183,7 @@ button.upload:hover {
 }
 
 .calificacion-estrellas legend {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 8px;
 }
@@ -1198,7 +1204,7 @@ button.upload:hover {
 
 .calificacion-opciones label.activa,
 .calificacion-estrellas-lectura .activa {
-  color: var(--dorado);
+  color: var(--acento-texto);
 }
 
 .calificacion-opciones label:focus-within {
@@ -1228,7 +1234,7 @@ button.upload:hover {
 }
 
 .calificacion-comentario {
-  font-size: 12px;
+  font-size: 14px;
   font-style: italic;
   margin: 10px 0 6px;
 }

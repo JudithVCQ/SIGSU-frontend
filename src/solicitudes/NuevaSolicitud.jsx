@@ -146,7 +146,7 @@ export default function NuevaSolicitud() {
                   <button
                     type="button"
                     className="auth-dev-btn"
-                    style={{ fontSize: '11px', padding: '4px 8px' }}
+                    style={{ fontSize: '13px', padding: '4px 8px' }}
                     onClick={() => handleRetryFile(idx)}
                   >
                     Reintentar

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getSolicitudesMock, SOLICITUDES_MOCK } from '../mocks/solicitudes';
 import {
@@ -10,10 +10,15 @@ import {
 import { getTecnicos } from '../services/usuarios.js';
 import { getDashboard } from '../services/dashboard.js';
 import { getErrorMessage } from '../services/apiClient.js';
+import { mensajeBackend } from './mensajeBackend';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
+import { SkeletonFilas, SkeletonDetalle } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
 
@@ -35,13 +40,15 @@ export default function AsignarTecnico() {
   const [loadingTecnicos, setLoadingTecnicos] = useState(false);
   const [submitting,      setSubmitting]      = useState(false);
   const [errGeneral,      setErrGeneral]      = useState('');
+  const [errCarga,        setErrCarga]        = useState('');
   const [modalOpen,       setModalOpen]       = useState(false);
   const [successInfo,     setSuccessInfo]     = useState(null);
 
   // Cargar datos según si hay :id o si es bandeja general /supervisor/asignacion
-  useEffect(() => {
+  const cargar = useCallback(() => {
     setLoading(true);
     setErrGeneral('');
+    setErrCarga('');
     setSuccessInfo(null);
     setSelectedTecnicoId('');
 
@@ -49,7 +56,7 @@ export default function AsignarTecnico() {
       if (id) {
         const s = getSolicitudesMock().find((x) => x.codigo === id || String(x.id) === String(id));
         setSolicitud(s || null);
-        if (!s) setErrGeneral('No se encontró la solicitud.');
+        if (!s) setErrCarga('No encontramos la solicitud que buscas.');
       } else {
         const unassigned = getSolicitudesMock().filter(
           (x) => !x.responsable || x.responsable === 'Sin asignar'
@@ -66,8 +73,8 @@ export default function AsignarTecnico() {
         .then((sol) => {
           setSolicitud(sol);
         })
-        .catch((err) => {
-          setErrGeneral(getErrorMessage(err, 'No se pudo cargar la solicitud.'));
+        .catch(() => {
+          setErrCarga('No pudimos cargar la solicitud. Revisa tu conexión e inténtalo de nuevo.');
         })
         .finally(() => setLoading(false));
     } else {
@@ -76,12 +83,14 @@ export default function AsignarTecnico() {
         .then((list) => {
           setSinAsignarList(list);
         })
-        .catch((err) => {
-          setErrGeneral(getErrorMessage(err, 'No se pudieron cargar las solicitudes sin asignar.'));
+        .catch(() => {
+          setErrCarga('No pudimos cargar las solicitudes sin asignar. Revisa tu conexión e inténtalo de nuevo.');
         })
         .finally(() => setLoading(false));
     }
   }, [id]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Cargar técnicos y cargas cuando se tenga una solicitud seleccionada
   useEffect(() => {
@@ -166,28 +175,33 @@ export default function AsignarTecnico() {
       // 1. Invocar POST /api/solicitudes/{solicitudId}/asignaciones {tecnicoId}
       await asignarTecnico(solicitud.id, Number(selectedTecnicoId));
 
-      // 2. Volver a pedir la solicitud para verificar el estado devuelto
-      const updated = await getSolicitudAny(solicitud.id);
-      let estadoFinal = updated?.estado || 'Asignada';
-      let autoAdvanced = updated?.estadoApi === 'ASIGNADA';
+      // 2. Volver a pedir la solicitud para conocer el estado real
+      let actual = null;
+      let aviso = '';
+      try {
+        actual = await getSolicitudAny(solicitud.id);
+      } catch (errGet) {
+        aviso = `Técnico asignado, pero no se pudo consultar el estado actual: ${mensajeBackend(errGet)}`;
+      }
 
-      // 3. Si el estado NO avanzó solo a ASIGNADA, intentar PUT /estado
-      if (!autoAdvanced && updated?.estadoApi !== 'ASIGNADA') {
+      // 3. Si no avanzó sola a ASIGNADA, intentar PUT /estado. Si falla, se informa
+      //    el error del backend y se muestra el estado REAL (nunca "Asignada" por defecto).
+      if (actual && actual.estadoApi !== 'ASIGNADA') {
         try {
-          const transitioned = await cambiarEstado(solicitud.id, 'ASIGNADA', {
+          actual = await cambiarEstado(solicitud.id, 'ASIGNADA', {
             observacion: `Técnico asignado: ${tecnicoObj?.nombre || selectedTecnicoId}`,
           });
-          estadoFinal = transitioned?.estado || 'Asignada';
-        } catch {
-          // Si el backend no permite transición manual, conservar el estado actual
+        } catch (errEstado) {
+          aviso = `Técnico asignado, pero no se pudo actualizar el estado: ${mensajeBackend(errEstado)}`;
         }
       }
 
-      setSolicitud(updated);
+      if (actual) setSolicitud(actual);
       setSuccessInfo({
         message: `Técnico asignado con éxito a la solicitud ${solicitud.codigo}.`,
-        estado: estadoFinal,
+        estado: actual?.estado ?? 'Desconocido',
         tecnicoNombre: tecnicoObj?.nombre || 'Técnico',
+        aviso,
       });
     } catch (err) {
       setErrGeneral(getErrorMessage(err, 'No se pudo completar la asignación del técnico.'));
@@ -197,6 +211,9 @@ export default function AsignarTecnico() {
   };
 
   const selectedTecnico = tecnicos.find((t) => String(t.id) === String(selectedTecnicoId));
+
+  // Paginación de la bandeja de solicitudes sin asignar (10 por página)
+  const { pagina, setPagina, items: sinAsignarPagina } = usePaginacion(sinAsignarList);
 
   // RENDER 1: Vista general /supervisor/asignacion (sin :id)
   if (!id) {
@@ -223,17 +240,28 @@ export default function AsignarTecnico() {
           </div>
 
           {loading ? (
-            <p className="muted-note">Cargando solicitudes sin asignar…</p>
+            <SkeletonFilas filas={5} columnas={6} />
+          ) : errCarga ? (
+            <ErrorState message={errCarga} onRetry={cargar} />
           ) : sinAsignarList.length === 0 ? (
-            <div className="empty">
-              <Icon name="check" size={28} />
-              <strong>No hay solicitudes pendientes de asignación</strong>
-              <p>Todas las solicitudes activas ya cuentan con un técnico responsable.</p>
-              <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>
-                Ir a todas las solicitudes
-              </Button>
-            </div>
+            <EmptyState
+              icon="check"
+              title="No hay solicitudes pendientes de asignación"
+              text="Todas las solicitudes activas ya cuentan con un técnico responsable."
+              action={
+                <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>
+                  Ir a todas las solicitudes
+                </Button>
+              }
+            />
           ) : (
+            <>
+            <div className="tabla-encabezado">
+              <div className="results-label">
+                {sinAsignarList.length} {sinAsignarList.length === 1 ? 'solicitud' : 'solicitudes'} por asignar
+              </div>
+              <Pagination pagina={pagina} total={sinAsignarList.length} onChange={setPagina} posicion="arriba" />
+            </div>
             <div className="desktop-table">
               <table className="req-table">
                 <thead>
@@ -247,7 +275,7 @@ export default function AsignarTecnico() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sinAsignarList.map((r) => {
+                  {sinAsignarPagina.map((r) => {
                     const faltaClasificar = !r.areaId || !r.categoriaId;
                     return (
                       <tr key={r.codigo || r.id}>
@@ -265,6 +293,7 @@ export default function AsignarTecnico() {
                           {faltaClasificar ? (
                             <Button
                               variant="secondary"
+                              size="sm"
                               onClick={() => navigate(`/supervisor/solicitudes/${r.codigo || r.id}/clasificar`)}
                             >
                               Clasificar primero
@@ -272,6 +301,7 @@ export default function AsignarTecnico() {
                           ) : (
                             <Button
                               variant="primary"
+                              size="sm"
                               onClick={() => navigate(`/supervisor/solicitudes/${r.codigo || r.id}/asignar`)}
                             >
                               Asignar técnico
@@ -284,6 +314,8 @@ export default function AsignarTecnico() {
                 </tbody>
               </table>
             </div>
+            <Pagination pagina={pagina} total={sinAsignarList.length} onChange={setPagina} posicion="abajo" />
+            </>
           )}
         </section>
       </div>
@@ -294,19 +326,16 @@ export default function AsignarTecnico() {
   if (loading) {
     return (
       <div className="narrow-page">
-        <p className="muted-note">Cargando datos de la solicitud y técnicos…</p>
+        <SkeletonDetalle />
       </div>
     );
   }
 
-  if (errGeneral && !solicitud) {
+  if (errCarga && !solicitud) {
     return (
       <div className="narrow-page">
-        <div className="message error" role="alert">
-          <Icon name="alert" />
-          <div><strong>{errGeneral}</strong></div>
-        </div>
-        <Button onClick={() => navigate('/supervisor/solicitudes')}>Volver a solicitudes</Button>
+        <ErrorState message={errCarga} onRetry={cargar} />
+        <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>Volver a solicitudes</Button>
       </div>
     );
   }
@@ -341,7 +370,7 @@ export default function AsignarTecnico() {
           </small>
         </div>
 
-        <h2 style={{ marginTop: '12px', fontSize: '18px' }}>{solicitud?.titulo}</h2>
+        <h2 style={{ marginTop: '12px' }}>{solicitud?.titulo}</h2>
         <div className="info-grid" style={{ marginTop: '12px' }}>
           <div><small>Categoría</small><span>{solicitud?.categoria || '—'}</span></div>
           <div><small>Área técnica</small><span>{solicitud?.area || '—'}</span></div>
@@ -360,10 +389,14 @@ export default function AsignarTecnico() {
 
       {/* Pantalla de Éxito */}
       {successInfo && (
-        <div className="message success" role="status" style={{ marginBottom: '20px' }}>
-          <Icon name="check" />
+        <div
+          className={`message ${successInfo.aviso ? 'error' : 'success'}`}
+          role={successInfo.aviso ? 'alert' : 'status'}
+          style={{ marginBottom: '20px' }}
+        >
+          <Icon name={successInfo.aviso ? 'alert' : 'check'} />
           <div style={{ flex: 1 }}>
-            <strong>{successInfo.message}</strong>
+            <strong>{successInfo.aviso || successInfo.message}</strong>
             <p style={{ margin: '4px 0 0 0' }}>
               Estado actual: <strong>{successInfo.estado}</strong> · Responsable: <strong>{successInfo.tecnicoNombre}</strong>
             </p>
@@ -384,7 +417,7 @@ export default function AsignarTecnico() {
         <div className="message error" role="alert" style={{ padding: '20px' }}>
           <Icon name="alert" size={24} />
           <div>
-            <strong style={{ fontSize: '15px' }}>Asignación bloqueada (Regla de negocio RN-004)</strong>
+            <strong style={{ fontSize: '15px' }}>Asignación bloqueada</strong>
             <p style={{ margin: '6px 0 16px 0', lineHeight: 1.5 }}>
               Para poder asignar un técnico, la solicitud debe contar previamente con una <strong>categoría</strong> y un <strong>área responsable</strong> definidas.
             </p>
@@ -411,13 +444,14 @@ export default function AsignarTecnico() {
           </div>
 
           {loadingTecnicos ? (
-            <p className="muted-note">Cargando personal técnico y disponibilidad…</p>
+            <SkeletonFilas filas={3} columnas={2} />
           ) : tecnicos.length === 0 ? (
-            <div className="empty">
-              <Icon name="alert" size={24} />
-              <strong>No se encontraron técnicos activos en esta área</strong>
-              <p>Revisa la configuración de usuarios en el sistema.</p>
-            </div>
+            <EmptyState
+              icon="users"
+              title="No se encontraron técnicos activos en esta área"
+              text="Pide al administrador que revise los usuarios del área."
+              compact
+            />
           ) : (
             <div style={{ display: 'grid', gap: '10px', marginTop: '14px' }}>
               {tecnicos.map((t) => {
@@ -461,7 +495,7 @@ export default function AsignarTecnico() {
                         style={{
                           background: carga > 4 ? 'var(--peligro-fondo)' : '#EAECEB',
                           color: carga > 4 ? '#8B2C2C' : 'var(--carbon)',
-                          fontSize: '11px',
+                          fontSize: '13px',
                         }}
                       >
                         {carga} {carga === 1 ? 'orden activa' : 'órdenes activas'}

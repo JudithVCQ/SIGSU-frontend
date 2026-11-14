@@ -10,7 +10,9 @@ import { ROLES } from '../config/constants';
 import { getSolicitudesPorSolicitante } from '../services/solicitudes.js';
 import Badge from './Badge';
 import Icon from './Icon';
-import Button from './Button';
+import { SkeletonFilas } from './Skeleton';
+import EmptyState from './EmptyState';
+import ErrorState from './ErrorState';
 
 export default function SolicitudesSolicitantePanel({
   solicitanteId,
@@ -37,8 +39,8 @@ export default function SolicitudesSolicitantePanel({
     try {
       const data = await getSolicitudesPorSolicitante(solicitanteId, excluirSolicitudId);
       setSolicitudes(data ?? []);
-    } catch (err) {
-      setError(err?.message || 'No se pudieron cargar las solicitudes del solicitante.');
+    } catch {
+      setError('No pudimos cargar las otras solicitudes de este solicitante.');
     } finally {
       setLoading(false);
     }
@@ -75,31 +77,12 @@ export default function SolicitudesSolicitantePanel({
         )}
       </div>
 
-      {loading && (
-        <div className="duplicados-loading" role="status" aria-busy="true">
-          <span>Cargando otras solicitudes…</span>
-        </div>
-      )}
+      {loading && <SkeletonFilas filas={2} columnas={2} />}
 
-      {!loading && error && (
-        <div className="duplicados-error" role="alert">
-          <Icon name="alert" size={18} />
-          <span>{error}</span>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={cargarSolicitudes}
-            style={{ fontSize: '12px', padding: '4px 10px' }}
-          >
-            Reintentar
-          </Button>
-        </div>
-      )}
+      {!loading && error && <ErrorState message={error} onRetry={cargarSolicitudes} compact />}
 
       {!loading && !error && solicitudes.length === 0 && (
-        <div className="duplicados-empty">
-          <p className="duplicados-empty-text">Primera solicitud de este usuario</p>
-        </div>
+        <EmptyState title="Primera solicitud de este usuario" compact />
       )}
 
       {!loading && !error && solicitudes.length > 0 && (

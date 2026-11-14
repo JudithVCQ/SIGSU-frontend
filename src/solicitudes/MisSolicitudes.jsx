@@ -1,20 +1,34 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getSolicitudesMock } from '../mocks/solicitudes';
 import { getSolicitudes } from '../services/solicitudes.js';
 import { getCategorias, getPrioridades } from '../services/catalogos.js';
-import { ESTADOS } from '../config/constants';
+import { ESTADOS, ROLES } from '../config/constants';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
+import { SkeletonFilas } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
+import VistaRapidaChip from '../components/VistaRapidaChip';
+import { buscarVista } from '../routes/vistasRapidas';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export default function MisSolicitudes() {
   const navigate = useNavigate();
+  // Vista rápida (?vista=) elegida desde el sidebar
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vista = buscarVista(ROLES.SOLICITANTE, searchParams.get('vista'));
+  const quitarVista = () => setSearchParams((p) => {
+    const n = new URLSearchParams(p);
+    n.delete('vista');
+    return n;
+  });
 
   const [items,      setItems]      = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -28,12 +42,13 @@ export default function MisSolicitudes() {
   const [categoriaId,    setCategoriaId]    = useState('');
   const [prioridadId,    setPrioridadId]    = useState('');
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       setItems(getSolicitudesMock());
       return;
     }
     setLoading(true);
+    setError('');
     Promise.all([
       getSolicitudes(),
       getCategorias(),
@@ -44,15 +59,13 @@ export default function MisSolicitudes() {
         setCategorias(cats);
         setPrioridades(prios);
       })
-      .catch(err => setError(err.message ?? 'No se pudieron cargar las solicitudes.'))
+      .catch(() => setError('No pudimos cargar tus solicitudes. Revisa tu conexión e inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   }, []);
 
-  // Paginación cliente
-  const [page, setPage] = useState(0);
-  const PAGE_SIZE = 10;
+  useEffect(() => { cargar(); }, [cargar]);
 
-  const filtered = items.filter((r) => {
+  const filtered = items.filter((r) => (vista ? vista.filtro(r) : true)).filter((r) => {
     const matchEstado     = !estadoFilter || r.estado === estadoFilter;
     const matchCategoria  = !categoriaId
       || String(r.categoriaId) === categoriaId
@@ -65,8 +78,8 @@ export default function MisSolicitudes() {
     return matchEstado && matchCategoria && matchPrioridad && matchQuery;
   });
 
-  const totalPages  = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged       = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  // Paginación (10 por página); vuelve a la primera al cambiar la vista rápida
+  const { pagina: page, setPagina: setPage, items: paged } = usePaginacion(filtered, vista?.id ?? '');
 
   const clearFilters = () => {
     setQuery(''); setEstadoFilter(''); setCategoriaId(''); setPrioridadId(''); setPage(0);
@@ -134,26 +147,31 @@ export default function MisSolicitudes() {
           )}
         </div>
 
-        {error && (
-          <div className="message error" role="alert" style={{ marginBottom: '16px' }}>
-            <Icon name="alert" />
-            <div><strong>{error}</strong></div>
+        {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
+        <div className="tabla-encabezado">
+          <div className="results-label">
+            {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Más recientes primero
           </div>
-        )}
-
-        <div className="results-label">
-          {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Más recientes primero
+          <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="arriba" />
         </div>
 
         {loading ? (
-          <p className="muted-note">Cargando solicitudes…</p>
+          <SkeletonFilas filas={5} columnas={5} />
+        ) : error ? (
+          <ErrorState message={error} onRetry={cargar} />
+        ) : items.length === 0 ? (
+          <EmptyState
+            title="Aún no has registrado solicitudes"
+            text="Cuando registres una, podrás seguir su avance desde aquí."
+            action={<Button icon="plus" onClick={() => navigate('/solicitante/nueva')}>Nueva solicitud</Button>}
+          />
         ) : filtered.length === 0 ? (
-          <div className="empty">
-            <Icon name="search" size={28} />
-            <strong>No hay solicitudes con estos filtros</strong>
-            <p>Prueba con otra búsqueda o limpia los filtros.</p>
-            <Button variant="secondary" onClick={clearFilters}>Limpiar filtros</Button>
-          </div>
+          <EmptyState
+            icon="search"
+            title="No hay solicitudes con estos filtros"
+            text="Prueba con otra búsqueda o limpia los filtros."
+            action={<Button variant="secondary" onClick={clearFilters}>Limpiar filtros</Button>}
+          />
         ) : (
           <>
             <div className="desktop-table">
@@ -182,7 +200,7 @@ export default function MisSolicitudes() {
                       <td><Badge texto={r.prioridad || '—'} /></td>
                       <td>{r.fecha}</td>
                       <td className="act">
-                        <Button variant="secondary" onClick={() => navigate(`/solicitudes/${r.codigo}`)}>
+                        <Button variant="secondary" size="sm" onClick={() => navigate(`/solicitudes/${r.codigo}`)}>
                           Ver<span className="sr-only"> {r.codigo}</span>
                         </Button>
                       </td>
@@ -216,17 +234,7 @@ export default function MisSolicitudes() {
           </>
         )}
 
-        <div className="pagination">
-          <span>Mostrando {paged.length} de {filtered.length}</span>
-          <div>
-            <Button variant="secondary" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
-              Anterior
-            </Button>
-            <Button variant="secondary" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
-              Siguiente
-            </Button>
-          </div>
-        </div>
+        <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="abajo" />
       </section>
     </div>
   );

@@ -16,6 +16,10 @@ import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
+import { SkeletonFilas } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import ConfirmModal from '../components/ConfirmModal';
 import FormField from '../components/FormField';
 import FormSelect from '../components/FormSelect';
@@ -72,8 +76,8 @@ export default function GestionUsuarios() {
       setUsuarios(uList);
       if (Array.isArray(rList) && rList.length > 0) setRoles(rList);
       if (Array.isArray(aList)) setAreas(aList);
-    } catch (err) {
-      setErrLoad(getErrorMessage(err, 'No se pudo cargar la lista de usuarios.'));
+    } catch {
+      setErrLoad('No pudimos cargar los usuarios. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -137,6 +141,12 @@ export default function GestionUsuarios() {
       return true;
     });
   }, [usuarios, busqueda, filtroRol, filtroArea, filtroEstado]);
+
+  // Paginación (10 por página); vuelve a la primera al cambiar los filtros
+  const { pagina, setPagina, items: usuariosPagina } = usePaginacion(
+    usuariosFiltrados,
+    `${busqueda}|${filtroRol}|${filtroArea}|${filtroEstado}`,
+  );
 
   // Manejo de Desactivación con ConfirmModal
   const handleConfirmDeactivate = async () => {
@@ -220,19 +230,6 @@ export default function GestionUsuarios() {
         </div>
       )}
 
-      {/* Error de carga */}
-      {errLoad && (
-        <div className="message error" style={{ marginBottom: '20px' }} role="alert">
-          <Icon name="alert" />
-          <div style={{ flex: 1 }}>
-            <strong>{errLoad}</strong>
-            <div style={{ marginTop: '8px' }}>
-              <Button variant="secondary" onClick={cargarDatos}>Reintentar carga</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Panel principal de tabla y filtros */}
       <section className="panel table-panel">
         <div className="filters filters-admin">
@@ -282,30 +279,30 @@ export default function GestionUsuarios() {
           />
         </div>
 
-        <div className="results-label">
-          {loading
-            ? 'Cargando usuarios desde el servidor…'
-            : `Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios`}
-        </div>
-
-        {/* Estado de carga */}
-        {loading && (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-            <p>Conectando con el servidor…</p>
+        {!loading && !errLoad && (
+        <div className="tabla-encabezado">
+          <div className="results-label">
+            {`Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios`}
           </div>
+          <Pagination pagina={pagina} total={usuariosFiltrados.length} onChange={setPagina} posicion="arriba" />
+        </div>
         )}
 
+        {/* Estado de carga */}
+        {loading && <SkeletonFilas filas={5} columnas={6} />}
+
+        {/* Error de carga */}
+        {!loading && errLoad && <ErrorState message={errLoad} onRetry={cargarDatos} />}
+
         {/* Estado vacío */}
-        {!loading && usuariosFiltrados.length === 0 && (
-          <div className="empty">
-            <Icon name="users" size={36} />
-            <strong>No se encontraron usuarios</strong>
-            <p>
-              {busqueda || filtroRol || filtroArea || filtroEstado
-                ? 'Prueba ajustando los filtros de búsqueda.'
-                : 'Aún no hay usuarios registrados.'}
-            </p>
-            {(busqueda || filtroRol || filtroArea || filtroEstado) && (
+        {!loading && !errLoad && usuariosFiltrados.length === 0 && (
+          <EmptyState
+            icon="users"
+            title="No se encontraron usuarios"
+            text={busqueda || filtroRol || filtroArea || filtroEstado
+              ? 'Prueba ajustando los filtros de búsqueda.'
+              : 'Aún no hay usuarios registrados.'}
+            action={(busqueda || filtroRol || filtroArea || filtroEstado) ? (
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -317,12 +314,12 @@ export default function GestionUsuarios() {
               >
                 Limpiar filtros
               </Button>
-            )}
-          </div>
+            ) : undefined}
+          />
         )}
 
         {/* Tabla en escritorio (> 720px) */}
-        {!loading && usuariosFiltrados.length > 0 && (
+        {!loading && !errLoad && usuariosFiltrados.length > 0 && (
           <div className="desktop-table">
             <table>
               <thead>
@@ -336,7 +333,7 @@ export default function GestionUsuarios() {
                 </tr>
               </thead>
               <tbody>
-                {usuariosFiltrados.map((u) => {
+                {usuariosPagina.map((u) => {
                   const isCurrent = currentUser?.id === u.id;
                   const roleSlug = (u.rol || '').toLowerCase();
                   return (
@@ -372,7 +369,7 @@ export default function GestionUsuarios() {
                           <Button
                             variant="secondary"
                             icon="edit"
-                            style={{ padding: '5px 10px', fontSize: '12px' }}
+                            size="sm"
                             onClick={() => setEditingUser(u)}
                             title="Editar datos y rol"
                           >
@@ -381,7 +378,7 @@ export default function GestionUsuarios() {
                           {u.activo ? (
                             <Button
                               variant="danger"
-                              style={{ padding: '5px 10px', fontSize: '12px' }}
+                              size="sm"
                               onClick={() => setUserToDeactivate(u)}
                               disabled={isCurrent}
                               title={isCurrent ? 'No puedes desactivar tu propia cuenta' : 'Desactivar acceso'}
@@ -391,7 +388,7 @@ export default function GestionUsuarios() {
                           ) : (
                             <Button
                               variant="secondary"
-                              style={{ padding: '5px 10px', fontSize: '12px', color: 'var(--verde)' }}
+                              size="sm"
                               onClick={() => handleActivar(u)}
                               title="Reactivar acceso al sistema"
                             >
@@ -409,9 +406,9 @@ export default function GestionUsuarios() {
         )}
 
         {/* Tarjetas en mobile (<= 720px) */}
-        {!loading && usuariosFiltrados.length > 0 && (
+        {!loading && !errLoad && usuariosFiltrados.length > 0 && (
           <div className="mobile-cards">
-            {usuariosFiltrados.map((u) => {
+            {usuariosPagina.map((u) => {
               const isCurrent = currentUser?.id === u.id;
               const roleSlug = (u.rol || '').toLowerCase();
               return (
@@ -477,6 +474,10 @@ export default function GestionUsuarios() {
               );
             })}
           </div>
+        )}
+
+        {!loading && !errLoad && (
+          <Pagination pagina={pagina} total={usuariosFiltrados.length} onChange={setPagina} posicion="abajo" />
         )}
       </section>
 
@@ -553,7 +554,7 @@ export default function GestionUsuarios() {
       <ConfirmModal
         isOpen={Boolean(userToDeactivate)}
         title={`¿Desactivar a ${userToDeactivate?.nombre}?`}
-        message="Desactivar no borra el historial. El usuario perderá acceso al sistema pero sus solicitudes, comentarios y atenciones históricas se conservarán intactas (RN-009)."
+        message="Desactivar no borra el historial. El usuario perderá acceso al sistema pero sus solicitudes, comentarios y atenciones históricas se conservarán intactas."
         confirmText="Desactivar usuario"
         cancelText="Cancelar"
         isDestructive={true}
@@ -721,14 +722,17 @@ function CreateUserModal({ roles, areas, onClose, onSuccess, onAreaAssignFailed 
         value={correo}
         onChange={setCorreo}
         placeholder="usuario@universidad.edu"
+        autoComplete="off"
         required
         error={getErr('correo')}
       />
 
+      {/* new-password: evita que Chrome autollene la contraseña de la sesión actual */}
       <PasswordField
         label="Contraseña"
         value={contrasena}
         onChange={setContrasena}
+        autoComplete="new-password"
         required
         hint="Debe tener al menos 8 caracteres."
         error={getErr('contrasena')}
@@ -752,7 +756,7 @@ function CreateUserModal({ roles, areas, onClose, onSuccess, onAreaAssignFailed 
           value={areaId}
           onChange={setAreaId}
           required={esTecnico}
-          placeholder={esTecnico ? 'Selecciona el área (obligatoria)' : 'Sin área asignada'}
+          placeholder={esTecnico ? 'Selecciona el área' : 'Sin área asignada'}
           options={areas.map((a) => ({ value: String(a.id), label: a.nombre }))}
           error={getErr('areaId')}
         />
@@ -822,11 +826,7 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
     };
 
     // Si cambió el rol, se solicita confirmación con ConfirmModal
-    if (rol !== user.rol) {
-      if (isSelf) {
-        setErrorMsg('No puedes cambiar tu propio rol de administrador.');
-        return;
-      }
+    if (rol !== user.rol && !isSelf) {
       onConfirmRoleChange({
         user,
         newRol: rol,
@@ -913,7 +913,8 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
           onChange={setRol}
           required
           options={roles.map((r) => ({ value: r, label: ROLE_LABEL[r] || r }))}
-          error={isSelf ? 'No puedes cambiar tu propio rol' : ''}
+          disabled={isSelf}
+          nota={isSelf ? 'No puedes cambiar tu propio rol de administrador.' : undefined}
         />
 
         <FormSelect
@@ -937,7 +938,7 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
         />
         <div>
           <strong>Usuario activo</strong>
-          <span style={{ display: 'block', fontSize: '11px', color: 'var(--muted)' }}>
+          <span style={{ display: 'block', fontSize: '13px', color: 'var(--muted)' }}>
             {isSelf
               ? 'No puedes desactivar tu propia cuenta de administrador.'
               : activo
@@ -947,7 +948,7 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
         </div>
       </label>
 
-      <p className="hint-text" style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'var(--muted)' }}>
+      <p className="hint-text" style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
         La contraseña no se puede modificar desde aquí.
       </p>
     </FormModal>

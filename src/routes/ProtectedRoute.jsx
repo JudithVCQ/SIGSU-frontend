@@ -1,24 +1,16 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ROLE_HOME } from '../config/constants';
+import { ForbiddenPage } from './PaginasError';
+import ServidorIniciando from '../components/ServidorIniciando';
 
 // La autorización real vive en el backend; esto solo evita mostrar vistas ajenas al rol (RNF-006).
 export default function ProtectedRoute({ roles }) {
-  const { user, loading } = useAuth();
+  const { user, loading, descartarSesion } = useAuth();
 
-  // Mientras se valida el token contra /api/auth/perfil, no redirigir todavía
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', color: 'var(--muted)', fontSize: '14px',
-      }}>
-        Verificando sesión…
-      </div>
-    );
-  }
+  // Hay un token vigente pero aún no sabemos quién es: el servidor puede estar iniciándose
+  if (loading) return <ServidorIniciando onIrAlLogin={descartarSesion} />;
 
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.rol)) return <Navigate to={ROLE_HOME[user.rol]} replace />;
+  if (roles && !roles.includes(user.rol)) return <ForbiddenPage />;
   return <Outlet />;
 }

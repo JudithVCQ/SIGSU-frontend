@@ -57,7 +57,7 @@ describe('CalificacionServicio', () => {
       .mockResolvedValueOnce({ puntaje: 3, comentario: '', creadoEn: null });
 
     render(<CalificacionServicio solicitud={calificada} />);
-    expect(await screen.findByText('Falla de red')).toBeInTheDocument();
+    expect(await screen.findByText('No pudimos cargar la calificación. Inténtalo de nuevo.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     await waitFor(() => expect(screen.getByRole('img', { name: '3 de 5' })).toBeInTheDocument());

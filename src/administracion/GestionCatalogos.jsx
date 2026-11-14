@@ -15,11 +15,14 @@ import {
   getEstados,
 } from '../services/catalogos.js';
 import { ESTADO_API_TO_UI } from '../services/mappers.js';
-import { getErrorMessage } from '../services/apiClient.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
+import { SkeletonFilas } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import ConfirmModal from '../components/ConfirmModal';
 import FormField from '../components/FormField';
 import FormModal from '../components/FormModal';
@@ -93,8 +96,8 @@ export default function GestionCatalogos() {
       setAreas(ars);
       setPrioridades(prios);
       setEstados(Array.isArray(ests) ? ests : []);
-    } catch (err) {
-      setErrLoad(getErrorMessage(err, 'No se pudieron cargar los catálogos.'));
+    } catch {
+      setErrLoad('No pudimos cargar los catálogos. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -141,6 +144,9 @@ export default function GestionCatalogos() {
       return c.includes(q) || n.includes(q) || idStr.includes(q);
     });
   }, [activeTab, categorias, areas, prioridades, estados, busqueda]);
+
+  // Paginación (10 por página); vuelve a la primera al cambiar de pestaña o buscar
+  const { pagina, setPagina, items: itemsPagina } = usePaginacion(itemsFiltrados, `${activeTab}|${busqueda}`);
 
   // Manejo de desactivación con ConfirmModal (RN-009)
   const handleConfirmDeactivate = async () => {
@@ -236,19 +242,6 @@ export default function GestionCatalogos() {
         </div>
       )}
 
-      {/* Error de carga */}
-      {errLoad && (
-        <div className="message error" style={{ marginBottom: '20px' }} role="alert">
-          <Icon name="alert" />
-          <div style={{ flex: 1 }}>
-            <strong>{errLoad}</strong>
-            <div style={{ marginTop: '8px' }}>
-              <Button variant="secondary" onClick={cargarCatalogos}>Reintentar carga</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Barra de pestañas */}
       <nav className="catalog-tabs" aria-label="Pestañas de catálogos">
         <button
@@ -299,7 +292,7 @@ export default function GestionCatalogos() {
           <Icon name="check" size={18} />
           <div>
             <strong>Solo se muestran los elementos activos.</strong>
-            <span> Desactivar no borra el historial (RN-009). Los elementos desactivados se excluyen de futuras operaciones.</span>
+            <span> Desactivar no borra el historial. Los elementos desactivados se excluyen de futuras operaciones.</span>
           </div>
         </div>
       )}
@@ -319,39 +312,39 @@ export default function GestionCatalogos() {
           </label>
         </div>
 
-        <div className="results-label">
-          {loading
-            ? 'Cargando datos desde el servidor…'
-            : `Mostrando ${itemsFiltrados.length} elementos en ${currentTabCfg.label}`}
-        </div>
-
-        {/* Estado de carga */}
-        {loading && (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-            <p>Conectando con el servidor…</p>
+        {!loading && !errLoad && (
+        <div className="tabla-encabezado">
+          <div className="results-label">
+            {`Mostrando ${itemsFiltrados.length} elementos en ${currentTabCfg.label}`}
           </div>
+          <Pagination pagina={pagina} total={itemsFiltrados.length} onChange={setPagina} posicion="arriba" />
+        </div>
         )}
 
+        {/* Estado de carga */}
+        {loading && <SkeletonFilas filas={5} columnas={5} />}
+
+        {/* Error de carga */}
+        {!loading && errLoad && <ErrorState message={errLoad} onRetry={cargarCatalogos} />}
+
         {/* Estado vacío */}
-        {!loading && itemsFiltrados.length === 0 && (
-          <div className="empty">
-            <Icon name="layers" size={36} />
-            <strong>No se encontraron registros</strong>
-            <p>
-              {busqueda
-                ? 'Prueba con otro término de búsqueda.'
-                : `No hay ${currentTabCfg.label.toLowerCase()} activas registradas.`}
-            </p>
-            {busqueda && (
+        {!loading && !errLoad && itemsFiltrados.length === 0 && (
+          <EmptyState
+            icon="layers"
+            title="No se encontraron registros"
+            text={busqueda
+              ? 'Prueba con otro término de búsqueda.'
+              : `No hay ${currentTabCfg.label.toLowerCase()} activas registradas.`}
+            action={busqueda ? (
               <Button variant="secondary" onClick={() => setBusqueda('')}>
                 Limpiar búsqueda
               </Button>
-            )}
-          </div>
+            ) : undefined}
+          />
         )}
 
         {/* Tabla en escritorio (> 720px) */}
-        {!loading && itemsFiltrados.length > 0 && (
+        {!loading && !errLoad && itemsFiltrados.length > 0 && (
           <div className="desktop-table">
             <table>
               <thead>
@@ -377,12 +370,12 @@ export default function GestionCatalogos() {
               </thead>
               <tbody>
                 {isReadOnlyTab
-                  ? itemsFiltrados.map((code) => {
+                  ? itemsPagina.map((code) => {
                       const uiText = ESTADO_API_TO_UI[code] || code;
                       return (
                         <tr key={code}>
                           <td>
-                            <code style={{ fontSize: '11px', fontWeight: 600, color: 'var(--verde)' }}>
+                            <code style={{ fontSize: '13px', fontWeight: 600, color: 'var(--verde)' }}>
                               {code}
                             </code>
                           </td>
@@ -398,11 +391,11 @@ export default function GestionCatalogos() {
                         </tr>
                       );
                     })
-                  : itemsFiltrados.map((item) => (
+                  : itemsPagina.map((item) => (
                       <tr key={item.id}>
                         <td style={{ color: 'var(--muted)' }}>#{item.id}</td>
                         <td>
-                          <code style={{ fontSize: '11px', fontWeight: 600, color: 'var(--verde)' }}>
+                          <code style={{ fontSize: '13px', fontWeight: 600, color: 'var(--verde)' }}>
                             {item.codigo}
                           </code>
                         </td>
@@ -424,7 +417,7 @@ export default function GestionCatalogos() {
                             <Button
                               variant="secondary"
                               icon="edit"
-                              style={{ padding: '5px 10px', fontSize: '12px' }}
+                              size="sm"
                               onClick={() => setEditingItem({ item, type: activeTab })}
                               title={`Editar ${currentTabCfg.singular}`}
                             >
@@ -432,7 +425,7 @@ export default function GestionCatalogos() {
                             </Button>
                             <Button
                               variant="danger"
-                              style={{ padding: '5px 10px', fontSize: '12px' }}
+                              size="sm"
                               onClick={() => setItemToDeactivate({ item, type: activeTab })}
                               title={`Desactivar ${currentTabCfg.singular}`}
                             >
@@ -448,17 +441,17 @@ export default function GestionCatalogos() {
         )}
 
         {/* Tarjetas en mobile (<= 720px) */}
-        {!loading && itemsFiltrados.length > 0 && (
+        {!loading && !errLoad && itemsFiltrados.length > 0 && (
           <div className="mobile-cards">
             {isReadOnlyTab
-              ? itemsFiltrados.map((code) => {
+              ? itemsPagina.map((code) => {
                   const uiText = ESTADO_API_TO_UI[code] || code;
                   return (
                     <article className="catalog-card" key={code}>
                       <div className="catalog-card-head">
                         <div>
                           <h4>{uiText}</h4>
-                          <code style={{ fontSize: '11px', color: 'var(--verde)' }}>{code}</code>
+                          <code style={{ fontSize: '13px', color: 'var(--verde)' }}>{code}</code>
                         </div>
                         <Badge texto={uiText} />
                       </div>
@@ -468,12 +461,12 @@ export default function GestionCatalogos() {
                     </article>
                   );
                 })
-              : itemsFiltrados.map((item) => (
+              : itemsPagina.map((item) => (
                   <article className="catalog-card" key={item.id}>
                     <div className="catalog-card-head">
                       <div>
                         <h4>{item.nombre}</h4>
-                        <code style={{ fontSize: '11px', color: 'var(--verde)' }}>{item.codigo}</code>
+                        <code style={{ fontSize: '13px', color: 'var(--verde)' }}>{item.codigo}</code>
                       </div>
                       <Badge texto={item.activo ? 'Activo' : 'Inactivo'} />
                     </div>
@@ -511,6 +504,10 @@ export default function GestionCatalogos() {
                   </article>
                 ))}
           </div>
+        )}
+
+        {!loading && !errLoad && (
+          <Pagination pagina={pagina} total={itemsFiltrados.length} onChange={setPagina} posicion="abajo" />
         )}
       </section>
 
@@ -552,7 +549,7 @@ export default function GestionCatalogos() {
         title={`¿Desactivar ${
           itemToDeactivate ? TAB_CONFIG[itemToDeactivate.type].singular : ''
         } "${itemToDeactivate?.item?.nombre}"?`}
-        message="Desactivar no borra el historial (RN-009). Al desactivarlo, dejará de estar disponible para nuevas solicitudes pero se conservará en los registros históricos."
+        message="Desactivar no borra el historial. Al desactivarlo, dejará de estar disponible para nuevas solicitudes pero se conservará en los registros históricos."
         confirmText="Desactivar elemento"
         cancelText="Cancelar"
         isDestructive={true}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getSolicitudesMock } from '../mocks/solicitudes';
@@ -8,6 +8,9 @@ import Button from '../components/Button';
 import KpiCard from '../components/KpiCard';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import { SkeletonFilas, SkeletonKpis } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -22,13 +25,17 @@ export default function SolicitanteDashboard() {
 
   const firstName = user?.nombre ? user.nombre.split(' ')[0] : 'Usuario';
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) { setItems(getSolicitudesMock()); return; }
+    setLoading(true);
+    setError('');
     getSolicitudes()
       .then(setItems)
-      .catch(err => setError(err.message ?? 'No se pudieron cargar las solicitudes.'))
+      .catch(() => setError('No pudimos cargar tus solicitudes. Revisa tu conexión e inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Con backend: REGISTRADA + EN_EVALUACION = "pendientes sin asignar aún"
   const pendientes = items.filter(r => {
@@ -62,18 +69,15 @@ export default function SolicitanteDashboard() {
         </Button>
       </section>
 
-      {error && (
-        <div className="message error" role="alert" style={{ marginBottom: '24px' }}>
-          <Icon name="alert" />
-          <div><strong>{error}</strong></div>
+      {loading ? (
+        <SkeletonKpis cantidad={3} />
+      ) : !error && (
+        <div className="kpi-grid">
+          <KpiCard icon="clock"  number={String(pendientes)} label="Pendientes"  change="Esperando clasificación o asignación" />
+          <KpiCard icon="layers" number={String(enAtencion)} label="En atención" change="Un responsable trabaja en ellas" tone="dark" />
+          <KpiCard icon="check"  number={String(resueltas)}  label="Resueltas"   change="Últimos 30 días" tone="gold" />
         </div>
       )}
-
-      <div className="kpi-grid">
-        <KpiCard icon="clock"  number={String(pendientes)} label="Pendientes"  change="Esperando clasificación o asignación" />
-        <KpiCard icon="layers" number={String(enAtencion)} label="En atención" change="Un responsable trabaja en ellas" tone="dark" />
-        <KpiCard icon="check"  number={String(resueltas)}  label="Resueltas"   change="Últimos 30 días" tone="gold" />
-      </div>
 
       <section className="panel recent-panel">
         <div className="panel-head">
@@ -87,7 +91,15 @@ export default function SolicitanteDashboard() {
         </div>
 
         {loading ? (
-          <p className="muted-note">Cargando solicitudes…</p>
+          <SkeletonFilas filas={3} columnas={3} />
+        ) : error ? (
+          <ErrorState message={error} onRetry={cargar} compact />
+        ) : items.length === 0 ? (
+          <EmptyState
+            title="No tienes solicitudes aún"
+            text="Registra tu primera solicitud con el botón de arriba."
+            compact
+          />
         ) : (
           <div>
             {items.slice(0, 4).map((r) => (
@@ -109,13 +121,6 @@ export default function SolicitanteDashboard() {
                 <Icon name="chevron" size={18} />
               </button>
             ))}
-            {items.length === 0 && !loading && (
-              <div className="empty">
-                <Icon name="file" size={28} />
-                <strong>No tienes solicitudes aún</strong>
-                <p>Registra tu primera solicitud con el botón de arriba.</p>
-              </div>
-            )}
           </div>
         )}
       </section>

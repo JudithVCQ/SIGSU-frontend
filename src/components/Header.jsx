@@ -1,64 +1,37 @@
-import { useLocation } from 'react-router-dom';
-import { ROLE_LABEL } from '../config/constants';
-import Icon from './Icon';
+/**
+ * Header.jsx — Barra superior: muestra la ruta de navegación de la página actual.
+ * El usuario y cerrar sesión están en el sidebar.
+ */
+import { Fragment } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { migasDePan } from '../routes/migas';
 
-const TITLES = {
-  '/solicitante': 'Inicio',
-  '/solicitante/solicitudes': 'Mis solicitudes',
-  '/solicitante/nueva': 'Registrar solicitud',
-  '/supervisor': 'Panel general',
-  '/supervisor/solicitudes': 'Solicitudes',
-  '/supervisor/asignacion': 'Asignación de técnicos',
-  '/tecnico': 'Mis asignaciones',
-  '/admin/usuarios': 'Gestión de usuarios',
-  '/admin/catalogos': 'Gestión de catálogos',
-};
-
-export default function Header({ user, logout }) {
-  const location = useLocation();
-  const initials = (user?.nombre || '')
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'U';
-
-  const isStaff = user?.rol !== 'SOLICITANTE';
-  const title =
-    TITLES[location.pathname] ||
-    (location.pathname.startsWith('/solicitudes/') ? 'Detalle de solicitud' : 'SIGSU');
+export default function Header({ rol }) {
+  const { pathname, search } = useLocation();
+  const migas = migasDePan(pathname, search, rol);
 
   return (
     <header className="topbar">
-      <div className="top-title">{title}</div>
-      <div className="top-actions">
-        <button
-          type="button"
-          className="icon-button notification"
-          aria-label="Notificaciones"
-          title="Notificaciones"
-        >
-          <Icon name="bell" />
-          <span />
-        </button>
-        <div className="top-profile">
-          <div className={`avatar small ${isStaff ? 'staff' : ''}`}>{initials}</div>
-          <div>
-            <strong>{user?.nombre || 'Usuario'}</strong>
-            <small>{ROLE_LABEL[user?.rol] || user?.rol}</small>
-          </div>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Cerrar sesión"
-            title="Cerrar sesión"
-            onClick={logout}
-            style={{ width: '32px', height: '32px' }}
-          >
-            <Icon name="logout" size={16} />
-          </button>
-        </div>
-      </div>
+      <nav aria-label="Ruta de navegación" className="migas">
+        <ol>
+          {migas.map((m, i) => {
+            const ultima = i === migas.length - 1;
+            const clase = `migas-item${m.codigo ? ' migas-codigo' : ''}`;
+            return (
+              <Fragment key={`${i}-${m.label}`}>
+                {i > 0 && <li className="migas-sep" aria-hidden="true">›</li>}
+                <li className={clase}>
+                  {ultima || !m.to ? (
+                    <span aria-current={ultima ? 'page' : undefined}>{m.label}</span>
+                  ) : (
+                    <Link to={m.to}>{m.label}</Link>
+                  )}
+                </li>
+              </Fragment>
+            );
+          })}
+        </ol>
+      </nav>
     </header>
   );
 }

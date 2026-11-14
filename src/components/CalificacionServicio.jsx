@@ -11,6 +11,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Button from './Button';
 import Icon from './Icon';
+import { SkeletonFilas } from './Skeleton';
+import ErrorState from './ErrorState';
 import { CALIFICACION } from '../config/constants';
 import {
   calificacionDisponible,
@@ -53,8 +55,8 @@ export default function CalificacionServicio({ solicitud, puedeCalificar = false
     setError('');
     try {
       setCalificacion(await getCalificacion(solicitud));
-    } catch (err) {
-      setError(err?.message || 'No se pudo cargar la calificación.');
+    } catch {
+      setError('No pudimos cargar la calificación. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -87,16 +89,9 @@ export default function CalificacionServicio({ solicitud, puedeCalificar = false
 
   let contenido;
   if (loading) {
-    contenido = <p className="muted-note" role="status">Cargando calificación…</p>;
+    contenido = <SkeletonFilas filas={2} columnas={2} />;
   } else if (error) {
-    contenido = (
-      <div>
-        <div className="message error" role="alert">
-          <Icon name="alert" /><div><strong>{error}</strong></div>
-        </div>
-        <Button variant="secondary" onClick={cargar}>Reintentar</Button>
-      </div>
-    );
+    contenido = <ErrorState message={error} onRetry={cargar} compact />;
   } else if (calificacion) {
     contenido = (
       <div className="calificacion-lectura">

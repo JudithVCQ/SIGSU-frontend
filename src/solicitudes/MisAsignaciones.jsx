@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ESTADOS } from '../config/constants';
+import { ESTADOS, ROLES } from '../config/constants';
 import { getSolicitudesMock } from '../mocks/solicitudes';
 import { getSolicitudes } from '../services/solicitudes.js';
 import PageHead from '../components/PageHead';
@@ -11,12 +11,26 @@ import FormSelect from '../components/FormSelect';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
+import { SkeletonFilas, SkeletonKpis } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
+import VistaRapidaChip from '../components/VistaRapidaChip';
+import { buscarVista } from '../routes/vistasRapidas';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export default function MisAsignaciones() {
   const navigate = useNavigate();
+  // Vista rápida (?vista=) elegida desde el sidebar
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vista = buscarVista(ROLES.TECNICO, searchParams.get('vista'));
+  const quitarVista = () => setSearchParams((p) => {
+    const n = new URLSearchParams(p);
+    n.delete('vista');
+    return n;
+  });
   const { user } = useAuth();
 
   const [misAsignaciones, setMisAsignaciones] = useState([]);
@@ -27,7 +41,7 @@ export default function MisAsignaciones() {
   const [estadoFilter, setEstadoFilter] = useState('');
   const [prioridadFilter, setPrioridadFilter] = useState('');
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       const all = getSolicitudesMock();
       // En mocks filtramos por nombre (compatibilidad)
@@ -37,23 +51,32 @@ export default function MisAsignaciones() {
     if (!user?.id) return;
     // En modo real: parámetro responsableId es el ID numérico del técnico
     setLoading(true);
+    setError('');
     getSolicitudes({ responsableId: user.id })
       .then(setMisAsignaciones)
-      .catch(err => setError(err.message ?? 'No se pudieron cargar las asignaciones.'))
+      .catch(() => setError('No pudimos cargar tus asignaciones. Revisa tu conexión e inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   }, [user?.id, user?.nombre]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   const asignadasCount = misAsignaciones.filter(r => r.estadoApi === 'ASIGNADA' || r.estado === 'Asignada').length;
   const enAtencionCount = misAsignaciones.filter(r => r.estadoApi === 'EN_ATENCION' || r.estado === 'En atención').length;
   const resueltasCount = misAsignaciones.filter(r => r.estadoApi === 'RESUELTA' || r.estado === 'Resuelta').length;
 
-  const filtered = misAsignaciones.filter((r) => {
+  const filtered = misAsignaciones.filter((r) => (vista ? vista.filtro(r) : true)).filter((r) => {
     const matchEstado = !estadoFilter || r.estado === estadoFilter;
     const matchPrioridad = !prioridadFilter || r.prioridad === prioridadFilter;
     const target = `${r.codigo} ${r.titulo} ${r.categoria} ${r.ubicacion || ''}`.toLowerCase();
     const matchQuery = !query.trim() || target.includes(query.trim().toLowerCase());
     return matchEstado && matchPrioridad && matchQuery;
   });
+
+  // Paginación (10 por página); vuelve a la primera al cambiar vista o filtros
+  const { pagina: page, setPagina: setPage, items: paged } = usePaginacion(
+    filtered,
+    `${vista?.id ?? ''}|${query}|${estadoFilter}|${prioridadFilter}`,
+  );
 
   const getActionLabel = (r) => {
     const e = r.estadoApi ?? r.estado;
@@ -75,11 +98,15 @@ export default function MisAsignaciones() {
         text="Gestiona tus órdenes de trabajo asignadas, registra avances y soluciones técnicas."
       />
 
-      <div className="kpi-grid">
-        <KpiCard icon="clock" number={String(asignadasCount)} label="Asignadas" change="Pendientes de iniciar" />
-        <KpiCard icon="layers" number={String(enAtencionCount)} label="En atención" change="Trabajos en curso" tone="dark" />
-        <KpiCard icon="check" number={String(resueltasCount)} label="Resueltas" change="Completadas recientemente" tone="gold" />
-      </div>
+      {loading ? (
+        <SkeletonKpis cantidad={3} />
+      ) : (
+        <div className="kpi-grid">
+          <KpiCard icon="clock" number={String(asignadasCount)} label="Asignadas" change="Pendientes de iniciar" />
+          <KpiCard icon="layers" number={String(enAtencionCount)} label="En atención" change="Trabajos en curso" tone="dark" />
+          <KpiCard icon="check" number={String(resueltasCount)} label="Resueltas" change="Completadas recientemente" tone="gold" />
+        </div>
+      )}
 
       <section className="panel table-panel" style={{ marginTop: '24px' }}>
         <div className="filters filters-3">
@@ -96,32 +123,35 @@ export default function MisAsignaciones() {
           <FormSelect label="Prioridad" value={prioridadFilter} onChange={setPrioridadFilter} options={['Alta', 'Media', 'Baja']} placeholder="Todas las prioridades" />
         </div>
 
-        {error && (
-          <div className="message error" role="alert" style={{ marginBottom: '16px' }}>
-            <Icon name="alert" /><div><strong>{error}</strong></div>
+        {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
+        <div className="tabla-encabezado">
+          <div className="results-label">
+            {filtered.length} {filtered.length === 1 ? 'asignación' : 'asignaciones'} · Ordenadas por prioridad y fecha
           </div>
-        )}
-
-        <div className="results-label">
-          {filtered.length} {filtered.length === 1 ? 'asignación' : 'asignaciones'} · Ordenadas por prioridad y fecha
+          <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="arriba" />
         </div>
 
         {loading ? (
-          <p className="muted-note">Cargando asignaciones…</p>
+          <SkeletonFilas filas={5} columnas={6} />
+        ) : error ? (
+          <ErrorState message={error} onRetry={cargar} />
         ) : misAsignaciones.length === 0 ? (
-          <div className="empty">
-            <Icon name="check" size={28} />
-            <strong>No tienes solicitudes asignadas</strong>
-            <p>Cuando el supervisor derive una solicitud a tu nombre, aparecerá aquí.</p>
-          </div>
+          <EmptyState
+            icon="check"
+            title="No tienes solicitudes asignadas"
+            text="Cuando el supervisor derive una solicitud a tu nombre, aparecerá aquí."
+          />
         ) : filtered.length === 0 ? (
-          <div className="empty">
-            <Icon name="search" size={28} />
-            <strong>No hay asignaciones con estos filtros</strong>
-            <Button variant="secondary" onClick={() => { setQuery(''); setEstadoFilter(''); setPrioridadFilter(''); }}>
-              Limpiar filtros
-            </Button>
-          </div>
+          <EmptyState
+            icon="search"
+            title="No hay asignaciones con estos filtros"
+            text="Prueba con otra búsqueda o limpia los filtros."
+            action={
+              <Button variant="secondary" onClick={() => { setQuery(''); setEstadoFilter(''); setPrioridadFilter(''); }}>
+                Limpiar filtros
+              </Button>
+            }
+          />
         ) : (
           <>
             <div className="desktop-table">
@@ -134,10 +164,10 @@ export default function MisAsignaciones() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r) => (
+                  {paged.map((r) => (
                     <tr key={r.codigo || r.id}>
                       <td>
-                        <button type="button" className="request-link" onClick={() => navigate(`/solicitudes/${r.codigo}`)}>
+                        <button type="button" className="request-link" onClick={() => navigate(`/tecnico/atencion/${r.codigo}`)}>
                           <strong>{r.codigo}</strong><span>{r.titulo}</span>
                         </button>
                       </td>
@@ -149,6 +179,7 @@ export default function MisAsignaciones() {
                       <td className="act">
                         <Button
                           variant={isPrimaryAction(r) ? 'primary' : 'secondary'}
+                          size="sm"
                           onClick={() => navigate(`/tecnico/atencion/${r.codigo}`)}
                         >
                           {getActionLabel(r)}
@@ -161,7 +192,7 @@ export default function MisAsignaciones() {
             </div>
 
             <div className="mobile-cards">
-              {filtered.map((r) => (
+              {paged.map((r) => (
                 <article className="request-card" key={r.codigo || r.id}>
                   <div className="request-card-head">
                     <div><strong>{r.codigo}</strong><span>{r.fecha}</span></div>
@@ -186,9 +217,7 @@ export default function MisAsignaciones() {
           </>
         )}
 
-        <div className="pagination">
-          <span>Mostrando {filtered.length} de {misAsignaciones.length} asignaciones</span>
-        </div>
+        <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="abajo" />
       </section>
     </div>
   );

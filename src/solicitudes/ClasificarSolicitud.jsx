@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ROLES, VIGENCIA } from '../config/constants';
 import { aFechaInput, fechaInputAIso } from '../config/vigencia';
@@ -7,50 +7,53 @@ import { getSolicitudByCodigo as getMock, SOLICITUDES_MOCK } from '../mocks/soli
 import {
   getSolicitudAny,
   clasificarSolicitud,
+  cambiarEstado,
 } from '../services/solicitudes.js';
+import { mensajeBackend } from './mensajeBackend';
 import { getCategorias, getPrioridades, getAreas } from '../services/catalogos.js';
-import { getErrorMessage } from '../services/apiClient.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import { SkeletonDetalle } from '../components/Skeleton';
+import ErrorState from '../components/ErrorState';
 import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export default function ClasificarSolicitud() {
-  const { id }     = useParams();
-  const navigate   = useNavigate();
-  const { user }   = useAuth();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const esSupervisorOAdmin = user?.rol === ROLES.SUPERVISOR || user?.rol === ROLES.ADMIN;
 
-  const [solicitud,   setSolicitud]   = useState(null);
-  const [categorias,  setCategorias]  = useState([]);
+  const [solicitud, setSolicitud] = useState(null);
+  const [categorias, setCategorias] = useState([]);
   const [prioridades, setPrioridades] = useState([]);
-  const [areas,       setAreas]       = useState([]);
+  const [areas, setAreas] = useState([]);
 
   const [categoriaId, setCategoriaId] = useState('');
   const [prioridadId, setPrioridadId] = useState('');
-  const [areaId,      setAreaId]      = useState('');
+  const [areaId, setAreaId] = useState('');
   const [fechaLimite, setFechaLimite] = useState('');
 
-  const [loading,     setLoading]     = useState(true);
-  const [submitting,  setSubmitting]  = useState(false);
-  const [errLoad,     setErrLoad]     = useState('');
-  const [errSubmit,   setErrSubmit]   = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [errLoad, setErrLoad] = useState('');
+  const [errSubmit, setErrSubmit] = useState('');
   const [successInfo, setSuccessInfo] = useState(null); // { message, estado, estadoApi }
-  const [tried,       setTried]       = useState(false);
+  const [tried, setTried] = useState(false);
 
   // Carga inicial de solicitud y catálogos
-  useEffect(() => {
+  const cargar = useCallback(() => {
     setLoading(true);
     setErrLoad('');
 
     if (USE_MOCKS) {
       const s = getMock(id);
       if (!s) {
-        setErrLoad('No se encontró la solicitud.');
+        setErrLoad('No encontramos la solicitud que buscas.');
         setLoading(false);
         return;
       }
@@ -147,11 +150,13 @@ export default function ClasificarSolicitud() {
           setFechaLimite(aFechaInput(fechaBase));
         }
       })
-      .catch((err) => {
-        setErrLoad(getErrorMessage(err, 'No se pudo cargar la información para clasificar.'));
+      .catch(() => {
+        setErrLoad('No pudimos cargar la información para clasificar. Revisa tu conexión e inténtalo de nuevo.');
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Actualizar fecha límite sugerida al cambiar la prioridad
   const handlePrioridadChange = (val) => {
@@ -170,7 +175,7 @@ export default function ClasificarSolicitud() {
   const errors = {
     categoriaId: !categoriaId ? 'Selecciona una categoría' : '',
     prioridadId: !prioridadId ? 'Selecciona una prioridad' : '',
-    areaId:      !areaId      ? 'Selecciona el área responsable' : '',
+    areaId: !areaId ? 'Selecciona el área responsable' : '',
   };
   const hasErrors = Object.values(errors).some(Boolean);
   const getFieldError = (k) => (tried ? errors[k] : '');
@@ -253,19 +258,35 @@ export default function ClasificarSolicitud() {
       await clasificarSolicitud(solicitud.id, {
         categoriaId: Number(categoriaId),
         prioridadId: Number(prioridadId),
-        areaId:      Number(areaId),
+        areaId: Number(areaId),
         fechaLimite: fechaIso,
       });
 
-      // 2. Volver a pedir la solicitud (GET) y mostrar el estado devuelto por el backend
-      // NO llamamos a PUT /estado bajo ninguna circunstancia
-      const updated = await getSolicitudAny(solicitud.id);
-      setSolicitud(updated);
+      // 2. Volver a pedir la solicitud (GET) para conocer el estado real
+      let actual = null;
+      let aviso = '';
+      try {
+        actual = await getSolicitudAny(solicitud.id);
+      } catch (errGet) {
+        aviso = `Solicitud clasificada, pero no se pudo consultar su estado actual: ${mensajeBackend(errGet)}`;
+      }
 
+      // 3. Si sigue en REGISTRADA, pasarla a EN_EVALUACION. Si el backend lo rechaza,
+      //    se avisa y se muestra el estado real (la clasificación sí quedó guardada).
+      if (actual?.estadoApi === 'REGISTRADA') {
+        try {
+          actual = await cambiarEstado(solicitud.id, 'EN_EVALUACION', { observacion: 'Solicitud clasificada' });
+        } catch (errEstado) {
+          aviso = `Solicitud clasificada, pero no se pudo actualizar el estado: ${mensajeBackend(errEstado)}`;
+        }
+      }
+
+      if (actual) setSolicitud(actual);
       setSuccessInfo({
         message: yaClasificada ? 'Clasificación actualizada con éxito.' : 'Solicitud clasificada con éxito.',
-        estado: updated?.estado || 'Registrada',
-        estadoApi: updated?.estadoApi || 'REGISTRADA',
+        estado: actual?.estado ?? 'Desconocido',
+        estadoApi: actual?.estadoApi ?? '',
+        aviso,
       });
     } catch (err) {
       // Mostrar el mensaje tal cual del backend sin ocultarlo
@@ -279,7 +300,7 @@ export default function ClasificarSolicitud() {
   if (loading) {
     return (
       <div className="narrow-page">
-        <p className="muted-note">Cargando datos de la solicitud y catálogos…</p>
+        <SkeletonDetalle />
       </div>
     );
   }
@@ -287,11 +308,8 @@ export default function ClasificarSolicitud() {
   if (errLoad) {
     return (
       <div className="narrow-page">
-        <div className="message error" role="alert">
-          <Icon name="alert" />
-          <div><strong>{errLoad}</strong></div>
-        </div>
-        <Button onClick={() => navigate('/supervisor/solicitudes')}>
+        <ErrorState message={errLoad} onRetry={cargar} />
+        <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>
           Volver a solicitudes
         </Button>
       </div>
@@ -327,7 +345,7 @@ export default function ClasificarSolicitud() {
           </small>
         </div>
 
-        <h2 style={{ marginTop: '12px', fontSize: '18px' }}>{solicitud?.titulo}</h2>
+        <h2 style={{ marginTop: '12px' }}>{solicitud?.titulo}</h2>
         <p style={{ color: 'var(--muted)', fontSize: '13px', margin: '4px 0 12px 0' }}>
           <strong>Ubicación:</strong> {solicitud?.ubicacion}
           {solicitud?.solicitante && ` · Solicitante: ${solicitud.solicitante}`}
@@ -400,12 +418,17 @@ export default function ClasificarSolicitud() {
 
           {/* Mensaje de éxito tras clasificar */}
           {successInfo && (
-            <div className="message success" role="status" style={{ marginBottom: '20px' }}>
-              <Icon name="check" />
+            <div
+              className={`message ${successInfo.aviso ? 'error' : 'success'}`}
+              role={successInfo.aviso ? 'alert' : 'status'}
+              style={{ marginBottom: '20px' }}
+            >
+              <Icon name={successInfo.aviso ? 'alert' : 'check'} />
               <div style={{ flex: 1 }}>
-                <strong>{successInfo.message}</strong>
+                <strong>{successInfo.aviso || successInfo.message}</strong>
                 <p style={{ margin: '4px 0 0 0' }}>
-                  Estado devuelto por el backend: <strong>{successInfo.estado}</strong> ({successInfo.estadoApi}).
+                  Estado actual: <strong>{successInfo.estado}</strong>
+                  {successInfo.estadoApi && <> ({successInfo.estadoApi})</>}.
                 </p>
                 <div style={{ marginTop: '12px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   <Button
@@ -525,7 +548,7 @@ export default function ClasificarSolicitud() {
                     onChange={(e) => setFechaLimite(e.target.value)}
                     min={aFechaInput(new Date())}
                   />
-                  <span className="field-hint" style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
+                  <span className="field-hint" style={{ fontSize: '13px', color: 'var(--muted)', marginTop: '2px' }}>
                     Plazo sugerido según prioridad. Puedes ajustarlo libremente.
                   </span>
                 </label>
