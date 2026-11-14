@@ -118,6 +118,18 @@ describe('AtencionSolicitud: notas de avance', () => {
     expect(screen.getByLabelText('Registrar nota de avance')).toBeInTheDocument();
   });
 
+  it('avisa cuando el estado aún no permite iniciar la atención ni agregar notas', async () => {
+    await abrirAtencion('EN_EVALUACION', 'En evaluación');
+    expect(screen.getByText('Esta solicitud aún no figura como asignada. Pide al supervisor que revise su estado.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Iniciar atención' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Registrar nota de avance')).not.toBeInTheDocument();
+  });
+
+  it('no muestra el aviso de "no asignada" en ASIGNADA', async () => {
+    await abrirAtencion('ASIGNADA', 'Asignada');
+    expect(screen.queryByText(/aún no figura como asignada/)).not.toBeInTheDocument();
+  });
+
   it('no muestra el formulario de notas en RESUELTA', async () => {
     await abrirAtencion('RESUELTA', 'Resuelta');
     expect(screen.queryByLabelText('Registrar nota de avance')).not.toBeInTheDocument();

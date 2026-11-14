@@ -104,6 +104,8 @@ export default function AtencionSolicitud() {
   const esEnAtencion  = estadoApi === 'EN_ATENCION' || estadoUi === 'En atención';
   const esResuelta    = estadoApi === 'RESUELTA'    || estadoUi === 'Resuelta';
   const esCerrada     = estadoApi === 'CERRADA'     || estadoUi === 'Cerrada';
+  // Estados en los que el técnico aún no puede iniciar la atención ni agregar notas
+  const noAsignadaAun = !esAsignada && !esEnAtencion && !esResuelta && !esCerrada;
 
   // Iniciar atención
   const handleIniciarAtencion = async () => {
@@ -230,6 +232,15 @@ export default function AtencionSolicitud() {
       {mensajeExito && (
         <div className="message success" role="status" style={{ marginBottom: '16px' }}>
           <Icon name="check" /><div><strong>{mensajeExito}</strong></div>
+        </div>
+      )}
+
+      {noAsignadaAun && (
+        <div className="message" role="status" style={{ marginBottom: '24px' }}>
+          <Icon name="alert" />
+          <div>
+            <strong>Esta solicitud aún no figura como asignada. Pide al supervisor que revise su estado.</strong>
+          </div>
         </div>
       )}
 
