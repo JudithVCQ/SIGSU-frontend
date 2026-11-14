@@ -84,7 +84,36 @@ describe('services/apiClient.js', () => {
       );
     });
 
+    it('401 SIN token guardado en una ruta protegida: no dice "sesión caducada" y va a /login sin aviso', async () => {
+      delete storageState['sigsu.token'];
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ message: 'Unauthorized' }),
+      });
+
+      const error = await request('/api/solicitudes').catch((e) => e);
+      expect(error.status).toBe(401);
+      expect(error.message).not.toMatch(/caduc/i);
+      expect(globalThis.window.location.replace).toHaveBeenCalledWith('/login');
+      expect(globalThis.window.location.replace).not.toHaveBeenCalledWith(expect.stringContaining('expired'));
+    });
+
+    it('401 CON token guardado conserva el aviso "Tu sesión ha caducado"', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({}),
+      });
+      const error = await request('/api/solicitudes').catch((e) => e);
+      expect(error.message).toBe('Tu sesión ha caducado.');
+      expect(globalThis.window.location.replace).toHaveBeenCalledWith(expect.stringContaining('expired=1'));
+    });
+
     it('maneja error 401 en login: lanza mensaje sin redirigir al propio login', async () => {
+      delete storageState['sigsu.token'];
       globalThis.fetch = vi.fn().mockResolvedValue({
         status: 401,
         ok: false,
@@ -94,7 +123,7 @@ describe('services/apiClient.js', () => {
 
       await expect(request('/api/auth/login')).rejects.toMatchObject({
         status: 401,
-        message: 'Tu sesión ha caducado. Inicia sesión nuevamente.',
+        message: 'Correo o contraseña incorrectos',
       });
 
       // No debe llamar a redirección en login

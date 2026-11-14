@@ -22,11 +22,14 @@ export function onSlowRequest(cb) { onSlowListeners.add(cb); return () => onSlow
 function notifySlow(pending) { onSlowListeners.forEach(cb => cb(pending)); }
 
 /** Mapea códigos HTTP a mensajes legibles */
-function humanMessage(status, body) {
+function humanMessage(status, body, hadToken = true) {
   const serverMsg = typeof body?.message === 'string' ? body.message : null;
   switch (status) {
     case 400: return serverMsg ?? 'Datos inválidos. Revisa los campos e inténtalo de nuevo.';
-    case 401: return 'Tu sesión ha caducado. Inicia sesión nuevamente.';
+    // "Sesión caducada" solo tiene sentido si había una sesión (token) guardada
+    case 401: return hadToken
+      ? 'Tu sesión ha caducado. Inicia sesión nuevamente.'
+      : (serverMsg ?? 'No pudimos validar tus credenciales. Inténtalo de nuevo.');
     case 403: return 'No tienes permisos para realizar esta acción.';
     case 404: return 'El recurso solicitado no existe.';
     case 409: return serverMsg ?? 'El registro ya existe o hay un conflicto en los datos.';
@@ -49,6 +52,12 @@ export function getErrorMessage(err, fallback = 'Ocurrió un error inesperado.')
     return 'El servidor tuvo un problema. Intenta más tarde.';
   }
   return err.message || fallback;
+}
+
+/** Redirige a /login sin mensaje (no había sesión que caducar). Evita recargar si ya está allí. */
+function redirectToLogin() {
+  if (window.location.pathname === '/login') return;
+  window.location.replace('/login');
 }
 
 /** Limpia la sesión y redirige a /login */
@@ -103,14 +112,19 @@ export async function request(path, options = {}) {
 
     // Si la respuesta fue 401 en cualquier ruta que no sea login/logout, limpiar y redirigir
     if (response.status === 401 && !path.includes('/api/auth/login')) {
-      clearSessionAndRedirect('Tu sesión ha caducado. Inicia sesión nuevamente.');
-      throw Object.assign(new Error('Tu sesión ha caducado.'), { status: 401 });
+      if (token) {
+        clearSessionAndRedirect('Tu sesión ha caducado. Inicia sesión nuevamente.');
+        throw Object.assign(new Error('Tu sesión ha caducado.'), { status: 401 });
+      }
+      // Sin token guardado nunca hubo sesión: no se habla de "sesión caducada"
+      redirectToLogin();
+      throw Object.assign(new Error('Inicia sesión para continuar.'), { status: 401, sinSesion: true });
     }
 
     // Respuestas sin cuerpo (ej. 204)
     if (response.status === 204 || response.headers.get('content-length') === '0') {
       if (!response.ok) {
-        const err = new Error(humanMessage(response.status, null));
+        const err = new Error(humanMessage(response.status, null, Boolean(token)));
         err.status = response.status;
         throw err;
       }
@@ -126,7 +140,7 @@ export async function request(path, options = {}) {
     }
 
     if (!response.ok) {
-      const err = new Error(humanMessage(response.status, body));
+      const err = new Error(humanMessage(response.status, body, Boolean(token)));
       err.status = response.status;
       err.body   = body;
       throw err;
