@@ -52,7 +52,7 @@ export default function AuthShell({ children }) {
 
           <figure className="auth-ejemplo" aria-label="Ejemplo ilustrativo de una solicitud en curso">
             <div className="auth-ejemplo-cabecera">
-              <span className="auth-ejemplo-codigo">SIG-00131</span>
+              <span className="auth-ejemplo-codigo">SOL-2026-000011</span>
               <span className="auth-ejemplo-estado">En atención</span>
             </div>
             <div className="auth-ejemplo-titulo">Proyector sin señal en Aula 205</div>
