@@ -20,12 +20,22 @@ export function estadoApiDe(s) {
 const sinResponsable = (s) =>
   s?.responsableId == null && (!s?.responsable || s.responsable === 'Sin asignar');
 
+const conTexto = (v) => typeof v === 'string' && v.trim() !== '';
+const tieneCategoria = (s) => s?.categoriaId != null || conTexto(s?.categoria);
+const tienePrioridad = (s) => s?.prioridadId != null || conTexto(s?.prioridad);
+
+// Las vistas del supervisor se definen por DATOS, no por estado:
+// - Sin clasificar: le falta categoría o prioridad.
+// - Por asignar: ya tiene categoría y prioridad, pero aún no tiene responsable.
+const sinClasificar = (s) => !tieneCategoria(s) || !tienePrioridad(s);
+const porAsignar = (s) => tieneCategoria(s) && tienePrioridad(s) && sinResponsable(s);
+
 export const VISTAS_RAPIDAS = {
   [ROLES.SUPERVISOR]: {
     ruta: '/supervisor/solicitudes',
     vistas: [
-      { id: 'sin-clasificar', label: 'Sin clasificar', icon: 'edit', filtro: (s) => estadoApiDe(s) === 'REGISTRADA' },
-      { id: 'por-asignar', label: 'Por asignar', icon: 'users', filtro: (s) => estadoApiDe(s) === 'EN_EVALUACION' && sinResponsable(s) },
+      { id: 'sin-clasificar', label: 'Sin clasificar', icon: 'edit', filtro: sinClasificar },
+      { id: 'por-asignar', label: 'Por asignar', icon: 'users', filtro: porAsignar },
       { id: 'por-cerrar', label: 'Por cerrar', icon: 'check', filtro: (s) => estadoApiDe(s) === 'RESUELTA' },
     ],
   },

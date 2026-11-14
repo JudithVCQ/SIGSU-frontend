@@ -24,10 +24,10 @@ export const INITIAL_SOLICITUDES = [
     id: 133,
     codigo: 'SIG-00133',
     titulo: 'Proyector no enciende / sin señal en aula 205',
-    categoria: 'Soporte informático',
+    categoria: '', // sin clasificar aún
     estado: 'Registrada',
     estadoApi: 'REGISTRADA',
-    prioridad: 'Alta',
+    prioridad: '',
     fechaRegistro: haceDias(1),
     fecha: formatearFechaVisual(haceDias(1)),
     ubicacion: 'Pabellón A - Aula 205',

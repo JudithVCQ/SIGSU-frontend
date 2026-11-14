@@ -14,15 +14,16 @@ const usuarios = {
   ADMINISTRADOR: { id: 1, nombre: 'Admin Prueba', rol: 'ADMINISTRADOR' },
 };
 
+const clasif = { categoria: 'Soporte informático', prioridad: 'Alta' };
 const lista = [
   { estadoApi: 'REGISTRADA' },
   { estadoApi: 'REGISTRADA' },
-  { estadoApi: 'EN_EVALUACION', responsableId: null, responsable: 'Sin asignar' },
-  { estadoApi: 'EN_EVALUACION', responsableId: 4, responsable: 'Laura' },
-  { estadoApi: 'ASIGNADA' },
-  { estadoApi: 'EN_ATENCION' },
-  { estadoApi: 'RESUELTA' },
-  { estado: 'Cerrada' }, // mocks: solo etiqueta
+  { estadoApi: 'EN_EVALUACION', ...clasif, responsableId: null, responsable: 'Sin asignar' },
+  { estadoApi: 'EN_EVALUACION', ...clasif, responsableId: 4, responsable: 'Laura' },
+  { estadoApi: 'ASIGNADA', ...clasif, responsableId: 4 },
+  { estadoApi: 'EN_ATENCION', ...clasif, responsableId: 4 },
+  { estadoApi: 'RESUELTA', ...clasif, responsableId: 4 },
+  { estado: 'Cerrada', ...clasif, responsableId: 4 }, // mocks: solo etiqueta
 ];
 
 describe('vistasRapidas', () => {
@@ -31,6 +32,30 @@ describe('vistasRapidas', () => {
     expect(contarPorVista('TECNICO', lista)).toEqual({ 'por-iniciar': 1, 'en-atencion': 1, resueltas: 1 });
     expect(contarPorVista('SOLICITANTE', lista)).toEqual({ abiertas: 7, cerradas: 1 });
     expect(contarPorVista('ADMINISTRADOR', lista)).toEqual({});
+  });
+
+  it('las vistas del supervisor se definen por datos, no por estado', () => {
+    const datos = [
+      // sin categoría o sin prioridad, sea cual sea el estado
+      { id: 1, estadoApi: 'EN_EVALUACION', categoria: '', prioridad: 'Alta' },
+      { id: 2, estadoApi: 'REGISTRADA', categoria: 'Soporte', prioridad: '' },
+      { id: 3, estadoApi: 'REGISTRADA', categoriaId: null, prioridadId: null },
+      // clasificada, sin responsable: aunque siga REGISTRADA
+      { id: 4, estadoApi: 'REGISTRADA', categoriaId: 1, prioridadId: 2, responsableId: null, responsable: 'Sin asignar' },
+      { id: 5, estadoApi: 'EN_EVALUACION', categoria: 'Soporte', prioridad: 'Baja', responsable: 'Sin asignar' },
+      // clasificada y con responsable: en ninguna de las dos
+      { id: 6, estadoApi: 'ASIGNADA', categoriaId: 1, prioridadId: 2, responsableId: 7 },
+    ];
+    const ids = (vista) => datos.filter(buscarVista('SUPERVISOR', vista).filtro).map((d) => d.id);
+    expect(ids('sin-clasificar')).toEqual([1, 2, 3]);
+    expect(ids('por-asignar')).toEqual([4, 5]);
+    expect(contarPorVista('SUPERVISOR', datos)).toEqual({ 'sin-clasificar': 3, 'por-asignar': 2, 'por-cerrar': 0 });
+  });
+
+  it('"Por cerrar" sigue siendo el estado RESUELTA', () => {
+    const f = buscarVista('SUPERVISOR', 'por-cerrar').filtro;
+    expect(f({ estadoApi: 'RESUELTA' })).toBe(true);
+    expect(f({ estadoApi: 'EN_ATENCION' })).toBe(false);
   });
 
   it('el administrador no tiene vistas rápidas', () => {
