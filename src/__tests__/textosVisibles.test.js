@@ -29,4 +29,10 @@ describe('Textos visibles', () => {
     });
     expect(hallazgos).toEqual([]);
   });
+
+  it('usan el nombre oficial del sistema', () => {
+    const variantes = /Sistema Integral de Gesti[oó]n|Gesti[oó]n de Servicios Universitarios/i;
+    const hallazgos = archivos.filter((f) => variantes.test(sinComentarios(fs.readFileSync(f, 'utf8'))));
+    expect(hallazgos.map((f) => path.relative(SRC, f))).toEqual([]);
+  });
 });

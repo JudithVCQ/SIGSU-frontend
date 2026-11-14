@@ -27,7 +27,7 @@ export default function AuthShell({ children }) {
           </ul>
         </div>
         <small className="auth-foot">
-          Sistema Integral de Gestión de Servicios Universitarios
+          Sistema Integrado de Gestión de Solicitudes Universitarias
         </small>
       </aside>
       <main className="auth-main">
