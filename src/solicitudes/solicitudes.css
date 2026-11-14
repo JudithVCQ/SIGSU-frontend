@@ -4,7 +4,7 @@
   position: relative;
   overflow: hidden;
   background: var(--verde);
-  color: #fff;
+  color: var(--superficie);
   border-radius: var(--radius);
   padding: 28px 32px;
   display: flex;
@@ -21,9 +21,9 @@
   bottom: 0;
   width: 70px;
   height: 70px;
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--superficie) 5%, transparent);
   border-radius: 8px 8px 0 0;
-  box-shadow: 86px 20px 0 rgba(181, 136, 63, 0.28), -86px 38px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 86px 20px 0 color-mix(in srgb, var(--acento) 28%, transparent), -86px 38px 0 color-mix(in srgb, var(--superficie) 4%, transparent);
   pointer-events: none;
 }
 
@@ -36,12 +36,12 @@
   font-size: 20px;
   letter-spacing: -0.02em;
   margin-bottom: 6px;
-  color: #fff;
+  color: var(--superficie);
 }
 
 .cta-banner p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--primario-suave);
   font-size: 12px;
   line-height: 1.6;
   max-width: 520px;
@@ -66,7 +66,7 @@
   align-items: center;
   padding: 15px 22px;
   border: 0;
-  border-top: 1px solid #eceeeb;
+  border-top: 1px solid var(--borde);
   background: none;
   text-align: left;
   color: var(--muted);
@@ -76,7 +76,7 @@
 }
 
 .recent-item:hover {
-  background: #f9faf8;
+  background: var(--superficie-alt);
   color: var(--verde);
 }
 
@@ -158,7 +158,7 @@
   place-items: center;
   border-radius: 50%;
   background: var(--verde);
-  color: #fff;
+  color: var(--superficie);
   font-size: 10px;
   font-weight: 700;
 }
@@ -179,7 +179,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 28px;
-  background: #fafaf8;
+  background: var(--fondo);
 }
 
 .form-footer p {
@@ -189,7 +189,7 @@
 }
 
 .success-state {
-  background: #fff;
+  background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radius);
   text-align: center;
@@ -213,7 +213,7 @@
   letter-spacing: 0.08em;
   color: var(--verde);
   background: var(--verde-suave);
-  border: 1px dashed #aebbb6;
+  border: 1px dashed var(--borde-fuerte);
   padding: 7px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -270,7 +270,7 @@
 
 button.upload {
   width: 100%;
-  background: #fafbf9;
+  background: var(--fondo);
   font: inherit;
 }
 
@@ -375,8 +375,8 @@ button.upload:hover {
 .timeline-dot {
   width: 24px;
   height: 24px;
-  border: 2px solid #bec5c2;
-  background: #fff;
+  border: 2px solid var(--borde-fuerte);
+  background: var(--superficie);
   border-radius: 50%;
   z-index: 1;
   display: grid;
@@ -384,7 +384,7 @@ button.upload:hover {
 }
 
 .timeline-dot.active {
-  color: #fff;
+  color: var(--superficie);
   border-color: var(--verde);
   background: var(--verde);
 }
@@ -392,7 +392,7 @@ button.upload:hover {
 .timeline-item > i {
   position: absolute;
   width: 1px;
-  background: #d7dbd8;
+  background: var(--borde);
   height: 30px;
   left: 12px;
   top: 34px;
@@ -410,7 +410,7 @@ button.upload:hover {
 }
 
 .timeline-item small {
-  color: #939a97;
+  color: var(--texto-secundario);
   font-size: 9px;
 }
 
@@ -434,7 +434,7 @@ button.upload:hover {
 .progress span {
   height: 4px;
   border-radius: 4px;
-  background: #dfe2e0;
+  background: var(--borde);
 }
 
 .progress span.done {
@@ -519,7 +519,7 @@ button.upload:hover {
   font-size: 12px;
   line-height: 1.6;
   margin: 5px 0 0;
-  color: #3e4442;
+  color: var(--texto-secundario);
 }
 
 .comment-form {
@@ -534,7 +534,7 @@ button.upload:hover {
 .comment-form textarea {
   width: 100%;
   min-height: 80px;
-  border: 1px solid #ccd1ce;
+  border: 1px solid var(--borde-fuerte);
   border-radius: 8px;
   padding: 11px 12px;
   font-size: 12px;
@@ -545,7 +545,7 @@ button.upload:hover {
 
 .comment-form textarea:focus {
   border-color: var(--verde);
-  box-shadow: 0 0 0 3px rgba(31, 78, 67, 0.08);
+  box-shadow: 0 0 0 3px var(--primario-anillo);
 }
 
 .evidence-grid {
@@ -566,7 +566,7 @@ button.upload:hover {
 .evidence-thumb {
   height: 88px;
   border-radius: 7px;
-  background: linear-gradient(135deg, var(--verde-suave), #dbe6e1);
+  background: linear-gradient(135deg, var(--primario-suave), var(--primario-anillo));
   color: var(--verde);
   display: grid;
   place-items: center;
@@ -677,8 +677,8 @@ button.upload:hover {
   height: 100vh;
   height: 100dvh; /* en móviles descuenta la barra del navegador */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  background: rgba(12, 14, 15, 0.94);
-  color: #fff;
+  background: color-mix(in srgb, var(--texto) 94%, transparent);
+  color: var(--superficie);
 }
 
 .visor-barra {
@@ -719,19 +719,19 @@ button.upload:hover {
   height: 40px;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: color-mix(in srgb, var(--superficie) 12%, transparent);
+  color: var(--superficie);
   cursor: pointer;
   text-decoration: none;
 }
 
 .visor-boton:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: color-mix(in srgb, var(--superficie) 22%, transparent);
 }
 
 .visor-boton:focus-visible,
 .visor-miniatura:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--superficie);
   outline-offset: 2px;
 }
 
@@ -791,7 +791,7 @@ button.upload:hover {
 }
 
 .visor-error a {
-  color: #fff;
+  color: var(--superficie);
 }
 
 .visor-miniaturas {
@@ -810,13 +810,13 @@ button.upload:hover {
   border: 2px solid transparent;
   border-radius: 6px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--superficie) 8%, transparent);
   cursor: pointer;
   opacity: 0.6;
 }
 
 .visor-miniatura.activa {
-  border-color: #fff;
+  border-color: var(--superficie);
   opacity: 1;
 }
 
@@ -836,7 +836,7 @@ button.upload:hover {
   .visor-nav {
     width: 40px;
     height: 40px;
-    background: rgba(0, 0, 0, 0.45);
+    background: color-mix(in srgb, var(--texto) 45%, transparent);
   }
 
   .visor-prev {
@@ -963,7 +963,7 @@ button.upload:hover {
 
 .atencion-banner {
   background: var(--verde-suave);
-  border: 1px solid #c2dcd3;
+  border: 1px solid var(--primario-anillo);
   border-radius: var(--radius);
   padding: 20px 24px;
   display: flex;
@@ -1096,7 +1096,7 @@ button.upload:hover {
 
 .duplicados-item:hover {
   border-color: var(--dorado);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--texto) 5%, transparent);
 }
 
 .duplicados-item-main {
@@ -1198,7 +1198,7 @@ button.upload:hover {
 
 .calificacion-opciones label.activa,
 .calificacion-estrellas-lectura .activa {
-  color: var(--dorado);
+  color: var(--acento-texto);
 }
 
 .calificacion-opciones label:focus-within {
