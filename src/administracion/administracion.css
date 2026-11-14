@@ -306,9 +306,12 @@
 .catalog-tabs {
   display: flex;
   gap: 8px;
-  border-bottom: 2px solid var(--borde);
+  /* La línea base se dibuja por dentro (sombra) para que las pestañas no desborden en vertical */
+  box-shadow: inset 0 -2px 0 var(--borde);
   margin-bottom: 16px;
+  /* Scroll horizontal solo si las pestañas no caben; nunca scroll vertical */
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: thin;
 }
 
@@ -320,8 +323,7 @@
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
+  border-bottom: 2px solid transparent;
   display: inline-flex;
   align-items: center;
   gap: 8px;
