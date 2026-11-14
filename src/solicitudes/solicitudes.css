@@ -1000,41 +1000,29 @@ button.upload:hover {
 
 /* ───────── Panel de solicitudes del solicitante (duplicados) ───────── */
 .duplicados-panel {
-  margin-bottom: 24px;
+  margin: 18px 0 24px;
+  padding: 20px;
 }
+
+.detail-side .duplicados-panel { margin: 0; }
 
 .duplicados-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--borde);
-}
-
-.duplicados-title-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--verde);
+  display: grid;
+  gap: 2px;
+  margin-bottom: 12px;
 }
 
 .duplicados-title {
-  font-size: 18px;
+  font-family: var(--fuente);
+  font-size: 16px;
   font-weight: 600;
   margin: 0;
-  color: var(--carbon);
+  color: var(--texto);
 }
 
 .duplicados-subtitulo {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--muted);
-  background: var(--fondo);
-  padding: 3px 8px;
-  border-radius: 4px;
+  color: var(--texto-secundario);
 }
 
 .duplicados-loading {
@@ -1087,29 +1075,22 @@ button.upload:hover {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
+
+.duplicados-list > li + li { border-top: 1px solid var(--borde); }
 
 .duplicados-item {
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  padding: 10px 14px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  display: grid;
+  gap: 2px;
+  padding: 8px 6px;
+  margin: 0 -6px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: inherit;
 }
 
-.duplicados-item:hover {
-  border-color: var(--dorado);
-  box-shadow: 0 1px 4px color-mix(in srgb, var(--texto) 5%, transparent);
-}
-
-.duplicados-item-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.duplicados-item:hover { background: var(--superficie-alt); }
+.duplicados-item:focus-visible { outline: 2px solid var(--verde); outline-offset: -2px; }
 
 .duplicados-item-top {
   display: flex;
@@ -1127,22 +1108,29 @@ button.upload:hover {
 
 .duplicados-fecha {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--texto-terciario);
   margin-left: auto;
 }
 
 .duplicados-item-link {
   font-size: 14px;
   font-weight: 500;
-  color: var(--carbon);
-  text-decoration: none;
+  color: var(--texto);
   line-height: 1.3;
 }
 
-.duplicados-item-link:hover {
+.duplicados-ver-todas {
+  margin-top: 8px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--verde);
-  text-decoration: underline;
+  cursor: pointer;
 }
+.duplicados-ver-todas:hover { text-decoration: underline; }
 
 /* Plazo de atención (PlazoSolicitud) */
 .plazo-info .plazo-texto {
