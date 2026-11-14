@@ -50,6 +50,14 @@ h2, h3 {
   margin-bottom: 0.5rem;
 }
 
+/* Títulos de página (h1) y de sección/tarjeta (h2) en serif; el resto sigue en Inter.
+   Solo se carga el peso 600 de Source Serif 4. */
+h1,
+h2 {
+  font-family: var(--fuente-titulos);
+  font-weight: 600;
+}
+
 .eyebrow {
   color: var(--acento-texto);
   font-size: 10px;
@@ -791,6 +799,8 @@ h2, h3 {
 }
 
 .card-label {
+  /* Etiqueta pequeña en mayúsculas: se mantiene en Inter aunque se use en un h2 */
+  font-family: var(--fuente);
   color: var(--muted);
   font-size: 9px;
   font-weight: 700;
