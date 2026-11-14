@@ -1,32 +1,109 @@
 :root {
-  /* Paleta oficial del repositorio (fuente de verdad) */
-  --verde: #1F4E43;
-  --verde-suave: #E3EEE9;
-  --dorado: #B5883F;
-  --carbon: #2B2F33;
-  --fondo: #F4F4F2;
-  --neutro: #EFEFEA;
-  --borde: #D6D6D0;
-  --blanco: #fff;
-  --peligro: #B94545;
-  --peligro-fondo: #F6DCDC;
-  --media-fondo: #F5E6C4;
-  --media-texto: #7A5A14;
-  --fuente: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --radio: 8px;
-  --sidebar: 256px;
-  --topbar: 72px;
+  /* ============================================================
+     SIGSU · Paleta UNMSM (guinda, dorado, base neutra cálida)
+     Fuente de verdad de colores. Usar SIEMPRE estas variables;
+     no escribir colores a mano en los componentes.
+     ============================================================ */
 
-  /* Tokens del mockup unificados con los valores del repositorio */
-  --forest: var(--verde);
-  --forest-dark: #173c34;
-  --forest-soft: var(--verde-suave);
-  --gold: var(--dorado);
-  --charcoal: var(--carbon);
-  --warm: var(--fondo);
-  --white: var(--blanco);
-  --line: var(--borde);
-  --muted: #68716e;
-  --danger: var(--peligro);
+  /* Marca */
+  --primario: #7A1E26;
+  /* guinda: botón principal, enlaces, activo */
+  --primario-hover: #5C161C;
+  --primario-suave: #F7EDEE;
+  /* fondo de ítem activo, selección */
+  --primario-anillo: #F1DADC;
+  /* anillo de foco */
+  --acento: #C9A14A;
+  /* dorado: SOLO detalles (indicadores, íconos) */
+  --acento-texto: #7A5A14;
+  /* dorado legible sobre fondo claro */
+
+  /* Neutros */
+  --texto: #1C1917;
+  --texto-secundario: #57534E;
+  --texto-terciario: #78716C;
+  /* solo textos de apoyo de 13px o más */
+  --fondo: #FAFAF9;
+  --superficie: #FFFFFF;
+  --superficie-alt: #F5F5F4;
+  /* cabecera de tablas, hover suave */
+  --borde: #E7E5E4;
+  --borde-fuerte: #D6D3D1;
+  /* bordes de inputs */
+  --skeleton: #EFEDEC;
+  --overlay: rgba(28, 25, 23, 0.55);
+
+  /* Sidebar (gris oscuro) */
+  --sidebar-fondo: #1C1A19;
+  --sidebar-texto: #D6D3D1;
+  --sidebar-texto-secundario: #A8A29E;
+  --sidebar-hover: #292524;
+  --sidebar-activo: #2E2A28;
+  --sidebar-borde: #34302D;
+
+  /* Estados de feedback */
+  --peligro: #9B1C1C;
+  --peligro-fondo: #FBECEC;
+  --peligro-borde: #F1C9C9;
+  --exito: #1F6B3A;
+  --exito-fondo: #E8F4EC;
+  --aviso: #7A4E00;
+  --aviso-fondo: #FBF2E1;
+  --info: #1E4E8C;
+  --info-fondo: #EAF1FB;
+
+  /* Estados de una solicitud (texto / fondo) */
+  --estado-registrada: #44403C;
+  --estado-registrada-fondo: #F0EFEE;
+  --estado-evaluacion: #1E4E8C;
+  --estado-evaluacion-fondo: #EAF1FB;
+  --estado-asignada: #3D3B8E;
+  --estado-asignada-fondo: #EEEEFB;
+  --estado-atencion: #7A4E00;
+  --estado-atencion-fondo: #FBF2E1;
+  --estado-resuelta: #1F6B3A;
+  --estado-resuelta-fondo: #E8F4EC;
+  --estado-cerrada: #57534E;
+  --estado-cerrada-fondo: #F0EFEE;
+
+  /* Prioridades */
+  --prioridad-alta: #9B1C1C;
+  --prioridad-media: #7A4E00;
+  --prioridad-baja: #57534E;
+
+  /* Tipografía */
+  --fuente: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fuente-titulos: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+  /* Forma y medidas */
+  --radio: 8px;
   --radius: 12px;
+  --radius-sm: 6px;
+  --sidebar: 256px;
+  --topbar: 64px;
+
+  /* ============================================================
+     Alias de compatibilidad (nombres antiguos → valores nuevos).
+     Permiten que el sistema actual tome la paleta sin romperse.
+     Migrar poco a poco a los nombres de arriba y luego borrarlos.
+     ============================================================ */
+  --verde: var(--primario);
+  --verde-suave: var(--primario-suave);
+  --dorado: var(--acento);
+  --carbon: var(--texto);
+  --neutro: var(--superficie-alt);
+  --blanco: var(--superficie);
+  --media-fondo: var(--aviso-fondo);
+  --media-texto: var(--aviso);
+  --muted: var(--texto-secundario);
+
+  --forest: var(--primario);
+  --forest-dark: var(--primario-hover);
+  --forest-soft: var(--primario-suave);
+  --gold: var(--acento);
+  --charcoal: var(--texto);
+  --warm: var(--fondo);
+  --white: var(--superficie);
+  --line: var(--borde);
+  --danger: var(--peligro);
 }
