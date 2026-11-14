@@ -34,14 +34,12 @@ describe('LoginPage', () => {
     expect(screen.getByText('Ejemplo ilustrativo')).toBeInTheDocument();
   });
 
-  it('ya no ofrece registrarse ni menciona el portal del solicitante; explica que las cuentas las crea el administrador', () => {
+  it('ya no ofrece registrarse, ni menciona el portal del solicitante ni la nota de cuentas', () => {
     renderLogin();
     expect(screen.queryByText(/Regístrate/i)).toBeNull();
     expect(screen.queryByRole('link', { name: /reg[ií]strate/i })).toBeNull();
     expect(screen.queryByText(/portal del solicitante/i)).toBeNull();
-    expect(
-      screen.getByText('Las cuentas las crea el administrador del sistema. Si no puedes ingresar, comunícate con él.'),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/Las cuentas las crea el administrador/)).toBeNull();
   });
 
   it('no menciona la universidad en el logo', () => {

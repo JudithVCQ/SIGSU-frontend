@@ -143,11 +143,6 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="auth-nota">
-        <Icon name="alert" size={16} />
-        <span>Las cuentas las crea el administrador del sistema. Si no puedes ingresar, comunícate con él.</span>
-      </p>
-
       {/* Acceso rápido por rol: SOLO en modo mocks */}
       {USE_MOCKS && (
         <div className="auth-dev">
