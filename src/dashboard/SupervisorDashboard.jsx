@@ -101,8 +101,8 @@ export default function SupervisorDashboard() {
 
       <div className="kpi-grid">
         <KpiCard number={loading ? '…' : String(kpis?.total ?? 0)}      label="Solicitudes totales" />
-        <KpiCard number={loading ? '…' : String(kpis?.atendidas ?? 0)}  label="En atención"          change="Activas ahora" tone="dark" />
-        <KpiCard number={loading ? '…' : `${kpis?.porcentajeResuelto ?? 0}%`} label="Resueltas a tiempo" tone="gold" />
+        <KpiCard number={loading ? '…' : String(kpis?.atendidas ?? 0)}  label="Atendidas" tone="dark" />
+        <KpiCard number={loading ? '…' : `${kpis?.porcentajeResuelto ?? 0}%`} label="Porcentaje resuelto" tone="gold" />
         <KpiCard number={loading ? '…' : String(kpis?.vencidas ?? 0)}   label="Vencidas"             change="Superan plazo de atención" tone="danger" icon="alert" />
         {mostrarCalificacion && (
           <KpiCard
