@@ -158,25 +158,37 @@ h3 {
 }
 
 .logo-mark {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  padding: 7px;
-  border: 1px solid var(--sidebar-borde);
-  border-radius: 10px;
+  flex-shrink: 0;
+  display: block;
 }
 
-.logo-mark span {
-  flex: 1;
-  background: var(--dorado);
-  border-radius: 2px 2px 0 0;
+.logo-fondo {
+  fill: var(--primario);
 }
 
-.logo-mark span:nth-child(1) { height: 11px; }
-.logo-mark span:nth-child(2) { height: 20px; }
-.logo-mark span:nth-child(3) { height: 15px; }
+.logo-linea {
+  fill: none;
+  stroke: var(--superficie);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logo-punto {
+  fill: var(--superficie);
+}
+
+.logo-punto-final {
+  fill: var(--acento);
+}
+
+.logo-check {
+  fill: none;
+  stroke: var(--texto);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 .logo b {
   display: block;

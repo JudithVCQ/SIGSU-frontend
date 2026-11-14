@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ROLES, ROLE_HOME } from '../config/constants';
-import { onSlowRequest } from '../services/apiClient.js';
 import AuthShell from './AuthShell';
 import Button from '../components/Button';
 import FormField from '../components/FormField';
@@ -28,15 +27,6 @@ export default function LoginPage() {
   const [password,  setPassword]  = useState('');
   const [error,     setError]     = useState(null); // { title, message }
   const [loading,   setLoading]   = useState(false);
-  const [slowMsg,   setSlowMsg]   = useState('');
-
-  // Suscripción al aviso de lentitud del servidor
-  useEffect(() => {
-    const unsub = onSlowRequest((pending) =>
-      setSlowMsg(pending ? 'Conectando con el servidor, puede tardar unos segundos…' : '')
-    );
-    return unsub;
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,7 +81,6 @@ export default function LoginPage() {
       setError({ title, message });
     } finally {
       setLoading(false);
-      setSlowMsg('');
     }
   };
 
@@ -103,11 +92,8 @@ export default function LoginPage() {
 
   return (
     <AuthShell>
-      <div className="eyebrow">ACCESO</div>
       <h1>Iniciar sesión</h1>
-      <p className="auth-lead">
-        Ingresa con tu cuenta institucional para registrar y seguir tus solicitudes.
-      </p>
+      <p className="auth-lead">Ingresa con tu correo institucional</p>
 
       {notice && (
         <div className="message success" role="status">
@@ -130,13 +116,6 @@ export default function LoginPage() {
             <strong>{error.title}</strong>
             <p>{error.message}</p>
           </div>
-        </div>
-      )}
-
-      {slowMsg && !error && (
-        <div className="message" style={{ background: 'var(--verde-suave)', color: 'var(--carbon)' }} role="status">
-          <Icon name="clock" />
-          <div><p>{slowMsg}</p></div>
         </div>
       )}
 
@@ -164,9 +143,9 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="auth-switch">
-        ¿Aún no tienes cuenta?{' '}
-        <Link to="/registro" className="text-link">Regístrate</Link>
+      <p className="auth-nota">
+        <Icon name="alert" size={16} />
+        <span>Las cuentas las crea el administrador del sistema. Si no puedes ingresar, comunícate con él.</span>
       </p>
 
       {/* Acceso rápido por rol: SOLO en modo mocks */}

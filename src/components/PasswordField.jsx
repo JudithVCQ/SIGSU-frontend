@@ -10,6 +10,7 @@ export default function PasswordField({
   hint,
   autoComplete,
   required = false,
+  disabled = false,
 }) {
   const [show, setShow] = useState(false);
   const bad = !!error || !!invalid;
@@ -27,6 +28,7 @@ export default function PasswordField({
           type={show ? 'text' : 'password'}
           value={value}
           autoComplete={autoComplete}
+          disabled={disabled}
           aria-invalid={bad}
           onChange={(e) => onChange(e.target.value)}
           placeholder="••••••••"

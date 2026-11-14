@@ -24,6 +24,8 @@
   --texto-terciario: #78716C;
   /* solo textos de apoyo de 13px o más */
   --fondo: #FAFAF9;
+  --fondo-auth: #EFEDEC;
+  /* fondo gris cálido de la columna del formulario de acceso */
   --superficie: #FFFFFF;
   --superficie-alt: #F5F5F4;
   /* cabecera de tablas, hover suave */

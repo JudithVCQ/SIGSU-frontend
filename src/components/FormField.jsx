@@ -12,6 +12,7 @@ export default function FormField({
   textarea = false,
   autoComplete,
   required = false,
+  disabled = false,
 }) {
   const bad = !!error || !!invalid;
 
@@ -34,6 +35,7 @@ export default function FormField({
           value={value}
           placeholder={placeholder}
           autoComplete={autoComplete}
+          disabled={disabled}
           aria-invalid={bad}
           onChange={(e) => onChange(e.target.value)}
         />
