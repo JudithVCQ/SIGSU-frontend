@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getSolicitudesMock } from '../mocks/solicitudes';
 import { getSolicitudes } from '../services/solicitudes.js';
@@ -9,6 +9,9 @@ import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import { SkeletonFilas } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import VistaRapidaChip from '../components/VistaRapidaChip';
 import { buscarVista } from '../routes/vistasRapidas';
 import './solicitudes.css';
@@ -38,12 +41,13 @@ export default function MisSolicitudes() {
   const [categoriaId,    setCategoriaId]    = useState('');
   const [prioridadId,    setPrioridadId]    = useState('');
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       setItems(getSolicitudesMock());
       return;
     }
     setLoading(true);
+    setError('');
     Promise.all([
       getSolicitudes(),
       getCategorias(),
@@ -54,9 +58,11 @@ export default function MisSolicitudes() {
         setCategorias(cats);
         setPrioridades(prios);
       })
-      .catch(err => setError(err.message ?? 'No se pudieron cargar las solicitudes.'))
+      .catch(() => setError('No pudimos cargar tus solicitudes. Revisa tu conexión e inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Paginación cliente
   const [page, setPage] = useState(0);
@@ -145,27 +151,28 @@ export default function MisSolicitudes() {
           )}
         </div>
 
-        {error && (
-          <div className="message error" role="alert" style={{ marginBottom: '16px' }}>
-            <Icon name="alert" />
-            <div><strong>{error}</strong></div>
-          </div>
-        )}
-
         {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
         <div className="results-label">
           {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Más recientes primero
         </div>
 
         {loading ? (
-          <p className="muted-note">Cargando solicitudes…</p>
+          <SkeletonFilas filas={5} columnas={5} />
+        ) : error ? (
+          <ErrorState message={error} onRetry={cargar} />
+        ) : items.length === 0 ? (
+          <EmptyState
+            title="Aún no has registrado solicitudes"
+            text="Cuando registres una, podrás seguir su avance desde aquí."
+            action={<Button icon="plus" onClick={() => navigate('/solicitante/nueva')}>Nueva solicitud</Button>}
+          />
         ) : filtered.length === 0 ? (
-          <div className="empty">
-            <Icon name="search" size={28} />
-            <strong>No hay solicitudes con estos filtros</strong>
-            <p>Prueba con otra búsqueda o limpia los filtros.</p>
-            <Button variant="secondary" onClick={clearFilters}>Limpiar filtros</Button>
-          </div>
+          <EmptyState
+            icon="search"
+            title="No hay solicitudes con estos filtros"
+            text="Prueba con otra búsqueda o limpia los filtros."
+            action={<Button variant="secondary" onClick={clearFilters}>Limpiar filtros</Button>}
+          />
         ) : (
           <>
             <div className="desktop-table">

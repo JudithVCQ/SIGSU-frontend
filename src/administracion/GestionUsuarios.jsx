@@ -16,6 +16,9 @@ import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import { SkeletonFilas } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import ConfirmModal from '../components/ConfirmModal';
 import FormField from '../components/FormField';
 import FormSelect from '../components/FormSelect';
@@ -72,8 +75,8 @@ export default function GestionUsuarios() {
       setUsuarios(uList);
       if (Array.isArray(rList) && rList.length > 0) setRoles(rList);
       if (Array.isArray(aList)) setAreas(aList);
-    } catch (err) {
-      setErrLoad(getErrorMessage(err, 'No se pudo cargar la lista de usuarios.'));
+    } catch {
+      setErrLoad('No pudimos cargar los usuarios. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -220,19 +223,6 @@ export default function GestionUsuarios() {
         </div>
       )}
 
-      {/* Error de carga */}
-      {errLoad && (
-        <div className="message error" style={{ marginBottom: '20px' }} role="alert">
-          <Icon name="alert" />
-          <div style={{ flex: 1 }}>
-            <strong>{errLoad}</strong>
-            <div style={{ marginTop: '8px' }}>
-              <Button variant="secondary" onClick={cargarDatos}>Reintentar carga</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Panel principal de tabla y filtros */}
       <section className="panel table-panel">
         <div className="filters filters-admin">
@@ -282,30 +272,27 @@ export default function GestionUsuarios() {
           />
         </div>
 
-        <div className="results-label">
-          {loading
-            ? 'Cargando usuarios desde el servidor…'
-            : `Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios`}
-        </div>
-
-        {/* Estado de carga */}
-        {loading && (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-            <p>Conectando con el servidor…</p>
+        {!loading && !errLoad && (
+          <div className="results-label">
+            {`Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios`}
           </div>
         )}
 
+        {/* Estado de carga */}
+        {loading && <SkeletonFilas filas={5} columnas={6} />}
+
+        {/* Error de carga */}
+        {!loading && errLoad && <ErrorState message={errLoad} onRetry={cargarDatos} />}
+
         {/* Estado vacío */}
-        {!loading && usuariosFiltrados.length === 0 && (
-          <div className="empty">
-            <Icon name="users" size={36} />
-            <strong>No se encontraron usuarios</strong>
-            <p>
-              {busqueda || filtroRol || filtroArea || filtroEstado
-                ? 'Prueba ajustando los filtros de búsqueda.'
-                : 'Aún no hay usuarios registrados.'}
-            </p>
-            {(busqueda || filtroRol || filtroArea || filtroEstado) && (
+        {!loading && !errLoad && usuariosFiltrados.length === 0 && (
+          <EmptyState
+            icon="users"
+            title="No se encontraron usuarios"
+            text={busqueda || filtroRol || filtroArea || filtroEstado
+              ? 'Prueba ajustando los filtros de búsqueda.'
+              : 'Aún no hay usuarios registrados.'}
+            action={(busqueda || filtroRol || filtroArea || filtroEstado) ? (
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -317,12 +304,12 @@ export default function GestionUsuarios() {
               >
                 Limpiar filtros
               </Button>
-            )}
-          </div>
+            ) : undefined}
+          />
         )}
 
         {/* Tabla en escritorio (> 720px) */}
-        {!loading && usuariosFiltrados.length > 0 && (
+        {!loading && !errLoad && usuariosFiltrados.length > 0 && (
           <div className="desktop-table">
             <table>
               <thead>
@@ -409,7 +396,7 @@ export default function GestionUsuarios() {
         )}
 
         {/* Tarjetas en mobile (<= 720px) */}
-        {!loading && usuariosFiltrados.length > 0 && (
+        {!loading && !errLoad && usuariosFiltrados.length > 0 && (
           <div className="mobile-cards">
             {usuariosFiltrados.map((u) => {
               const isCurrent = currentUser?.id === u.id;

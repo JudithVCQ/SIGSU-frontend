@@ -266,7 +266,7 @@ describe('Detección de duplicados - Servicio y Componente', () => {
       );
 
       // Mensaje de error
-      expect(await screen.findByText('Fallo de conexión')).toBeInTheDocument();
+      expect(await screen.findByText('No pudimos cargar las otras solicitudes de este solicitante.')).toBeInTheDocument();
 
       // Botón de reintentar
       const btnReintentar = screen.getByRole('button', { name: /reintentar/i });

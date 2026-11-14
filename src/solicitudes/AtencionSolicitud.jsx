@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { EVIDENCIA } from '../config/constants';
@@ -22,6 +22,9 @@ import Button from '../components/Button';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
+import { SkeletonDetalle } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import EvidenciasGaleria from '../components/EvidenciasGaleria';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
@@ -48,7 +51,7 @@ export default function AtencionSolicitud() {
   const [modalOpen,     setModalOpen]     = useState(false);
   const [submitting,    setSubmitting]    = useState(false);
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       const s = getMock(id);
       setSolicitud(s);
@@ -57,6 +60,7 @@ export default function AtencionSolicitud() {
       return;
     }
     setLoading(true);
+    setErrLoad('');
     getSolicitudByCodigo(id)
       .then(s => {
         setSolicitud(s);
@@ -67,14 +71,21 @@ export default function AtencionSolicitud() {
           getEvidencias(s.id).then(setEvidencias),
         ]);
       })
-      .catch(e => { setErrLoad(e.message ?? 'No se encontró la solicitud.'); setLoading(false); });
+      .catch((e) => {
+        setErrLoad(e?.status === 404
+          ? 'No encontramos la solicitud que buscas.'
+          : 'No pudimos cargar la orden de trabajo. Revisa tu conexión e inténtalo de nuevo.');
+        setLoading(false);
+      });
   }, [id]);
 
-  if (loading) return <div className="narrow-page"><p className="muted-note">Cargando orden de trabajo…</p></div>;
+  useEffect(() => { cargar(); }, [cargar]);
+
+  if (loading) return <div className="narrow-page"><SkeletonDetalle /></div>;
   if (errLoad) return (
     <div className="narrow-page">
-      <div className="message error" role="alert"><Icon name="alert" /><div><strong>{errLoad}</strong></div></div>
-      <Button onClick={() => navigate('/tecnico')}>Volver</Button>
+      <ErrorState message={errLoad} onRetry={cargar} />
+      <Button variant="secondary" onClick={() => navigate('/tecnico')}>Volver</Button>
     </div>
   );
   if (!solicitud) return null;
@@ -88,12 +99,12 @@ export default function AtencionSolicitud() {
     return (
       <div className="narrow-page">
         <PageHead title="Atención no disponible" text="No tienes asignada esta orden o no existe." />
-        <div className="empty">
-          <Icon name="alert" size={32} />
-          <strong>Acceso restringido</strong>
-          <p>Solo el técnico designado puede atender esta solicitud.</p>
-          <Button onClick={() => navigate('/tecnico')}>Volver a mis asignaciones</Button>
-        </div>
+        <EmptyState
+          icon="alert"
+          title="Acceso restringido"
+          text="Solo el técnico designado puede atender esta solicitud."
+          action={<Button onClick={() => navigate('/tecnico')}>Volver a mis asignaciones</Button>}
+        />
       </div>
     );
   }
@@ -342,7 +353,7 @@ export default function AtencionSolicitud() {
           <section className="panel info-panel">
             <h2>Avances y notas de trabajo</h2>
             {seguimientos.length === 0 ? (
-              <p className="muted-note">Aún no se han registrado notas de avance.</p>
+              <EmptyState title="Aún no hay notas de avance" text="Registra la primera nota cuando empieces a trabajar." compact />
             ) : (
               <div className="comments">
                 {seguimientos.map((c, idx) => (
@@ -386,7 +397,7 @@ export default function AtencionSolicitud() {
               </div>
             )}
             {evidencias.length === 0 ? (
-              <p className="muted-note">No se han registrado evidencias para esta solicitud.</p>
+              <EmptyState icon="image" title="Sin evidencias" text="No se han registrado evidencias para esta solicitud." compact />
             ) : (
               <EvidenciasGaleria evidencias={evidencias} />
             )}

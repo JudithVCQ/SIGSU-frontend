@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getSolicitudesMock, SOLICITUDES_MOCK } from '../mocks/solicitudes';
 import {
@@ -15,6 +15,9 @@ import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import { SkeletonFilas, SkeletonDetalle } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
 
@@ -36,13 +39,15 @@ export default function AsignarTecnico() {
   const [loadingTecnicos, setLoadingTecnicos] = useState(false);
   const [submitting,      setSubmitting]      = useState(false);
   const [errGeneral,      setErrGeneral]      = useState('');
+  const [errCarga,        setErrCarga]        = useState('');
   const [modalOpen,       setModalOpen]       = useState(false);
   const [successInfo,     setSuccessInfo]     = useState(null);
 
   // Cargar datos según si hay :id o si es bandeja general /supervisor/asignacion
-  useEffect(() => {
+  const cargar = useCallback(() => {
     setLoading(true);
     setErrGeneral('');
+    setErrCarga('');
     setSuccessInfo(null);
     setSelectedTecnicoId('');
 
@@ -50,7 +55,7 @@ export default function AsignarTecnico() {
       if (id) {
         const s = getSolicitudesMock().find((x) => x.codigo === id || String(x.id) === String(id));
         setSolicitud(s || null);
-        if (!s) setErrGeneral('No se encontró la solicitud.');
+        if (!s) setErrCarga('No encontramos la solicitud que buscas.');
       } else {
         const unassigned = getSolicitudesMock().filter(
           (x) => !x.responsable || x.responsable === 'Sin asignar'
@@ -67,8 +72,8 @@ export default function AsignarTecnico() {
         .then((sol) => {
           setSolicitud(sol);
         })
-        .catch((err) => {
-          setErrGeneral(getErrorMessage(err, 'No se pudo cargar la solicitud.'));
+        .catch(() => {
+          setErrCarga('No pudimos cargar la solicitud. Revisa tu conexión e inténtalo de nuevo.');
         })
         .finally(() => setLoading(false));
     } else {
@@ -77,12 +82,14 @@ export default function AsignarTecnico() {
         .then((list) => {
           setSinAsignarList(list);
         })
-        .catch((err) => {
-          setErrGeneral(getErrorMessage(err, 'No se pudieron cargar las solicitudes sin asignar.'));
+        .catch(() => {
+          setErrCarga('No pudimos cargar las solicitudes sin asignar. Revisa tu conexión e inténtalo de nuevo.');
         })
         .finally(() => setLoading(false));
     }
   }, [id]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Cargar técnicos y cargas cuando se tenga una solicitud seleccionada
   useEffect(() => {
@@ -229,16 +236,20 @@ export default function AsignarTecnico() {
           </div>
 
           {loading ? (
-            <p className="muted-note">Cargando solicitudes sin asignar…</p>
+            <SkeletonFilas filas={5} columnas={6} />
+          ) : errCarga ? (
+            <ErrorState message={errCarga} onRetry={cargar} />
           ) : sinAsignarList.length === 0 ? (
-            <div className="empty">
-              <Icon name="check" size={28} />
-              <strong>No hay solicitudes pendientes de asignación</strong>
-              <p>Todas las solicitudes activas ya cuentan con un técnico responsable.</p>
-              <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>
-                Ir a todas las solicitudes
-              </Button>
-            </div>
+            <EmptyState
+              icon="check"
+              title="No hay solicitudes pendientes de asignación"
+              text="Todas las solicitudes activas ya cuentan con un técnico responsable."
+              action={
+                <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>
+                  Ir a todas las solicitudes
+                </Button>
+              }
+            />
           ) : (
             <div className="desktop-table">
               <table className="req-table">
@@ -300,19 +311,16 @@ export default function AsignarTecnico() {
   if (loading) {
     return (
       <div className="narrow-page">
-        <p className="muted-note">Cargando datos de la solicitud y técnicos…</p>
+        <SkeletonDetalle />
       </div>
     );
   }
 
-  if (errGeneral && !solicitud) {
+  if (errCarga && !solicitud) {
     return (
       <div className="narrow-page">
-        <div className="message error" role="alert">
-          <Icon name="alert" />
-          <div><strong>{errGeneral}</strong></div>
-        </div>
-        <Button onClick={() => navigate('/supervisor/solicitudes')}>Volver a solicitudes</Button>
+        <ErrorState message={errCarga} onRetry={cargar} />
+        <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>Volver a solicitudes</Button>
       </div>
     );
   }
@@ -421,13 +429,14 @@ export default function AsignarTecnico() {
           </div>
 
           {loadingTecnicos ? (
-            <p className="muted-note">Cargando personal técnico y disponibilidad…</p>
+            <SkeletonFilas filas={3} columnas={2} />
           ) : tecnicos.length === 0 ? (
-            <div className="empty">
-              <Icon name="alert" size={24} />
-              <strong>No se encontraron técnicos activos en esta área</strong>
-              <p>Revisa la configuración de usuarios en el sistema.</p>
-            </div>
+            <EmptyState
+              icon="users"
+              title="No se encontraron técnicos activos en esta área"
+              text="Pide al administrador que revise los usuarios del área."
+              compact
+            />
           ) : (
             <div style={{ display: 'grid', gap: '10px', marginTop: '14px' }}>
               {tecnicos.map((t) => {

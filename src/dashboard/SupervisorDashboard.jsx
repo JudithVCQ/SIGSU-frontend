@@ -12,6 +12,9 @@ import Button from '../components/Button';
 import KpiCard from '../components/KpiCard';
 import RequestTable from '../components/RequestTable';
 import Icon from '../components/Icon';
+import { SkeletonFilas, SkeletonKpis } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import './dashboard.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -39,8 +42,8 @@ export default function SupervisorDashboard() {
     setErrorCal('');
     try {
       setResumenCal(await getResumenCalificaciones());
-    } catch (err) {
-      setErrorCal(err?.message || 'No se pudieron cargar las calificaciones.');
+    } catch {
+      setErrorCal('No pudimos cargar las calificaciones. Inténtalo de nuevo.');
     } finally {
       setLoadingCal(false);
     }
@@ -52,7 +55,7 @@ export default function SupervisorDashboard() {
 
   const firstName = user?.nombre ? user.nombre.split(' ')[0] : 'Ana';
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       const all = getSolicitudesMock();
       const vencidasCount = all.filter(s => esVencida(s)).length;
@@ -70,6 +73,7 @@ export default function SupervisorDashboard() {
     }
 
     setLoading(true);
+    setError('');
     Promise.all([
       getDashboard(),
       getSolicitudes(),
@@ -79,9 +83,11 @@ export default function SupervisorDashboard() {
         setItems(sols.slice(0, 20)); // Dashboard muestra las recientes
         setCargaCat(dash.porCategoria ?? []);
       })
-      .catch(err => setError(err.message ?? 'No se pudieron cargar los indicadores.'))
+      .catch(() => setError('No pudimos cargar los indicadores. Revisa tu conexión e inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   const maxCat = cargaCat.length ? Math.max(...cargaCat.map(c => c.total), 1) : 1;
 
@@ -93,17 +99,20 @@ export default function SupervisorDashboard() {
         text="Este es el estado general de los servicios universitarios."
       />
 
-      {error && (
-        <div className="message error" role="alert" style={{ marginBottom: '24px' }}>
-          <Icon name="alert" /><div><strong>{error}</strong></div>
-        </div>
+      {error && !loading && (
+        <section className="panel" style={{ marginBottom: '24px' }}>
+          <ErrorState message={error} onRetry={cargar} />
+        </section>
       )}
 
+      {loading ? (
+        <SkeletonKpis cantidad={mostrarCalificacion ? 5 : 4} />
+      ) : !error && (
       <div className="kpi-grid">
-        <KpiCard number={loading ? '…' : String(kpis?.total ?? 0)}      label="Solicitudes totales" />
-        <KpiCard number={loading ? '…' : String(kpis?.atendidas ?? 0)}  label="Atendidas" tone="dark" />
-        <KpiCard number={loading ? '…' : `${kpis?.porcentajeResuelto ?? 0}%`} label="Porcentaje resuelto" tone="gold" />
-        <KpiCard number={loading ? '…' : String(kpis?.vencidas ?? 0)}   label="Vencidas"             change="Superan plazo de atención" tone="danger" icon="alert" />
+        <KpiCard number={String(kpis?.total ?? 0)}      label="Solicitudes totales" />
+        <KpiCard number={String(kpis?.atendidas ?? 0)}  label="Atendidas" tone="dark" />
+        <KpiCard number={`${kpis?.porcentajeResuelto ?? 0}%`} label="Porcentaje resuelto" tone="gold" />
+        <KpiCard number={String(kpis?.vencidas ?? 0)}   label="Vencidas"             change="Superan plazo de atención" tone="danger" icon="alert" />
         {mostrarCalificacion && (
           <KpiCard
             number={loadingCal ? '…' : (resumenCal?.total ? `${formatPromedio(resumenCal.promedio)} / 5` : '—')}
@@ -118,6 +127,7 @@ export default function SupervisorDashboard() {
           />
         )}
       </div>
+      )}
 
       <div className="dashboard-grid">
         <section className="panel">
@@ -131,7 +141,11 @@ export default function SupervisorDashboard() {
             </Button>
           </div>
           {loading ? (
-            <p className="muted-note">Cargando solicitudes…</p>
+            <SkeletonFilas filas={3} columnas={4} />
+          ) : error ? (
+            <ErrorState message="No pudimos cargar las solicitudes." onRetry={cargar} compact />
+          ) : items.length === 0 ? (
+            <EmptyState title="Aún no hay solicitudes" text="Cuando se registren, las más recientes aparecerán aquí." compact />
           ) : (
             <RequestTable
               compact
@@ -149,7 +163,11 @@ export default function SupervisorDashboard() {
             </div>
           </div>
           {loading ? (
-            <p className="muted-note">Cargando…</p>
+            <SkeletonFilas filas={4} columnas={2} />
+          ) : error ? (
+            <ErrorState message="No pudimos cargar la carga por categoría." onRetry={cargar} compact />
+          ) : cargaCat.length === 0 ? (
+            <EmptyState title="Sin datos por categoría" text="Aún no hay solicitudes activas para mostrar." compact />
           ) : (
             cargaCat.map((item) => (
               <div className="work-row" key={item.nombre ?? item.categoria}>
@@ -178,16 +196,11 @@ export default function SupervisorDashboard() {
             </div>
           </div>
           {loadingCal ? (
-            <p className="muted-note" role="status">Cargando calificaciones…</p>
+            <SkeletonFilas filas={3} columnas={2} />
           ) : errorCal ? (
-            <div className="work-row">
-              <div className="message error" role="alert">
-                <Icon name="alert" /><div><strong>{errorCal}</strong></div>
-              </div>
-              <Button variant="secondary" onClick={cargarCalificaciones}>Reintentar</Button>
-            </div>
+            <ErrorState message={errorCal} onRetry={cargarCalificaciones} compact />
           ) : !resumenCal?.porTecnico?.length ? (
-            <p className="muted-note work-row">Aún no hay calificaciones registradas.</p>
+            <EmptyState icon="check" title="Aún no hay calificaciones" text="Aparecerán cuando los solicitantes califiquen la atención." compact />
           ) : (
             resumenCal.porTecnico.map((t) => (
               <div className="work-row" key={t.responsable}>

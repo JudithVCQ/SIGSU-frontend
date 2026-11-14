@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getSolicitudesMock } from '../mocks/solicitudes';
 import { esVencida } from '../config/vigencia';
@@ -10,6 +10,9 @@ import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
 import RequestTable from '../components/RequestTable';
 import Icon from '../components/Icon';
+import { SkeletonFilas } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import VistaRapidaChip from '../components/VistaRapidaChip';
 import { buscarVista } from '../routes/vistasRapidas';
 import './solicitudes.css';
@@ -44,21 +47,24 @@ export default function BandejaSolicitudes() {
   useEffect(() => { setPage(0); }, [vista?.id]);
   const PAGE_SIZE          = 15;
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       setItems(getSolicitudesMock());
       return;
     }
     setLoading(true);
+    setError('');
     Promise.all([getSolicitudes(), getCategorias(), getPrioridades()])
       .then(([sols, cats, prios]) => {
         setItems(sols);
         setCategorias(cats);
         setPrioridades(prios);
       })
-      .catch(err => setError(err.message ?? 'No se pudieron cargar las solicitudes.'))
+      .catch(() => setError('No pudimos cargar las solicitudes. Revisa tu conexión e inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Recargar al cambiar filtros en modo real (enviamos filtros al servidor)
   useEffect(() => {
@@ -80,7 +86,7 @@ export default function BandejaSolicitudes() {
 
     getSolicitudes(params)
       .then(sols => { setItems(sols); setPage(0); })
-      .catch(err => setError(err.message ?? 'Error al filtrar.'))
+      .catch(() => setError('No pudimos aplicar los filtros. Inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estadoFilter, categoriaId, prioridadId]);
@@ -255,19 +261,23 @@ export default function BandejaSolicitudes() {
           )}
         </div>
 
-        {error && (
-          <div className="message error" role="alert" style={{ marginBottom: '16px' }}>
-            <Icon name="alert" /><div><strong>{error}</strong></div>
-          </div>
-        )}
-
         {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
         <div className="results-label">
           {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Ordenadas por más recientes
         </div>
 
         {loading ? (
-          <p className="muted-note">Cargando solicitudes…</p>
+          <SkeletonFilas filas={6} columnas={6} />
+        ) : error ? (
+          <ErrorState message={error} onRetry={cargar} />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon="search"
+            title={items.length === 0 ? 'Aún no hay solicitudes' : 'No hay solicitudes con estos filtros'}
+            text={items.length === 0
+              ? 'Cuando la comunidad registre solicitudes, aparecerán aquí.'
+              : 'Prueba con otra búsqueda o ajusta los filtros.'}
+          />
         ) : (
           <RequestTable
             requests={paged}

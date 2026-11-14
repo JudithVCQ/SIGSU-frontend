@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ESTADOS, ROLES } from '../config/constants';
@@ -11,6 +11,9 @@ import FormSelect from '../components/FormSelect';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
+import { SkeletonFilas, SkeletonKpis } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import VistaRapidaChip from '../components/VistaRapidaChip';
 import { buscarVista } from '../routes/vistasRapidas';
 import './solicitudes.css';
@@ -37,7 +40,7 @@ export default function MisAsignaciones() {
   const [estadoFilter, setEstadoFilter] = useState('');
   const [prioridadFilter, setPrioridadFilter] = useState('');
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       const all = getSolicitudesMock();
       // En mocks filtramos por nombre (compatibilidad)
@@ -47,11 +50,14 @@ export default function MisAsignaciones() {
     if (!user?.id) return;
     // En modo real: parámetro responsableId es el ID numérico del técnico
     setLoading(true);
+    setError('');
     getSolicitudes({ responsableId: user.id })
       .then(setMisAsignaciones)
-      .catch(err => setError(err.message ?? 'No se pudieron cargar las asignaciones.'))
+      .catch(() => setError('No pudimos cargar tus asignaciones. Revisa tu conexión e inténtalo de nuevo.'))
       .finally(() => setLoading(false));
   }, [user?.id, user?.nombre]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   const asignadasCount = misAsignaciones.filter(r => r.estadoApi === 'ASIGNADA' || r.estado === 'Asignada').length;
   const enAtencionCount = misAsignaciones.filter(r => r.estadoApi === 'EN_ATENCION' || r.estado === 'En atención').length;
@@ -85,11 +91,15 @@ export default function MisAsignaciones() {
         text="Gestiona tus órdenes de trabajo asignadas, registra avances y soluciones técnicas."
       />
 
-      <div className="kpi-grid">
-        <KpiCard icon="clock" number={String(asignadasCount)} label="Asignadas" change="Pendientes de iniciar" />
-        <KpiCard icon="layers" number={String(enAtencionCount)} label="En atención" change="Trabajos en curso" tone="dark" />
-        <KpiCard icon="check" number={String(resueltasCount)} label="Resueltas" change="Completadas recientemente" tone="gold" />
-      </div>
+      {loading ? (
+        <SkeletonKpis cantidad={3} />
+      ) : (
+        <div className="kpi-grid">
+          <KpiCard icon="clock" number={String(asignadasCount)} label="Asignadas" change="Pendientes de iniciar" />
+          <KpiCard icon="layers" number={String(enAtencionCount)} label="En atención" change="Trabajos en curso" tone="dark" />
+          <KpiCard icon="check" number={String(resueltasCount)} label="Resueltas" change="Completadas recientemente" tone="gold" />
+        </div>
+      )}
 
       <section className="panel table-panel" style={{ marginTop: '24px' }}>
         <div className="filters filters-3">
@@ -106,33 +116,32 @@ export default function MisAsignaciones() {
           <FormSelect label="Prioridad" value={prioridadFilter} onChange={setPrioridadFilter} options={['Alta', 'Media', 'Baja']} placeholder="Todas las prioridades" />
         </div>
 
-        {error && (
-          <div className="message error" role="alert" style={{ marginBottom: '16px' }}>
-            <Icon name="alert" /><div><strong>{error}</strong></div>
-          </div>
-        )}
-
         {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
         <div className="results-label">
           {filtered.length} {filtered.length === 1 ? 'asignación' : 'asignaciones'} · Ordenadas por prioridad y fecha
         </div>
 
         {loading ? (
-          <p className="muted-note">Cargando asignaciones…</p>
+          <SkeletonFilas filas={5} columnas={6} />
+        ) : error ? (
+          <ErrorState message={error} onRetry={cargar} />
         ) : misAsignaciones.length === 0 ? (
-          <div className="empty">
-            <Icon name="check" size={28} />
-            <strong>No tienes solicitudes asignadas</strong>
-            <p>Cuando el supervisor derive una solicitud a tu nombre, aparecerá aquí.</p>
-          </div>
+          <EmptyState
+            icon="check"
+            title="No tienes solicitudes asignadas"
+            text="Cuando el supervisor derive una solicitud a tu nombre, aparecerá aquí."
+          />
         ) : filtered.length === 0 ? (
-          <div className="empty">
-            <Icon name="search" size={28} />
-            <strong>No hay asignaciones con estos filtros</strong>
-            <Button variant="secondary" onClick={() => { setQuery(''); setEstadoFilter(''); setPrioridadFilter(''); }}>
-              Limpiar filtros
-            </Button>
-          </div>
+          <EmptyState
+            icon="search"
+            title="No hay asignaciones con estos filtros"
+            text="Prueba con otra búsqueda o limpia los filtros."
+            action={
+              <Button variant="secondary" onClick={() => { setQuery(''); setEstadoFilter(''); setPrioridadFilter(''); }}>
+                Limpiar filtros
+              </Button>
+            }
+          />
         ) : (
           <>
             <div className="desktop-table">

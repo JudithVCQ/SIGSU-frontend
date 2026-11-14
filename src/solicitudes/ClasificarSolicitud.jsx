@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ROLES, VIGENCIA } from '../config/constants';
 import { aFechaInput, fechaInputAIso } from '../config/vigencia';
@@ -11,11 +11,12 @@ import {
 } from '../services/solicitudes.js';
 import { mensajeBackend } from './mensajeBackend';
 import { getCategorias, getPrioridades, getAreas } from '../services/catalogos.js';
-import { getErrorMessage } from '../services/apiClient.js';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import { SkeletonDetalle } from '../components/Skeleton';
+import ErrorState from '../components/ErrorState';
 import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
 import './solicitudes.css';
 
@@ -45,14 +46,14 @@ export default function ClasificarSolicitud() {
   const [tried, setTried] = useState(false);
 
   // Carga inicial de solicitud y catálogos
-  useEffect(() => {
+  const cargar = useCallback(() => {
     setLoading(true);
     setErrLoad('');
 
     if (USE_MOCKS) {
       const s = getMock(id);
       if (!s) {
-        setErrLoad('No se encontró la solicitud.');
+        setErrLoad('No encontramos la solicitud que buscas.');
         setLoading(false);
         return;
       }
@@ -149,11 +150,13 @@ export default function ClasificarSolicitud() {
           setFechaLimite(aFechaInput(fechaBase));
         }
       })
-      .catch((err) => {
-        setErrLoad(getErrorMessage(err, 'No se pudo cargar la información para clasificar.'));
+      .catch(() => {
+        setErrLoad('No pudimos cargar la información para clasificar. Revisa tu conexión e inténtalo de nuevo.');
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Actualizar fecha límite sugerida al cambiar la prioridad
   const handlePrioridadChange = (val) => {
@@ -297,7 +300,7 @@ export default function ClasificarSolicitud() {
   if (loading) {
     return (
       <div className="narrow-page">
-        <p className="muted-note">Cargando datos de la solicitud y catálogos…</p>
+        <SkeletonDetalle />
       </div>
     );
   }
@@ -305,11 +308,8 @@ export default function ClasificarSolicitud() {
   if (errLoad) {
     return (
       <div className="narrow-page">
-        <div className="message error" role="alert">
-          <Icon name="alert" />
-          <div><strong>{errLoad}</strong></div>
-        </div>
-        <Button onClick={() => navigate('/supervisor/solicitudes')}>
+        <ErrorState message={errLoad} onRetry={cargar} />
+        <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>
           Volver a solicitudes
         </Button>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getSolicitudByCodigo as getMock, SOLICITUDES_MOCK } from '../mocks/solicitudes';
 import {
@@ -14,6 +14,9 @@ import Button from '../components/Button';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
+import { SkeletonDetalle } from '../components/Skeleton';
+import ErrorState from '../components/ErrorState';
+import EmptyState from '../components/EmptyState';
 import EvidenciasGaleria from '../components/EvidenciasGaleria';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
@@ -36,14 +39,14 @@ export default function RevisarCerrar() {
   const [errSubmit,   setErrSubmit]   = useState('');
   const [cerradaExito,setCerradaExito]= useState(false);
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     setLoading(true);
     setErrLoad('');
 
     if (USE_MOCKS) {
       const s = getMock(id);
       if (!s) {
-        setErrLoad('No se encontró la solicitud.');
+        setErrLoad('No encontramos la solicitud que buscas.');
       } else {
         setSolicitud(s);
         setEvidencias(s.evidencias || []);
@@ -68,11 +71,13 @@ export default function RevisarCerrar() {
         if (resEvi.status === 'fulfilled') setEvidencias(resEvi.value || []);
         if (resHist.status === 'fulfilled') setHistorial(resHist.value || []);
       })
-      .catch((err) => {
-        setErrLoad(getErrorMessage(err, 'No se pudo cargar la información para revisión.'));
+      .catch(() => {
+        setErrLoad('No pudimos cargar la información para la revisión. Revisa tu conexión e inténtalo de nuevo.');
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   const handleConfirmarCierre = async () => {
     setModalOpen(false);
@@ -106,7 +111,7 @@ export default function RevisarCerrar() {
   if (loading) {
     return (
       <div className="narrow-page">
-        <p className="muted-note">Cargando datos de resolución y evidencias…</p>
+        <SkeletonDetalle />
       </div>
     );
   }
@@ -114,11 +119,8 @@ export default function RevisarCerrar() {
   if (errLoad || !solicitud) {
     return (
       <div className="narrow-page">
-        <div className="message error" role="alert">
-          <Icon name="alert" />
-          <div><strong>{errLoad || 'Solicitud no encontrada'}</strong></div>
-        </div>
-        <Button onClick={() => navigate('/supervisor/solicitudes')}>Volver a solicitudes</Button>
+        <ErrorState message={errLoad || 'No encontramos la solicitud que buscas.'} onRetry={errLoad ? cargar : undefined} />
+        <Button variant="secondary" onClick={() => navigate('/supervisor/solicitudes')}>Volver a solicitudes</Button>
       </div>
     );
   }
@@ -249,7 +251,7 @@ export default function RevisarCerrar() {
       <section className="panel info-panel" style={{ marginBottom: '20px' }}>
         <h2 style={{ fontSize: '16px' }}>Evidencias fotográficas / documentales</h2>
         {evidencias.length === 0 ? (
-          <p className="muted-note">No se adjuntaron archivos de evidencia a esta solicitud.</p>
+          <EmptyState icon="image" title="Sin evidencias" text="No se adjuntaron archivos de evidencia a esta solicitud." compact />
         ) : (
           <EvidenciasGaleria evidencias={evidencias} style={{ marginTop: '12px' }} />
         )}
@@ -259,7 +261,7 @@ export default function RevisarCerrar() {
       <section className="panel timeline" style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '16px' }}>Trazabilidad del ciclo de atención</h2>
         {historial.length === 0 ? (
-          <p className="muted-note">Sin registros en el historial.</p>
+          <EmptyState title="Sin registros en el historial" compact />
         ) : (
           [...historial].reverse().map((h, idx) => (
             <div className="timeline-item" key={h.id ?? idx}>

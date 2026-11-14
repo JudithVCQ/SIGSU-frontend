@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ROLES } from '../config/constants';
@@ -16,6 +16,9 @@ import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
+import { SkeletonDetalle } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
 import EvidenciasGaleria from '../components/EvidenciasGaleria';
 import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
 import CalificacionServicio from '../components/CalificacionServicio';
@@ -40,7 +43,17 @@ export default function DetalleSolicitud() {
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [sendingComment,  setSendingComment]  = useState(false);
 
-  useEffect(() => {
+  // Seguimientos, evidencias e historial: cada uno falla por separado y se puede reintentar
+  const cargarAnidados = useCallback((solicitudId) => {
+    setErrSeg(''); setErrEvi(''); setErrHist('');
+    return Promise.allSettled([
+      getSeguimientos(solicitudId).then(setSeguimientos).catch(() => setErrSeg('No pudimos cargar los comentarios.')),
+      getEvidencias(solicitudId).then(setEvidencias).catch(() => setErrEvi('No pudimos cargar las evidencias.')),
+      getHistorial(solicitudId).then(setHistorial).catch(() => setErrHist('No pudimos cargar el historial.')),
+    ]);
+  }, []);
+
+  const cargar = useCallback(() => {
     if (USE_MOCKS) {
       const s = getMock(id);
       setSolicitud(s);
@@ -52,19 +65,22 @@ export default function DetalleSolicitud() {
     }
 
     setLoading(true);
+    setErrSol('');
     getSolicitudByCodigo(id)
       .then((s) => {
         setSolicitud(s);
         setLoading(false);
-        // Carga paralela de los recursos anidados
-        Promise.allSettled([
-          getSeguimientos(s.id).then(setSeguimientos).catch(e => setErrSeg(e.message)),
-          getEvidencias(s.id).then(setEvidencias).catch(e => setErrEvi(e.message)),
-          getHistorial(s.id).then(setHistorial).catch(e => setErrHist(e.message)),
-        ]);
+        cargarAnidados(s.id);
       })
-      .catch(e => { setErrSol(e.message ?? 'No se encontró la solicitud.'); setLoading(false); });
-  }, [id]);
+      .catch((e) => {
+        setErrSol(e?.status === 404
+          ? 'No encontramos la solicitud que buscas.'
+          : 'No pudimos cargar la solicitud. Revisa tu conexión e inténtalo de nuevo.');
+        setLoading(false);
+      });
+  }, [id, cargarAnidados]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   const handleSendComment = async (e) => {
     e.preventDefault();
@@ -90,13 +106,11 @@ export default function DetalleSolicitud() {
     }
   };
 
-  if (loading) return <div className="narrow-page"><p className="muted-note">Cargando solicitud…</p></div>;
+  if (loading) return <div className="narrow-page"><SkeletonDetalle /></div>;
   if (errSol)  return (
     <div className="narrow-page">
-      <div className="message error" role="alert">
-        <Icon name="alert" /><div><strong>{errSol}</strong></div>
-      </div>
-      <Button onClick={() => navigate(-1)}>Volver</Button>
+      <ErrorState message={errSol} onRetry={cargar} />
+      <Button variant="secondary" onClick={() => navigate(-1)}>Volver</Button>
     </div>
   );
   if (!solicitud) return null;
@@ -257,9 +271,9 @@ export default function DetalleSolicitud() {
           {/* Historial de estados */}
           <section className="panel timeline">
             <h2>Historial de la solicitud</h2>
-            {errHist && <p className="muted-note" style={{ color: 'var(--peligro)' }}>{errHist}</p>}
+            {errHist && <ErrorState message={errHist} onRetry={() => cargarAnidados(solicitud.id)} compact />}
             {timelineItems.length === 0 && !errHist && (
-              <p className="muted-note">Aún no hay cambios de estado registrados.</p>
+              <EmptyState title="Aún no hay cambios de estado" text="El historial aparecerá cuando la solicitud avance." compact />
             )}
             {timelineItems.map((item, idx) => (
               <div className="timeline-item" key={item.id ?? idx}>
@@ -281,9 +295,9 @@ export default function DetalleSolicitud() {
           {/* Seguimientos / Comentarios */}
           <section className="panel info-panel">
             <h2>Comentarios</h2>
-            {errSeg && <p className="muted-note" style={{ color: 'var(--peligro)' }}>{errSeg}</p>}
+            {errSeg && <ErrorState message={errSeg} onRetry={() => cargarAnidados(solicitud.id)} compact />}
             {seguimientos.length === 0 && !errSeg ? (
-              <p className="muted-note">Aún no hay comentarios.</p>
+              <EmptyState title="Aún no hay comentarios" text="Sé la primera persona en comentar." compact />
             ) : (
               <div className="comments">
                 {seguimientos.map((c, i) => (
@@ -319,9 +333,9 @@ export default function DetalleSolicitud() {
           {/* Evidencias */}
           <section className="panel info-panel">
             <h2>Evidencias</h2>
-            {errEvi && <p className="muted-note" style={{ color: 'var(--peligro)' }}>{errEvi}</p>}
+            {errEvi && <ErrorState message={errEvi} onRetry={() => cargarAnidados(solicitud.id)} compact />}
             {evidencias.length === 0 && !errEvi ? (
-              <p className="muted-note">No se adjuntaron archivos a esta solicitud.</p>
+              <EmptyState icon="image" title="Sin evidencias" text="No se adjuntaron archivos a esta solicitud." compact />
             ) : (
               <EvidenciasGaleria evidencias={evidencias} />
             )}
