@@ -18,12 +18,12 @@
 .work-row > div:first-child {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 14px;
   margin-bottom: 7px;
 }
 
 .work-row b {
-  font-size: 10px;
+  font-size: 14px;
   color: var(--carbon);
 }
 

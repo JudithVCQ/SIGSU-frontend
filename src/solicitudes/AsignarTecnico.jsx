@@ -471,7 +471,7 @@ export default function AsignarTecnico() {
                         style={{
                           background: carga > 4 ? 'var(--peligro-fondo)' : '#EAECEB',
                           color: carga > 4 ? '#8B2C2C' : 'var(--carbon)',
-                          fontSize: '11px',
+                          fontSize: '13px',
                         }}
                       >
                         {carga} {carga === 1 ? 'orden activa' : 'órdenes activas'}

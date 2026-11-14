@@ -16,7 +16,7 @@ body {
   font-family: var(--fuente);
   color: var(--carbon);
   background: var(--fondo);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 button, input, textarea, select {
@@ -38,11 +38,11 @@ h1, h2, h3, p {
 }
 
 h1 {
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1.2;
   letter-spacing: -0.03em;
   margin-bottom: 10px;
-  color: var(--verde);
+  color: var(--texto);
 }
 
 h2, h3 {
@@ -56,11 +56,16 @@ h1,
 h2 {
   font-family: var(--fuente-titulos);
   font-weight: 600;
+  color: var(--texto);
+}
+
+h2 {
+  font-size: 18px;
 }
 
 .eyebrow {
-  color: var(--acento-texto);
-  font-size: 10px;
+  color: var(--texto-secundario);
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.16em;
   margin-bottom: 10px;
@@ -97,7 +102,7 @@ h2 {
   background: none;
   padding: 0;
   color: var(--verde);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -179,7 +184,7 @@ h2 {
   display: block;
   margin-top: 2px;
   color: var(--sidebar-texto-secundario);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .sidebar-top {
@@ -191,7 +196,7 @@ h2 {
 
 .role-label {
   color: var(--sidebar-texto-secundario);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.13em;
   margin: 24px 12px 8px;
@@ -213,7 +218,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 13px;
+  font-size: 14px;
   text-align: left;
   text-decoration: none;
   font-weight: 400;
@@ -276,13 +281,13 @@ h2 {
 }
 
 .sidebar-profile strong {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--sidebar-texto);
 }
 
 .sidebar-profile small {
   color: var(--sidebar-texto-secundario);
-  font-size: 10px;
+  font-size: 13px;
   margin-top: 2px;
 }
 
@@ -295,14 +300,14 @@ h2 {
   border-radius: 50%;
   background: var(--primario-suave);
   color: var(--verde);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .avatar.small {
   width: 32px;
   height: 32px;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .avatar.staff {
@@ -401,7 +406,7 @@ h2 {
 .top-profile strong,
 .top-profile small {
   display: block;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .top-profile strong {
@@ -435,7 +440,7 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
   transition: 0.18s ease;
@@ -514,7 +519,7 @@ h2 {
   gap: 6px;
   padding: 4px 9px;
   border-radius: 99px;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   line-height: 1.2;
@@ -609,7 +614,7 @@ h2 {
 }
 
 .field-label {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--carbon);
 }
@@ -626,7 +631,7 @@ h2 {
   padding: 0 12px;
   color: var(--carbon);
   outline: none;
-  font-size: 12px;
+  font-size: 15px;
   font-family: inherit;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -668,7 +673,7 @@ h2 {
 
 .error-text {
   color: var(--peligro);
-  font-size: 10px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -676,7 +681,7 @@ h2 {
 
 .hint-text {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .select-wrap {
@@ -748,13 +753,13 @@ h2 {
 .upload strong,
 .upload small {
   display: block;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .upload small {
   color: var(--muted);
   margin-top: 4px;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 400;
 }
 
@@ -788,21 +793,21 @@ h2 {
 }
 
 .panel-head h2 {
-  font-size: 15px;
+  font-size: 18px;
   margin-bottom: 4px;
 }
 
 .panel-head p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   margin: 0;
 }
 
 .card-label {
   /* Etiqueta pequeña en mayúsculas: se mantiene en Inter aunque se use en un h2 */
   font-family: var(--fuente);
-  color: var(--muted);
-  font-size: 9px;
+  color: var(--texto-secundario);
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.15em;
   margin-bottom: 20px;
@@ -824,12 +829,12 @@ h2 {
 }
 
 .message strong {
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .message p {
   margin: 3px 0 0;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .message.success {
@@ -882,7 +887,7 @@ h2 {
 
 .modal p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.65;
   margin-bottom: 24px;
 }
@@ -944,14 +949,14 @@ h2 {
 }
 
 .kpi-label {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   margin-top: 2px;
   color: var(--carbon);
 }
 
 .kpi-change {
-  font-size: 9px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 5px;
 }
@@ -964,7 +969,7 @@ table {
 
 th {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: left;
@@ -976,7 +981,7 @@ th {
 td {
   border-top: 1px solid var(--borde);
   padding: 13px 14px;
-  font-size: 10px;
+  font-size: 14px;
   color: var(--texto-secundario);
 }
 
@@ -985,7 +990,7 @@ td:first-child {
 }
 
 .req-table td {
-  font-size: 11px;
+  font-size: 14px;
   vertical-align: middle;
 }
 
@@ -1010,13 +1015,14 @@ td:first-child {
 }
 
 .request-link strong {
-  color: var(--verde);
-  font-size: 10px;
+  color: var(--texto-secundario);
+  font-size: 13px;
+  font-family: var(--fuente-mono);
 }
 
 .request-link span {
   color: var(--carbon);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -1025,12 +1031,12 @@ td:first-child {
 }
 
 .request-link.static strong {
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 0.03em;
 }
 
 .request-link.static span {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .row-action {
@@ -1066,7 +1072,7 @@ td:first-child {
   display: grid;
   place-items: center;
   font-style: normal;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -1103,7 +1109,7 @@ td:first-child {
   border: 1px solid var(--borde-fuerte);
   border-radius: 8px;
   background: var(--superficie);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--texto);
   cursor: pointer;
   white-space: nowrap;
@@ -1140,12 +1146,12 @@ td:first-child {
   background: var(--peligro-fondo);
   border: 1px solid var(--peligro-borde);
   color: var(--peligro);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .vencida-alert-banner strong {
   display: block;
-  font-size: 13px;
+  font-size: 14px;
   margin-bottom: 2px;
 }
 
@@ -1179,7 +1185,7 @@ td:first-child {
   color: var(--carbon);
   box-shadow: none !important;
   outline: none !important;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .search-field input:focus,
@@ -1190,7 +1196,7 @@ td:first-child {
 }
 
 .results-label {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   padding: 4px 20px 14px;
 }
@@ -1201,7 +1207,7 @@ td:first-child {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
 }
 
@@ -1226,12 +1232,12 @@ td:first-child {
 
 .empty strong {
   color: var(--carbon);
-  font-size: 14px;
+  font-size: 15px;
   margin-top: 6px;
 }
 
 .empty p {
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 12px;
 }
 
@@ -1255,21 +1261,23 @@ td:first-child {
 .request-card-head strong,
 .request-card-head span {
   display: block;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .request-card-head strong {
-  color: var(--verde);
+  /* Código de solicitud: monoespaciado, secundario */
+  font-family: var(--fuente-mono);
+  color: var(--texto-secundario);
 }
 
 .request-card-head span {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 13px;
   margin-top: 4px;
 }
 
 .request-card h3 {
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.4;
   margin: 15px 0;
   color: var(--carbon);
@@ -1284,12 +1292,12 @@ td:first-child {
 .request-meta small,
 .request-meta > div > span {
   display: block;
-  font-size: 8px;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .request-meta > div > span {
-  font-size: 10px;
+  font-size: 14px;
   color: var(--carbon);
   margin-top: 5px;
 }
@@ -1408,7 +1416,7 @@ td:first-child {
     justify-items: center;
     gap: 3px;
     padding: 8px 6px 6px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--muted);
     border-radius: 8px;

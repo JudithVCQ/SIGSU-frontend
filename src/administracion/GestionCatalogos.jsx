@@ -382,7 +382,7 @@ export default function GestionCatalogos() {
                       return (
                         <tr key={code}>
                           <td>
-                            <code style={{ fontSize: '11px', fontWeight: 600, color: 'var(--verde)' }}>
+                            <code style={{ fontSize: '13px', fontWeight: 600, color: 'var(--verde)' }}>
                               {code}
                             </code>
                           </td>
@@ -402,7 +402,7 @@ export default function GestionCatalogos() {
                       <tr key={item.id}>
                         <td style={{ color: 'var(--muted)' }}>#{item.id}</td>
                         <td>
-                          <code style={{ fontSize: '11px', fontWeight: 600, color: 'var(--verde)' }}>
+                          <code style={{ fontSize: '13px', fontWeight: 600, color: 'var(--verde)' }}>
                             {item.codigo}
                           </code>
                         </td>
@@ -458,7 +458,7 @@ export default function GestionCatalogos() {
                       <div className="catalog-card-head">
                         <div>
                           <h4>{uiText}</h4>
-                          <code style={{ fontSize: '11px', color: 'var(--verde)' }}>{code}</code>
+                          <code style={{ fontSize: '13px', color: 'var(--verde)' }}>{code}</code>
                         </div>
                         <Badge texto={uiText} />
                       </div>
@@ -473,7 +473,7 @@ export default function GestionCatalogos() {
                     <div className="catalog-card-head">
                       <div>
                         <h4>{item.nombre}</h4>
-                        <code style={{ fontSize: '11px', color: 'var(--verde)' }}>{item.codigo}</code>
+                        <code style={{ fontSize: '13px', color: 'var(--verde)' }}>{item.codigo}</code>
                       </div>
                       <Badge texto={item.activo ? 'Activo' : 'Inactivo'} />
                     </div>

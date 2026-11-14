@@ -419,15 +419,15 @@ export default function AtencionSolicitud() {
             </p>
             <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--borde)' }}>
               <div className="card-label">DATOS RÁPIDOS</div>
-              <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '4px 0' }}>
+              <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '4px 0' }}>
                 <strong>Código:</strong> {solicitud.codigo}
               </p>
               {solicitud.prioridad && (
-                <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '4px 0' }}>
+                <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '4px 0' }}>
                   <strong>Prioridad:</strong> {solicitud.prioridad}
                 </p>
               )}
-              <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '4px 0' }}>
+              <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '4px 0' }}>
                 <strong>Ubicación:</strong> {solicitud.ubicacion}
               </p>
             </div>

@@ -33,7 +33,7 @@
 }
 
 .cta-banner h2 {
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: -0.02em;
   margin-bottom: 6px;
   color: var(--superficie);
@@ -42,7 +42,7 @@
 .cta-banner p {
   margin: 0;
   color: var(--primario-suave);
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.6;
   max-width: 520px;
 }
@@ -50,7 +50,7 @@
 .cta-banner .btn {
   min-height: 48px;
   padding: 0 24px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .recent-panel {
@@ -87,20 +87,21 @@
 }
 
 .recent-main strong {
-  color: var(--verde);
-  font-size: 10px;
+  color: var(--texto-secundario);
+  font-size: 13px;
   letter-spacing: 0.03em;
+  font-family: var(--fuente-mono);
 }
 
 .recent-main span {
   color: var(--carbon);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .recent-main small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .recent-badges {
@@ -127,7 +128,7 @@
   align-items: center;
   gap: 8px;
   padding: 0;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   margin-bottom: 25px;
   cursor: pointer;
@@ -159,17 +160,17 @@
   border-radius: 50%;
   background: var(--verde);
   color: var(--superficie);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .form-section-head h2 {
-  font-size: 14px;
+  font-size: 18px;
   margin: 2px 0 4px;
 }
 
 .form-section-head p {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   margin: 0;
 }
@@ -183,7 +184,7 @@
 }
 
 .form-footer p {
-  font-size: 9px;
+  font-size: 13px;
   color: var(--muted);
   margin: 0;
 }
@@ -218,15 +219,16 @@
   border-radius: 8px;
   font-size: 14px;
   margin-bottom: 16px;
+  font-family: var(--fuente-mono);
 }
 
 .success-state h2 {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .success-state p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.7;
   max-width: 480px;
   margin: 0 auto 24px;
@@ -251,7 +253,7 @@
   border: 1px solid var(--borde);
   border-radius: 8px;
   padding: 8px 8px 8px 12px;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--verde);
 }
 
@@ -265,7 +267,7 @@
 
 .file-list small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 button.upload {
@@ -300,10 +302,11 @@ button.upload:hover {
 }
 
 .code {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--verde);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-secundario);
   letter-spacing: 0.04em;
+  font-family: var(--fuente-mono);
 }
 
 .detail-grid {
@@ -327,7 +330,7 @@ button.upload:hover {
 
 .info-panel h2,
 .timeline h2 {
-  font-size: 15px;
+  font-size: 18px;
   padding-bottom: 17px;
   border-bottom: 1px solid var(--borde);
   margin-bottom: 4px;
@@ -343,14 +346,21 @@ button.upload:hover {
 .info-grid small,
 .description small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   display: block;
   margin-bottom: 7px;
 }
 
 .info-grid span,
 .description p {
-  font-size: 11px;
+  font-size: 15px;
+}
+
+/* Datos clave del panel (estado, prioridad, área, fecha límite): 14px y peso 500.
+   Aplica también a los badges y al plazo dentro del panel. */
+.info-grid span {
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .description {
@@ -399,19 +409,19 @@ button.upload:hover {
 }
 
 .timeline-item strong {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--carbon);
 }
 
 .timeline-item p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   margin: 3px 0;
 }
 
 .timeline-item small {
   color: var(--texto-secundario);
-  font-size: 9px;
+  font-size: 13px;
 }
 
 .status-panel .badge {
@@ -420,7 +430,7 @@ button.upload:hover {
 
 .status-panel p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.6;
 }
 
@@ -444,7 +454,7 @@ button.upload:hover {
 .progress-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 8px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 7px;
 }
@@ -463,18 +473,20 @@ button.upload:hover {
 .contact strong,
 .contact span {
   display: block;
-  font-size: 11px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .contact span {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   margin-top: 3px;
+  font-weight: 400;
 }
 
 .muted-note {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   margin: 18px 0 0;
   line-height: 1.6;
 }
@@ -499,11 +511,11 @@ button.upload:hover {
 }
 
 .comment-head strong {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .comment-head span {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--verde);
   background: var(--verde-suave);
   padding: 2px 7px;
@@ -511,12 +523,12 @@ button.upload:hover {
 }
 
 .comment-head small {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .comment p {
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.6;
   margin: 5px 0 0;
   color: var(--texto-secundario);
@@ -537,7 +549,7 @@ button.upload:hover {
   border: 1px solid var(--borde-fuerte);
   border-radius: 8px;
   padding: 11px 12px;
-  font-size: 12px;
+  font-size: 15px;
   outline: none;
   resize: vertical;
   color: var(--carbon);
@@ -574,7 +586,7 @@ button.upload:hover {
 }
 
 .evidence strong {
-  font-size: 11px;
+  font-size: 13px;
   padding: 0 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -582,7 +594,7 @@ button.upload:hover {
 }
 
 .evidence small {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   padding: 0 4px;
 }
@@ -611,7 +623,7 @@ button.upload:hover {
 }
 
 .evidence-pdf > span {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -645,7 +657,7 @@ button.upload:hover {
   align-items: center;
   gap: 4px;
   margin: 6px 4px 0;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--verde);
   text-decoration: none;
@@ -696,14 +708,14 @@ button.upload:hover {
 }
 
 .visor-info strong {
-  font-size: 13px;
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .visor-info span {
-  font-size: 11px;
+  font-size: 13px;
   opacity: 0.75;
 }
 
@@ -980,7 +992,7 @@ button.upload:hover {
 }
 
 .atencion-banner p {
-  font-size: 11px;
+  font-size: 13px;
   margin: 0;
   color: var(--carbon);
 }
@@ -1016,14 +1028,14 @@ button.upload:hover {
 }
 
 .duplicados-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   margin: 0;
   color: var(--carbon);
 }
 
 .duplicados-subtitulo {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--muted);
   background: var(--fondo);
@@ -1113,20 +1125,20 @@ button.upload:hover {
 }
 
 .duplicados-codigo {
-  font-family: monospace;
-  font-size: 12px;
+  font-family: var(--fuente-mono);
+  font-size: 13px;
   font-weight: 600;
-  color: var(--verde);
+  color: var(--texto-secundario);
 }
 
 .duplicados-fecha {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin-left: auto;
 }
 
 .duplicados-item-link {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--carbon);
   text-decoration: none;
@@ -1157,7 +1169,7 @@ button.upload:hover {
 
 .plazo-inline .plazo-texto {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .plazo-texto.plazo-vencida {
@@ -1177,7 +1189,7 @@ button.upload:hover {
 }
 
 .calificacion-estrellas legend {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 8px;
 }
@@ -1228,7 +1240,7 @@ button.upload:hover {
 }
 
 .calificacion-comentario {
-  font-size: 12px;
+  font-size: 14px;
   font-style: italic;
   margin: 10px 0 6px;
 }

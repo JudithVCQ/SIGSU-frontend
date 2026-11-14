@@ -940,7 +940,7 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
         />
         <div>
           <strong>Usuario activo</strong>
-          <span style={{ display: 'block', fontSize: '11px', color: 'var(--muted)' }}>
+          <span style={{ display: 'block', fontSize: '13px', color: 'var(--muted)' }}>
             {isSelf
               ? 'No puedes desactivar tu propia cuenta de administrador.'
               : activo
@@ -950,7 +950,7 @@ function EditUserModal({ user, isSelf, roles, areas, onClose, onConfirmRoleChang
         </div>
       </label>
 
-      <p className="hint-text" style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'var(--muted)' }}>
+      <p className="hint-text" style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
         La contraseña no se puede modificar desde aquí.
       </p>
     </FormModal>

@@ -548,7 +548,7 @@ export default function ClasificarSolicitud() {
                     onChange={(e) => setFechaLimite(e.target.value)}
                     min={aFechaInput(new Date())}
                   />
-                  <span className="field-hint" style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
+                  <span className="field-hint" style={{ fontSize: '13px', color: 'var(--muted)', marginTop: '2px' }}>
                     Plazo sugerido según prioridad. Puedes ajustarlo libremente.
                   </span>
                 </label>

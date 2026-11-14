@@ -52,13 +52,13 @@
 
 .user-info strong {
   color: var(--carbon);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .user-info small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 /* Badges de Roles */
@@ -66,7 +66,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 6px;
@@ -128,13 +128,13 @@
   padding: 10px;
   background: var(--superficie-alt);
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .user-card-meta small {
   display: block;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 3px;
@@ -252,7 +252,7 @@
   gap: 10px;
   cursor: pointer;
   user-select: none;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--carbon);
   padding: 10px 14px;
   background: var(--fondo);
@@ -276,7 +276,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--verde);
   background: var(--verde-suave);
@@ -318,7 +318,7 @@
   padding: 10px 18px;
   border: none;
   background: none;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
@@ -343,7 +343,7 @@
 .tab-badge {
   background: var(--superficie-alt);
   color: var(--carbon);
-  font-size: 10px;
+  font-size: 13px;
   padding: 2px 7px;
   border-radius: 99px;
   font-weight: 700;
@@ -362,7 +362,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   margin-bottom: 16px;
   line-height: 1.5;
@@ -408,13 +408,13 @@
   padding: 8px 12px;
   background: var(--superficie-alt);
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .catalog-card-meta small {
   color: var(--muted);
   text-transform: uppercase;
-  font-size: 9px;
+  font-size: 12px;
   display: block;
   margin-bottom: 2px;
 }
