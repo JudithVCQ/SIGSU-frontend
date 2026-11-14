@@ -20,13 +20,15 @@ export default function AuthShell({ children }) {
   return (
     <div className="auth">
       <aside className="auth-aside">
-        {/* Decoración: trama de puntos y línea punteada que une tres círculos */}
-        <svg className="auth-decoracion" viewBox="0 0 600 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-          <path className="auth-linea" d="M70 640 C 190 520, 250 560, 330 430 S 470 250, 540 90" />
-          <circle className="auth-circulo" cx="70" cy="640" r="14" />
-          <circle className="auth-circulo" cx="330" cy="430" r="14" />
-          <circle className="auth-circulo auth-circulo-final" cx="540" cy="90" r="18" />
-        </svg>
+        {/* Decoración (aria-hidden): línea punteada que une tres círculos, todo en % del panel */}
+        <div className="auth-decoracion" aria-hidden="true">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
+            <path className="auth-linea" d="M12 88 C 30 76, 40 80, 55 62 S 80 36, 88 14" />
+          </svg>
+          <span className="auth-circulo" style={{ left: '12%', top: '88%' }} />
+          <span className="auth-circulo" style={{ left: '55%', top: '62%' }} />
+          <span className="auth-circulo auth-circulo-final" style={{ left: '88%', top: '14%' }} />
+        </div>
 
         <div className="auth-contenido">
           <Logo />

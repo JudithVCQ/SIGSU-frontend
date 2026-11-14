@@ -12,7 +12,8 @@
   overflow: hidden;
   isolation: isolate;
   color: var(--sidebar-texto);
-  padding: 48px;
+  min-height: 100vh;
+  padding: clamp(24px, 4vw, 48px);
   display: flex;
   background-color: var(--sidebar-fondo);
   /* Brillo guinda suave desde la esquina inferior izquierda + trama de puntos muy tenue */
@@ -29,10 +30,16 @@
 .auth-decoracion {
   position: absolute;
   inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.auth-decoracion svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;
-  pointer-events: none;
 }
 
 .auth-linea {
@@ -41,16 +48,23 @@
   stroke-width: 2;
   stroke-dasharray: 3 12;
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .auth-circulo {
-  fill: var(--sidebar-fondo);
-  stroke: color-mix(in srgb, var(--superficie) 22%, transparent);
-  stroke-width: 2;
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--sidebar-fondo);
+  border: 2px solid color-mix(in srgb, var(--superficie) 22%, transparent);
 }
 
 .auth-circulo-final {
-  stroke: color-mix(in srgb, var(--acento) 55%, transparent);
+  width: 36px;
+  height: 36px;
+  border-color: color-mix(in srgb, var(--acento) 55%, transparent);
 }
 
 .auth-contenido {
@@ -73,7 +87,7 @@
 
 .auth-aside .auth-titulo {
   font-family: var(--fuente-titulos);
-  font-size: 38px;
+  font-size: clamp(26px, 3.2vw, 38px);
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -84,8 +98,8 @@
 
 .auth-subtitulo {
   max-width: 440px;
-  margin: 0 0 32px;
-  font-size: 16px;
+  margin: 0 0 clamp(18px, 3vh, 32px);
+  font-size: clamp(14px, 1.3vw, 16px);
   line-height: 1.6;
   color: var(--sidebar-texto);
 }
@@ -345,6 +359,13 @@
   color: var(--primario);
 }
 
+/* Poca altura: se oculta la tarjeta de ejemplo para que nada quede fuera del panel */
+@media (max-height: 860px) {
+  .auth-ejemplo {
+    display: none;
+  }
+}
+
 /* ── Responsivo: columnas apiladas, sin tarjeta de ejemplo ── */
 @media (max-width: 900px) {
   .auth {
@@ -361,14 +382,16 @@
     max-width: none;
   }
 
+  .auth-aside {
+    min-height: 0;
+  }
+
   .auth-aside .auth-titulo {
-    font-size: 28px;
     margin-bottom: 12px;
   }
 
   .auth-subtitulo {
     margin-bottom: 20px;
-    font-size: 15px;
   }
 
   .auth-ejemplo {
