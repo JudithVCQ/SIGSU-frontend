@@ -29,7 +29,7 @@ describe('Listas filtradas por ?vista=', () => {
     renderLista(BandejaSolicitudes, '/supervisor/solicitudes', '/supervisor/solicitudes?vista=sin-clasificar',
       { id: 2, nombre: 'Ana', rol: 'SUPERVISOR' });
 
-    expect(await screen.findByText('Sin clasificar')).toBeInTheDocument(); // chip
+    expect(await screen.findByRole('button', { name: 'Quitar la vista rápida Sin clasificar' })).toBeInTheDocument(); // chip
     expect(aparece('SIG-00133')).toBe(true);  // Registrada
     expect(aparece('SIG-00131')).toBe(false); // En atención
     expect(aparece('SIG-00118')).toBe(false); // Resuelta

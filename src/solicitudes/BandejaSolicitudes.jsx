@@ -6,7 +6,6 @@ import { getSolicitudes } from '../services/solicitudes.js';
 import { getCategorias, getPrioridades } from '../services/catalogos.js';
 import { ESTADOS, ROLES } from '../config/constants';
 import PageHead from '../components/PageHead';
-import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
 import RequestTable from '../components/RequestTable';
 import Icon from '../components/Icon';
@@ -107,8 +106,8 @@ export default function BandejaSolicitudes() {
   // Paginación (10 por página); vuelve a la primera al cambiar la vista rápida
   const { pagina: page, setPagina: setPage, items: paged } = usePaginacion(filtered, vista?.id ?? '');
 
-  // Acción contextual exclusiva para Supervisor según el estado de la solicitud
-  const renderSupervisorAction = (r) => {
+  // Una acción principal según el estado; el resto, en el menú "⋯"
+  const getAcciones = (r) => {
     const code = r.codigo || r.id;
     const e = r.estadoApi ?? (
       r.estado === 'Registrada'    ? 'REGISTRADA' :
@@ -123,63 +122,30 @@ export default function BandejaSolicitudes() {
       (r.categoriaId && r.areaId) ||
       (r.categoria && r.categoria !== 'Sin categoría' && r.categoria !== '—')
     );
+    const verDetalle = { label: 'Ver detalle', onClick: () => navigate(`/solicitudes/${code}`) };
 
-    // 1. Revisar y cerrar: si el técnico ya documentó la solución
     if (e === 'RESUELTA' || r.estado === 'Resuelta') {
-      return (
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => navigate(`/supervisor/solicitudes/${code}/cerrar`)}
-        >
-          Revisar y cerrar
-        </Button>
-      );
+      return {
+        principal: { label: 'Cerrar', onClick: () => navigate(`/supervisor/solicitudes/${code}/cerrar`) },
+        menu: [verDetalle],
+      };
     }
-
-    // 2. Si está en REGISTRADA o EN_EVALUACION y NO tiene responsable
     if ((e === 'REGISTRADA' || e === 'EN_EVALUACION') && sinResponsable) {
       if (estaClasificada) {
-        return (
-          <div style={{ display: 'inline-flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}
-            >
-              Asignar
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
-            >
-              Editar clasificación
-            </Button>
-          </div>
-        );
+        return {
+          principal: { label: 'Asignar', onClick: () => navigate(`/supervisor/solicitudes/${code}/asignar`) },
+          menu: [
+            { label: 'Editar clasificación', onClick: () => navigate(`/supervisor/solicitudes/${code}/clasificar`) },
+            verDetalle,
+          ],
+        };
       }
-      return (
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
-        >
-          Clasificar
-        </Button>
-      );
+      return {
+        principal: { label: 'Clasificar', onClick: () => navigate(`/supervisor/solicitudes/${code}/clasificar`) },
+        menu: [verDetalle],
+      };
     }
-
-    // 3. Cualquier otro estado (En atención, Cerrada, Asignada): ver detalle
-    return (
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => navigate(`/solicitudes/${code}`)}
-      >
-        Ver
-      </Button>
-    );
+    return { principal: null, menu: [verDetalle] };
   };
 
   return (
@@ -282,7 +248,7 @@ export default function BandejaSolicitudes() {
           <RequestTable
             requests={paged}
             onOpen={(code) => navigate(`/solicitudes/${code}`)}
-            renderAction={renderSupervisorAction}
+            getAcciones={getAcciones}
           />
         )}
 

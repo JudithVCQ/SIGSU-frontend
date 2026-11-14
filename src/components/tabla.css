@@ -1,0 +1,65 @@
+/* Filas clicables, acciones compactas y menú "⋯" */
+.fila-clicable { cursor: pointer; }
+.fila-clicable:hover { background: var(--superficie-alt); }
+.fila-clicable:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: -2px;
+}
+
+.sin-clasificar { font-size: 13px; color: var(--texto-terciario); }
+
+.row-acciones {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.menu-acciones { position: relative; display: inline-block; }
+
+.menu-acciones-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radio);
+  background: transparent;
+  color: var(--texto-secundario);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.menu-acciones-btn:hover { background: var(--superficie-alt); border-color: var(--borde); }
+.menu-acciones-btn:focus-visible { outline: 2px solid var(--verde); outline-offset: 1px; }
+
+.menu-acciones-lista {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  min-width: 190px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--texto) 12%, transparent);
+  text-align: left;
+}
+
+.menu-acciones-item {
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--texto);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-acciones-item:hover,
+.menu-acciones-item:focus-visible { background: var(--superficie-alt); outline: none; }
