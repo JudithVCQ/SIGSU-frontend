@@ -34,13 +34,13 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid rgba(31, 78, 67, 0.12);
+  border: 1px solid var(--primario-anillo);
 }
 
 .user-avatar.inactive {
-  background: #f1f3f2;
-  color: #888;
-  border-color: #e0e3e1;
+  background: var(--superficie-alt);
+  color: var(--texto-secundario);
+  border-color: var(--borde);
 }
 
 .user-info {
@@ -101,7 +101,7 @@
 /* Tarjetas Mobile para Usuarios */
 .user-card {
   border: 1px solid var(--borde);
-  background: #fff;
+  background: var(--superficie);
   padding: 16px;
   border-radius: 12px;
   display: flex;
@@ -111,7 +111,7 @@
 }
 
 .user-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--texto) 5%, transparent);
 }
 
 .user-card-head {
@@ -126,7 +126,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   padding: 10px;
-  background: #f8faf9;
+  background: var(--superficie-alt);
   border-radius: 8px;
   font-size: 11px;
 }
@@ -156,7 +156,7 @@
 .modal-form-layer {
   position: fixed;
   inset: 0;
-  background: rgba(23, 31, 29, 0.6);
+  background: var(--overlay);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -167,11 +167,11 @@
 }
 
 .modal-form {
-  background: #fff;
+  background: var(--superficie);
   width: min(560px, 100%);
   max-height: 90vh;
   border-radius: 14px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 20px 45px color-mix(in srgb, var(--texto) 22%, transparent);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -195,7 +195,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fafbf9;
+  background: var(--fondo);
 }
 
 .modal-form-head h3 {
@@ -220,7 +220,7 @@
 
 .modal-form-close:hover {
   color: var(--carbon);
-  background: #eef1ef;
+  background: var(--superficie-alt);
 }
 
 .modal-form-body {
@@ -237,7 +237,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  background: #fafbf9;
+  background: var(--fondo);
 }
 
 .form-row-2 {
@@ -255,7 +255,7 @@
   font-size: 13px;
   color: var(--carbon);
   padding: 10px 14px;
-  background: #f8faf9;
+  background: var(--fondo);
   border: 1px solid var(--borde);
   border-radius: 8px;
 }
@@ -341,7 +341,7 @@
 }
 
 .tab-badge {
-  background: #eef2f0;
+  background: var(--superficie-alt);
   color: var(--carbon);
   font-size: 10px;
   padding: 2px 7px;
@@ -355,7 +355,7 @@
 }
 
 .catalog-notice {
-  background: #f8faf9;
+  background: var(--fondo);
   border: 1px solid var(--borde);
   padding: 12px 16px;
   border-radius: 8px;
@@ -375,7 +375,7 @@
 /* Tarjetas Mobile para Catálogos */
 .catalog-card {
   border: 1px solid var(--borde);
-  background: #fff;
+  background: var(--superficie);
   padding: 16px;
   border-radius: 12px;
   display: flex;
@@ -385,7 +385,7 @@
 }
 
 .catalog-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--texto) 5%, transparent);
 }
 
 .catalog-card-head {
@@ -406,7 +406,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: #f8faf9;
+  background: var(--superficie-alt);
   border-radius: 8px;
   font-size: 11px;
 }
