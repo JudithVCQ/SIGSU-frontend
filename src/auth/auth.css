@@ -65,6 +65,7 @@
 }
 
 .auth-pitch h2 {
+  font-family: var(--fuente-titulos);
   font-size: 34px;
   line-height: 1.15;
   letter-spacing: -0.03em;

@@ -33,7 +33,6 @@
 }
 
 .cta-banner h2 {
-  font-size: 18px;
   letter-spacing: -0.02em;
   margin-bottom: 6px;
   color: var(--superficie);
@@ -165,7 +164,6 @@
 }
 
 .form-section-head h2 {
-  font-size: 18px;
   margin: 2px 0 4px;
 }
 
@@ -223,7 +221,7 @@
 }
 
 .success-state h2 {
-  font-size: 18px;
+  margin-bottom: 8px;
 }
 
 .success-state p {
@@ -330,7 +328,6 @@ button.upload:hover {
 
 .info-panel h2,
 .timeline h2 {
-  font-size: 18px;
   padding-bottom: 17px;
   border-bottom: 1px solid var(--borde);
   margin-bottom: 4px;
@@ -986,9 +983,7 @@ button.upload:hover {
 }
 
 .atencion-banner h3 {
-  font-size: 15px;
   margin: 0 0 4px;
-  color: var(--verde);
 }
 
 .atencion-banner p {

@@ -345,7 +345,7 @@ export default function ClasificarSolicitud() {
           </small>
         </div>
 
-        <h2 style={{ marginTop: '12px', fontSize: '18px' }}>{solicitud?.titulo}</h2>
+        <h2 style={{ marginTop: '12px' }}>{solicitud?.titulo}</h2>
         <p style={{ color: 'var(--muted)', fontSize: '13px', margin: '4px 0 12px 0' }}>
           <strong>Ubicación:</strong> {solicitud?.ubicacion}
           {solicitud?.solicitante && ` · Solicitante: ${solicitud.solicitante}`}

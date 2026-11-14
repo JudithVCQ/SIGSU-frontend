@@ -347,7 +347,7 @@ export default function AsignarTecnico() {
           </small>
         </div>
 
-        <h2 style={{ marginTop: '12px', fontSize: '18px' }}>{solicitud?.titulo}</h2>
+        <h2 style={{ marginTop: '12px' }}>{solicitud?.titulo}</h2>
         <div className="info-grid" style={{ marginTop: '12px' }}>
           <div><small>Categoría</small><span>{solicitud?.categoria || '—'}</span></div>
           <div><small>Área técnica</small><span>{solicitud?.area || '—'}</span></div>

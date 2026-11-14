@@ -45,22 +45,21 @@ h1 {
   color: var(--texto);
 }
 
-h2, h3 {
-  color: var(--verde);
-  margin-bottom: 0.5rem;
-}
-
-/* Títulos de página (h1) y de sección/tarjeta (h2) en serif; el resto sigue en Inter.
-   Solo se carga el peso 600 de Source Serif 4. */
-h1,
-h2 {
+/* Solo el h1 (título de página) y el título grande del login usan la serif.
+   Los títulos de tarjetas y secciones (h2, h3) van en Inter, peso 600, 16px. */
+h1 {
   font-family: var(--fuente-titulos);
   font-weight: 600;
-  color: var(--texto);
 }
 
-h2 {
-  font-size: 18px;
+h2,
+h3 {
+  font-family: var(--fuente);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--texto);
+  margin-bottom: 0.5rem;
 }
 
 .eyebrow {
@@ -937,7 +936,6 @@ h2 {
 }
 
 .panel-head h2 {
-  font-size: 18px;
   margin-bottom: 4px;
 }
 
@@ -1024,9 +1022,7 @@ h2 {
 }
 
 .modal h3 {
-  font-size: 19px;
   margin-bottom: 9px;
-  color: var(--carbon);
 }
 
 .modal p {
@@ -1421,10 +1417,7 @@ td:first-child {
 }
 
 .request-card h3 {
-  font-size: 15px;
-  line-height: 1.4;
   margin: 15px 0;
-  color: var(--carbon);
 }
 
 .request-meta {
