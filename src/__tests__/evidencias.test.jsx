@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { esUrlCloudinary, urlMiniatura, urlDescarga, tipoEvidencia } from '../services/evidencias.js';
 import EvidenciaCard from '../components/EvidenciaCard';
+import EvidenciasGaleria from '../components/EvidenciasGaleria';
 
 const CLOUD_IMG = 'https://res.cloudinary.com/demo/image/upload/v1731/solicitud_11_abc.jpg';
 const CLOUD_PDF = 'https://res.cloudinary.com/demo/image/upload/v1731/solicitud_11_informe.pdf';
@@ -108,5 +109,103 @@ describe('EvidenciaCard', () => {
     expect(screen.getByText('toma_red_lab4.jpg')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Archivo: toma_red_lab4.jpg' })).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+});
+
+describe('EvidenciasGaleria + VisorImagenes', () => {
+  const img1 = { id: 1, nombreArchivo: 'aula.jpg', tipoMime: 'image/jpeg', archivoUrl: CLOUD_IMG };
+  const img2 = { id: 2, nombreArchivo: 'cable.png', tipoMime: 'image/png', archivoUrl: OTRA_URL };
+  const doc  = { id: 3, nombreArchivo: 'informe.pdf', tipoMime: 'application/pdf', archivoUrl: CLOUD_PDF };
+
+  const visor = () => screen.queryByRole('dialog');
+  const imagenGrande = () => within(visor()).getAllByRole('img').find((el) => el.classList.contains('visor-imagen'));
+
+  it('al hacer clic en una imagen la amplía (no abre otra pestaña)', () => {
+    render(<EvidenciasGaleria evidencias={[img1, img2, doc]} />);
+    expect(screen.queryByRole('link', { name: 'Abrir aula.jpg en una pestaña nueva' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver aula.jpg en grande' }));
+    expect(visor()).toBeInTheDocument();
+    // En grande se usa la URL original, no la miniatura
+    expect(imagenGrande()).toHaveAttribute('src', CLOUD_IMG);
+    expect(imagenGrande()).toHaveAttribute('alt', 'aula.jpg');
+  });
+
+  it('los PDF siguen abriéndose en una pestaña nueva', () => {
+    render(<EvidenciasGaleria evidencias={[img1, doc]} />);
+    expect(screen.getByRole('link', { name: 'Abrir informe.pdf en una pestaña nueva' })).toHaveAttribute('target', '_blank');
+  });
+
+  it('carrusel: contador, siguiente/anterior, teclado y sin incluir PDFs', () => {
+    render(<EvidenciasGaleria evidencias={[img1, doc, img2]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver aula.jpg en grande' }));
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Imagen siguiente' }));
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+    expect(imagenGrande()).toHaveAttribute('alt', 'cable.png');
+
+    // Circular: siguiente desde la última vuelve a la primera
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'ArrowLeft' });
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+  });
+
+  it('abre en la imagen elegida y permite saltar con las miniaturas', () => {
+    render(<EvidenciasGaleria evidencias={[img1, img2]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver cable.png en grande' }));
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver aula.jpg (1 de 2)' }));
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+  });
+
+  it('deslizar con el dedo cambia de imagen', () => {
+    render(<EvidenciasGaleria evidencias={[img1, img2]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver aula.jpg en grande' }));
+    const escenario = document.querySelector('.visor-escenario');
+    fireEvent.touchStart(escenario, { touches: [{ clientX: 300 }] });
+    fireEvent.touchEnd(escenario, { changedTouches: [{ clientX: 150 }] });
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+  });
+
+  it('con una sola imagen no muestra flechas ni contador', () => {
+    render(<EvidenciasGaleria evidencias={[img1]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver aula.jpg en grande' }));
+    expect(screen.queryByRole('button', { name: 'Imagen siguiente' })).not.toBeInTheDocument();
+    expect(screen.queryByText('1 / 1')).not.toBeInTheDocument();
+  });
+
+  it('se cierra con Esc y con el botón Cerrar, y devuelve el foco', () => {
+    render(<EvidenciasGaleria evidencias={[img1, img2]} />);
+    const abrir = screen.getByRole('button', { name: 'Ver aula.jpg en grande' });
+    abrir.focus();
+    fireEvent.click(abrir);
+    expect(screen.getByRole('button', { name: 'Cerrar visor' })).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(visor()).not.toBeInTheDocument();
+    expect(abrir).toHaveFocus();
+
+    fireEvent.click(abrir);
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar visor' }));
+    expect(visor()).not.toBeInTheDocument();
+  });
+
+  it('ofrece descargar la imagen actual', () => {
+    render(<EvidenciasGaleria evidencias={[img1]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver aula.jpg en grande' }));
+    expect(within(visor()).getByRole('link', { name: 'Descargar aula.jpg' })).toHaveAttribute('href', urlDescarga(CLOUD_IMG));
+  });
+
+  it('si la imagen grande no carga muestra un aviso sin romper el visor', () => {
+    render(<EvidenciasGaleria evidencias={[img1, img2]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver aula.jpg en grande' }));
+    fireEvent.error(imagenGrande());
+    expect(screen.getByText('No se pudo cargar la imagen.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Imagen siguiente' }));
+    expect(imagenGrande()).toHaveAttribute('alt', 'cable.png');
   });
 });
