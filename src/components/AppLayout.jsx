@@ -21,7 +21,7 @@ export default function AppLayout() {
         onAlternar={alternarSidebar}
       />
       <div className="main-shell">
-        <Header user={user} logout={logout} />
+        <Header rol={user?.rol} />
         <main className="content">
           <Outlet />
         </main>

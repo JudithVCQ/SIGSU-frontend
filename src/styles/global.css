@@ -516,55 +516,50 @@ h2 {
   backdrop-filter: blur(10px);
 }
 
-.top-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--carbon);
+/* Ruta de navegación (migas de pan) */
+.migas {
+  min-width: 0;
 }
 
-.top-actions {
+.migas ol {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
-.notification {
-  position: relative;
+.migas-item {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.notification > span {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--dorado);
-  top: 9px;
-  right: 9px;
-  border: 1px solid var(--superficie);
+.migas-item a {
+  color: var(--texto-secundario);
+  text-decoration: none;
 }
 
-.top-profile {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-left: 14px;
-  padding-left: 18px;
-  border-left: 1px solid var(--borde);
+.migas-item a:hover {
+  color: var(--primario);
+  text-decoration: underline;
 }
 
-.top-profile strong,
-.top-profile small {
-  display: block;
+.migas-item [aria-current='page'] {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.migas-sep {
+  color: var(--texto-terciario);
+}
+
+.migas-codigo {
+  font-family: var(--fuente-mono);
   font-size: 13px;
-}
-
-.top-profile strong {
-  color: var(--carbon);
-}
-
-.top-profile small {
-  color: var(--muted);
-  margin-top: 2px;
 }
 
 .content {
@@ -1466,8 +1461,9 @@ td:first-child {
     padding: 0 16px;
   }
 
-  .top-profile > div:not(.avatar),
-  .top-profile > .icon {
+  /* En móvil solo se ven los dos últimos niveles de la ruta */
+  .migas-item:not(:nth-last-child(-n + 3)),
+  .migas-sep:not(:nth-last-child(-n + 2)) {
     display: none;
   }
 
