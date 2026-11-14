@@ -1580,11 +1580,12 @@ td:first-child {
 }
 
 /* ───────── Vista rápida aplicada a una lista ───────── */
+/* Margen lateral de 20px: igual que el buscador (.filters), dentro del padding de la tarjeta */
 .vista-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 12px;
+  margin: 0 20px 12px;
   padding: 4px 6px 4px 12px;
   border-radius: 99px;
   background: var(--primario-suave);
