@@ -1,21 +1,31 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getSolicitudesMock } from '../mocks/solicitudes';
 import { esVencida } from '../config/vigencia';
 import { getSolicitudes } from '../services/solicitudes.js';
 import { getCategorias, getPrioridades } from '../services/catalogos.js';
-import { ESTADOS } from '../config/constants';
+import { ESTADOS, ROLES } from '../config/constants';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
 import RequestTable from '../components/RequestTable';
 import Icon from '../components/Icon';
+import VistaRapidaChip from '../components/VistaRapidaChip';
+import { buscarVista } from '../routes/vistasRapidas';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export default function BandejaSolicitudes() {
   const navigate = useNavigate();
+  // Vista rápida (?vista=) elegida desde el sidebar
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vista = buscarVista(ROLES.SUPERVISOR, searchParams.get('vista'));
+  const quitarVista = () => setSearchParams((p) => {
+    const n = new URLSearchParams(p);
+    n.delete('vista');
+    return n;
+  });
 
   const [items,       setItems]       = useState([]);
   const [categorias,  setCategorias]  = useState([]);
@@ -31,6 +41,7 @@ export default function BandejaSolicitudes() {
   const [soloVencidas,   setSoloVencidas]   = useState(false);
 
   const [page, setPage]   = useState(0);
+  useEffect(() => { setPage(0); }, [vista?.id]);
   const PAGE_SIZE          = 15;
 
   useEffect(() => {
@@ -75,7 +86,7 @@ export default function BandejaSolicitudes() {
   }, [estadoFilter, categoriaId, prioridadId]);
 
   // Filtro local para texto en modo real, y todos los filtros en modo mocks
-  const filtered = USE_MOCKS
+  const filtradosBase = USE_MOCKS
     ? items.filter(r => {
         const matchEstado    = !estadoFilter || r.estado === estadoFilter;
         const matchCategoria = !categoriaId  || r.categoria === categoriaId;
@@ -88,6 +99,7 @@ export default function BandejaSolicitudes() {
     : query.trim()
       ? items.filter(r => `${r.codigo} ${r.titulo} ${r.descripcion}`.toLowerCase().includes(query.trim().toLowerCase()))
       : items;
+  const filtered = vista ? filtradosBase.filter(vista.filtro) : filtradosBase;
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged      = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -249,6 +261,7 @@ export default function BandejaSolicitudes() {
           </div>
         )}
 
+        {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
         <div className="results-label">
           {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Ordenadas por más recientes
         </div>

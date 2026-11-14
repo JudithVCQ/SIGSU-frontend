@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ESTADOS } from '../config/constants';
+import { ESTADOS, ROLES } from '../config/constants';
 import { getSolicitudesMock } from '../mocks/solicitudes';
 import { getSolicitudes } from '../services/solicitudes.js';
 import PageHead from '../components/PageHead';
@@ -11,12 +11,22 @@ import FormSelect from '../components/FormSelect';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
+import VistaRapidaChip from '../components/VistaRapidaChip';
+import { buscarVista } from '../routes/vistasRapidas';
 import './solicitudes.css';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export default function MisAsignaciones() {
   const navigate = useNavigate();
+  // Vista rápida (?vista=) elegida desde el sidebar
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vista = buscarVista(ROLES.TECNICO, searchParams.get('vista'));
+  const quitarVista = () => setSearchParams((p) => {
+    const n = new URLSearchParams(p);
+    n.delete('vista');
+    return n;
+  });
   const { user } = useAuth();
 
   const [misAsignaciones, setMisAsignaciones] = useState([]);
@@ -47,7 +57,7 @@ export default function MisAsignaciones() {
   const enAtencionCount = misAsignaciones.filter(r => r.estadoApi === 'EN_ATENCION' || r.estado === 'En atención').length;
   const resueltasCount = misAsignaciones.filter(r => r.estadoApi === 'RESUELTA' || r.estado === 'Resuelta').length;
 
-  const filtered = misAsignaciones.filter((r) => {
+  const filtered = misAsignaciones.filter((r) => (vista ? vista.filtro(r) : true)).filter((r) => {
     const matchEstado = !estadoFilter || r.estado === estadoFilter;
     const matchPrioridad = !prioridadFilter || r.prioridad === prioridadFilter;
     const target = `${r.codigo} ${r.titulo} ${r.categoria} ${r.ubicacion || ''}`.toLowerCase();
@@ -102,6 +112,7 @@ export default function MisAsignaciones() {
           </div>
         )}
 
+        {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
         <div className="results-label">
           {filtered.length} {filtered.length === 1 ? 'asignación' : 'asignaciones'} · Ordenadas por prioridad y fecha
         </div>
