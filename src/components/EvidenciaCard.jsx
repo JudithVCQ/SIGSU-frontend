@@ -90,7 +90,7 @@ export default function EvidenciaCard({ evidencia, onVer }) {
           rel="noopener noreferrer"
           aria-label={`Descargar ${nombre}`}
         >
-          <Icon name="down" size={14} /> Descargar
+          <Icon name="download" size={14} /> Descargar
         </a>
       )}
     </div>

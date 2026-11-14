@@ -86,7 +86,7 @@ export default function VisorImagenes({ imagenes = [], indiceInicial = 0, onClos
               rel="noopener noreferrer"
               aria-label={`Descargar ${actual.nombre}`}
             >
-              <Icon name="down" size={20} />
+              <Icon name="download" size={20} />
             </a>
           )}
           <button ref={cerrarRef} type="button" className="visor-boton" onClick={onClose} aria-label="Cerrar visor">
