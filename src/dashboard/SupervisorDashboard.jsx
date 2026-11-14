@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getSolicitudesMock, SUPERVISOR_KPIS, CARGA_POR_CATEGORIA } from '../mocks/solicitudes';
 import { esVencida } from '../config/vigencia';
+import { saludoSegunHora } from '../config/saludo';
 import { getDashboard } from '../services/dashboard.js';
 import { getSolicitudes } from '../services/solicitudes.js';
 import { calificacionDisponible, esVistaPreviaLocal, getResumenCalificaciones } from '../services/calificaciones.js';
@@ -88,7 +89,7 @@ export default function SupervisorDashboard() {
     <div>
       <PageHead
         eyebrow={new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
-        title={`Buenos días, ${firstName}`}
+        title={`${saludoSegunHora()}, ${firstName}`}
         text="Este es el estado general de los servicios universitarios."
       />
 
