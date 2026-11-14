@@ -23,6 +23,7 @@ import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
 import { SkeletonDetalle } from '../components/Skeleton';
+import { FormularioActividad } from '../components/ActividadSolicitud';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import EvidenciasGaleria from '../components/EvidenciasGaleria';
@@ -351,9 +352,9 @@ export default function AtencionSolicitud() {
 
           {/* Avances y notas */}
           <section className="panel info-panel">
-            <h2>Avances y notas de trabajo</h2>
+            <h2>Actividad</h2>
             {seguimientos.length === 0 ? (
-              <EmptyState title="Aún no hay notas de avance" text="Registra la primera nota cuando empieces a trabajar." compact />
+              <EmptyState title="Aún no hay actividad" text="Registra la primera nota cuando empieces a trabajar." compact />
             ) : (
               <div className="comments">
                 {seguimientos.map((c, idx) => (
@@ -374,17 +375,16 @@ export default function AtencionSolicitud() {
               </div>
             )}
             {!esCerrada && (
-              <form className="comment-form" onSubmit={handleAgregarAvance}>
-                <textarea
-                  aria-label="Registrar nota de avance"
-                  placeholder="Registrar una nota técnica de avance o coordinación..."
-                  value={notaAvance}
-                  onChange={(e) => setNotaAvance(e.target.value)}
-                />
-                <Button type="submit" icon="send" disabled={submitting || !notaAvance.trim()}>
-                  {submitting ? 'Guardando…' : 'Agregar nota de avance'}
-                </Button>
-              </form>
+              <FormularioActividad
+                valor={notaAvance}
+                onChange={setNotaAvance}
+                onSubmit={handleAgregarAvance}
+                enviando={submitting}
+                etiqueta="Registrar nota de avance"
+                placeholder="Registrar una nota técnica de avance o coordinación..."
+                boton={submitting ? 'Guardando…' : 'Agregar nota de avance'}
+                nota="Visible para el solicitante y el supervisor"
+              />
             )}
           </section>
 

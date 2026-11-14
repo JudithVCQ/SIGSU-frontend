@@ -14,6 +14,8 @@ import { SkeletonFilas } from './Skeleton';
 import EmptyState from './EmptyState';
 import ErrorState from './ErrorState';
 
+const MAX_VISIBLES = 5;
+
 export default function SolicitudesSolicitantePanel({
   solicitanteId,
   solicitanteNombre,
@@ -23,6 +25,7 @@ export default function SolicitudesSolicitantePanel({
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [verTodas, setVerTodas] = useState(false);
 
   // Solo visible para SUPERVISOR y ADMINISTRADOR
   const esAutorizado =
@@ -62,16 +65,14 @@ export default function SolicitudesSolicitantePanel({
     return estadoNorm !== 'CERRADA' && s.estado !== 'Cerrada';
   });
   const hayAbiertas = abiertas.length > 0;
+  const visibles = verTodas ? solicitudes : solicitudes.slice(0, MAX_VISIBLES);
 
   return (
     <section className="panel duplicados-panel" aria-labelledby="duplicados-panel-title">
       <div className="duplicados-header">
-        <div className="duplicados-title-group">
-          <Icon name="file" size={20} />
-          <h2 id="duplicados-panel-title" className="duplicados-title">
-            Otras solicitudes de este solicitante
-          </h2>
-        </div>
+        <h2 id="duplicados-panel-title" className="duplicados-title">
+          Otras solicitudes de este solicitante
+        </h2>
         {solicitanteNombre && (
           <span className="duplicados-subtitulo">{solicitanteNombre}</span>
         )}
@@ -101,25 +102,33 @@ export default function SolicitudesSolicitantePanel({
           )}
 
           <ul className="duplicados-list">
-            {solicitudes.map((s) => (
-              <li key={s.id || s.codigo} className="duplicados-item">
-                <div className="duplicados-item-main">
-                  <div className="duplicados-item-top">
+            {visibles.map((s) => (
+              <li key={s.id || s.codigo}>
+                <Link
+                  to={`/solicitudes/${s.codigo || s.id}`}
+                  className="duplicados-item"
+                  title={`Ver detalle de ${s.codigo}`}
+                >
+                  <span className="duplicados-item-top">
                     <span className="duplicados-codigo">{s.codigo}</span>
                     <Badge texto={s.estado} />
                     {s.fecha && <span className="duplicados-fecha">{s.fecha}</span>}
-                  </div>
-                  <Link
-                    to={`/solicitudes/${s.codigo || s.id}`}
-                    className="duplicados-item-link"
-                    title={`Ver detalle de ${s.codigo}`}
-                  >
-                    {s.titulo}
-                  </Link>
-                </div>
+                  </span>
+                  <span className="duplicados-item-link">{s.titulo}</span>
+                </Link>
               </li>
             ))}
           </ul>
+          {solicitudes.length > MAX_VISIBLES && (
+            <button
+              type="button"
+              className="duplicados-ver-todas"
+              aria-expanded={verTodas}
+              onClick={() => setVerTodas((v) => !v)}
+            >
+              {verTodas ? 'Ver menos' : `Ver todas (${solicitudes.length})`}
+            </button>
+          )}
         </div>
       )}
     </section>

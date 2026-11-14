@@ -1,6 +1,8 @@
+import './tabla.css';
 import Badge from './Badge';
 import Button from './Button';
 import Icon from './Icon';
+import MenuAcciones from './MenuAcciones';
 import { esVencida } from '../config/vigencia';
 
 export default function RequestTable({
@@ -8,7 +10,7 @@ export default function RequestTable({
   compact = false,
   onOpen,
   mostrarVencidas = false,
-  renderAction,
+  getAcciones,
 }) {
   const data = compact ? requests.slice(0, 3) : requests;
 
@@ -19,6 +21,36 @@ export default function RequestTable({
       .map((x) => x[0])
       .slice(0, 2)
       .join('');
+  };
+
+  const abrirFila = (e, code) => {
+    if (e.target.closest('button, a, [role="menu"]')) return;
+    onOpen && onOpen(code);
+  };
+  const teclaFila = (e, code) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter') { e.preventDefault(); onOpen && onOpen(code); }
+  };
+  const prioridadUi = (v) => (v ? <Badge texto={v} /> : <span className="sin-clasificar">Sin clasificar</span>);
+
+  // Una acción principal compacta + el resto en el menú "⋯"
+  const renderAcciones = (r, code) => {
+    const { principal = null, menu = [] } = getAcciones ? getAcciones(r) : {};
+    if (!getAcciones) {
+      return (
+        <button type="button" className="row-action" onClick={() => onOpen && onOpen(code)} aria-label={`Abrir ${code}`}>
+          <Icon name="chevron" size={18} />
+        </button>
+      );
+    }
+    return (
+      <div className="row-acciones">
+        {principal && (
+          <Button variant="primary" size="sm" onClick={principal.onClick}>{principal.label}</Button>
+        )}
+        <MenuAcciones etiqueta={`Más acciones de ${code}`} acciones={menu} />
+      </div>
+    );
   };
 
   return (
@@ -47,7 +79,14 @@ export default function RequestTable({
               const owner = r.responsable || r.owner || 'Sin asignar';
 
               return (
-                <tr key={code}>
+                <tr
+                  key={code}
+                  className="fila-clicable"
+                  tabIndex={0}
+                  onClick={(e) => abrirFila(e, code)}
+                  onKeyDown={(e) => teclaFila(e, code)}
+                  aria-label={`Abrir ${code}: ${title}`}
+                >
                   <td>
                     <button
                       type="button"
@@ -65,9 +104,7 @@ export default function RequestTable({
                       {mostrarVencidas && esVencida(r) && <Badge texto="Vencida" />}
                     </div>
                   </td>
-                  <td>
-                    <Badge texto={priority} />
-                  </td>
+                  <td>{prioridadUi(priority)}</td>
                   {!compact && (
                     <td>
                       <span className="owner">
@@ -76,20 +113,7 @@ export default function RequestTable({
                       </span>
                     </td>
                   )}
-                  <td style={{ textAlign: 'right' }}>
-                    {renderAction ? (
-                      renderAction(r)
-                    ) : (
-                      <button
-                        type="button"
-                        className="row-action"
-                        onClick={() => onOpen && onOpen(code)}
-                        aria-label={`Abrir ${code}`}
-                      >
-                        <Icon name="chevron" size={18} />
-                      </button>
-                    )}
-                  </td>
+                  <td style={{ textAlign: 'right' }}>{renderAcciones(r, code)}</td>
                 </tr>
               );
             })}
@@ -126,12 +150,10 @@ export default function RequestTable({
                 </div>
                 <div>
                   <small>Prioridad</small>
-                  <Badge texto={priority} />
+                  {prioridadUi(priority)}
                 </div>
               </div>
-              {renderAction ? (
-                renderAction(r)
-              ) : (
+              {getAcciones ? renderAcciones(r, code) : (
                 <Button variant="secondary" full onClick={() => onOpen && onOpen(code)}>
                   Ver solicitud
                 </Button>
