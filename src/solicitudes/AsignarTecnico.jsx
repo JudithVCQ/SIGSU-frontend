@@ -10,6 +10,7 @@ import {
 import { getTecnicos } from '../services/usuarios.js';
 import { getDashboard } from '../services/dashboard.js';
 import { getErrorMessage } from '../services/apiClient.js';
+import { mensajeBackend } from './mensajeBackend';
 import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
@@ -166,28 +167,33 @@ export default function AsignarTecnico() {
       // 1. Invocar POST /api/solicitudes/{solicitudId}/asignaciones {tecnicoId}
       await asignarTecnico(solicitud.id, Number(selectedTecnicoId));
 
-      // 2. Volver a pedir la solicitud para verificar el estado devuelto
-      const updated = await getSolicitudAny(solicitud.id);
-      let estadoFinal = updated?.estado || 'Asignada';
-      let autoAdvanced = updated?.estadoApi === 'ASIGNADA';
+      // 2. Volver a pedir la solicitud para conocer el estado real
+      let actual = null;
+      let aviso = '';
+      try {
+        actual = await getSolicitudAny(solicitud.id);
+      } catch (errGet) {
+        aviso = `Técnico asignado, pero no se pudo consultar el estado actual: ${mensajeBackend(errGet)}`;
+      }
 
-      // 3. Si el estado NO avanzó solo a ASIGNADA, intentar PUT /estado
-      if (!autoAdvanced && updated?.estadoApi !== 'ASIGNADA') {
+      // 3. Si no avanzó sola a ASIGNADA, intentar PUT /estado. Si falla, se informa
+      //    el error del backend y se muestra el estado REAL (nunca "Asignada" por defecto).
+      if (actual && actual.estadoApi !== 'ASIGNADA') {
         try {
-          const transitioned = await cambiarEstado(solicitud.id, 'ASIGNADA', {
+          actual = await cambiarEstado(solicitud.id, 'ASIGNADA', {
             observacion: `Técnico asignado: ${tecnicoObj?.nombre || selectedTecnicoId}`,
           });
-          estadoFinal = transitioned?.estado || 'Asignada';
-        } catch {
-          // Si el backend no permite transición manual, conservar el estado actual
+        } catch (errEstado) {
+          aviso = `Técnico asignado, pero no se pudo actualizar el estado: ${mensajeBackend(errEstado)}`;
         }
       }
 
-      setSolicitud(updated);
+      if (actual) setSolicitud(actual);
       setSuccessInfo({
         message: `Técnico asignado con éxito a la solicitud ${solicitud.codigo}.`,
-        estado: estadoFinal,
+        estado: actual?.estado ?? 'Desconocido',
         tecnicoNombre: tecnicoObj?.nombre || 'Técnico',
+        aviso,
       });
     } catch (err) {
       setErrGeneral(getErrorMessage(err, 'No se pudo completar la asignación del técnico.'));
@@ -360,10 +366,14 @@ export default function AsignarTecnico() {
 
       {/* Pantalla de Éxito */}
       {successInfo && (
-        <div className="message success" role="status" style={{ marginBottom: '20px' }}>
-          <Icon name="check" />
+        <div
+          className={`message ${successInfo.aviso ? 'error' : 'success'}`}
+          role={successInfo.aviso ? 'alert' : 'status'}
+          style={{ marginBottom: '20px' }}
+        >
+          <Icon name={successInfo.aviso ? 'alert' : 'check'} />
           <div style={{ flex: 1 }}>
-            <strong>{successInfo.message}</strong>
+            <strong>{successInfo.aviso || successInfo.message}</strong>
             <p style={{ margin: '4px 0 0 0' }}>
               Estado actual: <strong>{successInfo.estado}</strong> · Responsable: <strong>{successInfo.tecnicoNombre}</strong>
             </p>
