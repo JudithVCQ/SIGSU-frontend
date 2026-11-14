@@ -96,11 +96,11 @@ export function mapSolicitud(s) {
     solicitanteId:      s.solicitanteId ?? null,
     solicitante:        s.solicitanteNombre ?? '',
     // Fechas ISO (conserva el formato del backend; formatea en el componente)
-    fechaLimite:        normalizarFechaUtc(s.fechaLimite),
-    creadoEn:           normalizarFechaUtc(s.creadoEn),
-    actualizadoEn:      normalizarFechaUtc(s.actualizadoEn),
-    resueltaEn:         normalizarFechaUtc(s.resueltaEn),
-    cerradaEn:          normalizarFechaUtc(s.cerradaEn),
+    fechaLimite:        parseFechaBackend(s.fechaLimite),
+    creadoEn:           parseFechaBackend(s.creadoEn),
+    actualizadoEn:      parseFechaBackend(s.actualizadoEn),
+    resueltaEn:         parseFechaBackend(s.resueltaEn),
+    cerradaEn:          parseFechaBackend(s.cerradaEn),
     // Alias de compatibilidad para componentes que usan r.fecha
     fecha:              s.creadoEn ? formatFechaVisual(s.creadoEn) : '',
     // Alias de compatibilidad para responsable (mocks usan r.rolResponsable)
@@ -125,7 +125,7 @@ export function mapSeguimiento(s) {
     creadoPorId:  s.creadoPorId ?? null,
     rol:          '',           // el backend no devuelve el rol en SeguimientoResponse
     tiempo:       s.creadoEn ? formatFechaVisual(s.creadoEn, true) : 'Ahora',
-    creadoEn:     normalizarFechaUtc(s.creadoEn),
+    creadoEn:     parseFechaBackend(s.creadoEn),
   };
 }
 
@@ -133,18 +133,35 @@ export function mapSeguimiento(s) {
 // Evidencia
 // ---------------------------------------------------------------------------
 
+/** Tamaño legible: "640 KB" por debajo de 1 MB, "1.8 MB" en adelante. */
+export function formatTamano(bytes) {
+  if (typeof bytes !== 'number' || !Number.isFinite(bytes) || bytes <= 0) return '';
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${Math.max(1, Math.round(kb))} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
+
 export function mapEvidencia(e) {
   if (!e) return null;
+  const nombreArchivo = e.nombreArchivo ?? 'archivo';
+  const archivoUrl    = e.archivoUrl ?? null;
+  const tamanoBytes   = typeof e.tamanoBytes === 'number' ? e.tamanoBytes : null;
   return {
-    id:           e.id,
-    nombre:       e.nombreArchivo ?? 'archivo',
-    tamano:       e.tamanoBytes ? `${(e.tamanoBytes / 1024 / 1024).toFixed(1)} MB` : '',
-    tipoMime:     e.tipoMime ?? '',
-    url:          e.archivoUrl ?? null,
+    id:            e.id,
+    solicitudId:   e.solicitudId ?? null,
+    // Campos del backend conservados tal cual
+    nombreArchivo,
+    archivoUrl,
+    tipoMime:      e.tipoMime ?? '',
+    tamanoBytes,
+    // Alias usados por los componentes
+    nombre:        nombreArchivo,
+    url:           archivoUrl,
+    tamano:        formatTamano(tamanoBytes),
     seguimientoId: e.seguimientoId ?? null,
     cargadoPorId: e.cargadoPorId ?? null,
     cargadoPor:   e.cargadoPorNombre ?? '',
-    creadoEn:     normalizarFechaUtc(e.creadoEn),
+    creadoEn:     parseFechaBackend(e.creadoEn),
   };
 }
 
@@ -162,7 +179,7 @@ export function mapHistorialItem(h) {
     cambiadoPorId:  h.cambiadoPorId ?? null,
     observacion:    h.observacion ?? '',
     tiempo:         h.cambiadoEn ? formatFechaVisual(h.cambiadoEn, true) : '',
-    cambiadoEn:     normalizarFechaUtc(h.cambiadoEn),
+    cambiadoEn:     parseFechaBackend(h.cambiadoEn),
   };
 }
 
@@ -211,7 +228,8 @@ export function mapAsignacion(a) {
     tecnico:         a.tecnicoNombre ?? '',
     asignadoPorId:   a.asignadoPorId ?? null,
     asignadoPor:     a.asignadoPorNombre ?? '',
-    asignadaEn:      normalizarFechaUtc(a.asignadaEn),
+    asignadaEn:      parseFechaBackend(a.asignadaEn),
+    finalizadaEn:    parseFechaBackend(a.finalizadaEn),
   };
 }
 
@@ -245,14 +263,20 @@ function mapIndicador(i) {
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','set','oct','nov','dic'];
 
 /**
+ * Única traducción de fechas recibidas del backend.
+ *
  * El backend devuelve las fechas en UTC pero sin designador de zona
- * (ej. "2026-11-16T04:59:59", LocalDateTime de Java). JavaScript interpreta ese
- * formato como hora LOCAL, lo que desplaza la fecha (en Lima, +5 h: una fecha
- * límite del 15/11 a las 23:59 se mostraba como 16/11). Esta función agrega la
- * "Z" para que se interprete como UTC. Si ya trae zona (Z u offset), o es solo
- * fecha, la deja igual.
+ * (ej. "2026-11-13T23:36:09", LocalDateTime de Java, que son las 18:36 en Lima).
+ * JavaScript interpreta ese formato como hora LOCAL y quedaría 5 h desfasado.
+ * Esta función agrega la "Z" para que se interprete como UTC.
+ *  - Sin zona               → se agrega "Z".
+ *  - Con "Z" u offset (±hh:mm) → sin cambios.
+ *  - Solo fecha (YYYY-MM-DD) → sin cambios (JS ya la interpreta como UTC).
+ *  - null, undefined o ''    → null.
+ * Devuelve un string ISO (no un Date) para que los objetos mapeados sigan siendo
+ * serializables; los componentes lo convierten con new Date() o formatFechaVisual.
  */
-export function normalizarFechaUtc(valor) {
+export function parseFechaBackend(valor) {
   if (valor == null || valor === '') return null;
   if (typeof valor !== 'string') return valor;
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(valor) ? `${valor}Z` : valor;
@@ -260,7 +284,7 @@ export function normalizarFechaUtc(valor) {
 
 export function formatFechaVisual(isoString, incluirHora = false) {
   if (!isoString) return '';
-  const d = new Date(normalizarFechaUtc(isoString));
+  const d = new Date(parseFechaBackend(isoString));
   if (isNaN(d.getTime())) return '';
   const dia  = String(d.getDate()).padStart(2, '0');
   const mes  = MESES[d.getMonth()];

@@ -587,6 +587,283 @@ button.upload:hover {
   padding: 0 4px;
 }
 
+/* Evidencias con archivo real (EvidenciaCard) */
+.evidence-thumb {
+  overflow: hidden;
+}
+
+.evidence-thumb-img {
+  background: var(--neutro);
+}
+
+.evidence-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.evidence-pdf {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: var(--peligro);
+}
+
+.evidence-pdf > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.evidence-generico {
+  display: grid;
+  place-items: center;
+}
+
+.evidence-link {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 7px;
+}
+
+.evidence-link:hover strong {
+  text-decoration: underline;
+}
+
+.evidence-link:focus-visible,
+.evidence-descargar:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.evidence-descargar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 4px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--verde);
+  text-decoration: none;
+  justify-self: start;
+}
+
+.evidence-descargar:hover {
+  text-decoration: underline;
+}
+
+/* Botón que abre el visor (reset de estilos de botón) */
+.evidence-ver {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: zoom-in;
+}
+
+/* ───────── Visor de imágenes (VisorImagenes) ───────── */
+.visor {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  /* minmax(0, 1fr): la fila de la imagen ocupa SOLO el espacio sobrante y no crece con la imagen */
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100vh;
+  height: 100dvh; /* en móviles descuenta la barra del navegador */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: rgba(12, 14, 15, 0.94);
+  color: #fff;
+}
+
+.visor-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.visor-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.visor-info strong {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visor-info span {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.visor-acciones {
+  display: flex;
+  gap: 6px;
+}
+
+.visor-boton {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.visor-boton:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.visor-boton:focus-visible,
+.visor-miniatura:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.visor-escenario {
+  /* Espacio libre a cada lado de la imagen (deja sitio a las flechas) */
+  --visor-margen-x: 72px;
+  --visor-margen-y: 12px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+/*
+ * La imagen se posiciona contra el escenario (que tiene un tamaño definido) para que
+ * los límites en % funcionen: se ajusta al espacio disponible conservando la proporción,
+ * sin pasar de su tamaño real y centrada en ambos ejes.
+ */
+.visor-imagen {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 2 * var(--visor-margen-x));
+  max-height: calc(100% - 2 * var(--visor-margen-y));
+  object-fit: contain;
+  border-radius: 4px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.visor-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+}
+
+.visor-prev {
+  left: 12px;
+}
+
+.visor-next {
+  right: 12px;
+}
+
+.visor-error {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.visor-error a {
+  color: #fff;
+}
+
+.visor-miniaturas {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px 18px;
+  overflow-x: auto;
+}
+
+.visor-miniatura {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.visor-miniatura.activa {
+  border-color: #fff;
+  opacity: 1;
+}
+
+.visor-miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 720px) {
+  .visor-escenario {
+    --visor-margen-x: 8px;
+    --visor-margen-y: 8px;
+  }
+
+  .visor-nav {
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .visor-prev {
+    left: 6px;
+  }
+
+  .visor-next {
+    right: 6px;
+  }
+
+  .visor-miniatura {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Pantallas bajas (móvil en horizontal): más espacio para la imagen */
+@media (max-height: 500px) {
+  .visor-barra {
+    padding: 6px 12px;
+  }
+
+  .visor-miniaturas {
+    display: none;
+  }
+}
+
 /* ───────── Responsive Solicitudes ───────── */
 @media (max-width: 900px) {
   .detail-grid {
