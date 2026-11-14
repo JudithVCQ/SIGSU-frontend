@@ -672,7 +672,11 @@ button.upload:hover {
   inset: 0;
   z-index: 2000;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  /* minmax(0, 1fr): la fila de la imagen ocupa SOLO el espacio sobrante y no crece con la imagen */
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100vh;
+  height: 100dvh; /* en móviles descuenta la barra del navegador */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   background: rgba(12, 14, 15, 0.94);
   color: #fff;
 }
@@ -732,20 +736,34 @@ button.upload:hover {
 }
 
 .visor-escenario {
+  /* Espacio libre a cada lado de la imagen (deja sitio a las flechas) */
+  --visor-margen-x: 72px;
+  --visor-margen-y: 12px;
   position: relative;
   display: grid;
   place-items: center;
   min-height: 0;
-  padding: 0 64px;
+  overflow: hidden;
   touch-action: pan-y;
 }
 
+/*
+ * La imagen se posiciona contra el escenario (que tiene un tamaño definido) para que
+ * los límites en % funcionen: se ajusta al espacio disponible conservando la proporción,
+ * sin pasar de su tamaño real y centrada en ambos ejes.
+ */
 .visor-imagen {
-  max-width: 100%;
-  max-height: 100%;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 2 * var(--visor-margen-x));
+  max-height: calc(100% - 2 * var(--visor-margen-y));
   object-fit: contain;
   border-radius: 4px;
   user-select: none;
+  -webkit-user-drag: none;
 }
 
 .visor-nav {
@@ -811,7 +829,8 @@ button.upload:hover {
 
 @media (max-width: 720px) {
   .visor-escenario {
-    padding: 0 8px;
+    --visor-margen-x: 8px;
+    --visor-margen-y: 8px;
   }
 
   .visor-nav {
@@ -826,6 +845,22 @@ button.upload:hover {
 
   .visor-next {
     right: 6px;
+  }
+
+  .visor-miniatura {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Pantallas bajas (móvil en horizontal): más espacio para la imagen */
+@media (max-height: 500px) {
+  .visor-barra {
+    padding: 6px 12px;
+  }
+
+  .visor-miniaturas {
+    display: none;
   }
 }
 
