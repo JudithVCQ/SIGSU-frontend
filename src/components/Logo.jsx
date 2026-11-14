@@ -1,4 +1,4 @@
-export default function Logo({ compact = false }) {
+export default function Logo({ compact = false, subtitulo = true }) {
   return (
     <div className="logo">
       <div className="logo-mark" aria-hidden="true">
@@ -9,7 +9,7 @@ export default function Logo({ compact = false }) {
       {!compact && (
         <div>
           <b>SIGSU</b>
-          <small>Gestión universitaria</small>
+          {subtitulo && <small>Gestión universitaria</small>}
         </div>
       )}
     </div>
