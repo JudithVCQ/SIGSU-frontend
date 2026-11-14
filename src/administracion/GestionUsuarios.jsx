@@ -721,14 +721,17 @@ function CreateUserModal({ roles, areas, onClose, onSuccess, onAreaAssignFailed 
         value={correo}
         onChange={setCorreo}
         placeholder="usuario@universidad.edu"
+        autoComplete="off"
         required
         error={getErr('correo')}
       />
 
+      {/* new-password: evita que Chrome autollene la contraseña de la sesión actual */}
       <PasswordField
         label="Contraseña"
         value={contrasena}
         onChange={setContrasena}
+        autoComplete="new-password"
         required
         hint="Debe tener al menos 8 caracteres."
         error={getErr('contrasena')}
