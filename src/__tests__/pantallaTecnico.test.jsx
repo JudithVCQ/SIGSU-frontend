@@ -120,9 +120,9 @@ describe('AtencionSolicitud: notas de avance', () => {
 
   it('avisa cuando el estado aún no permite iniciar la atención ni agregar notas', async () => {
     await abrirAtencion('EN_EVALUACION', 'En evaluación');
-    expect(screen.getByText('Esta solicitud aún no figura como asignada. Pide al supervisor que revise su estado.')).toBeInTheDocument();
+    expect(screen.getByText('Esta solicitud aún no figura como asignada. Pide al supervisor que revise su estado. Puedes dejar notas mientras tanto.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Iniciar atención' })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Registrar nota de avance')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Registrar nota de avance')).toBeInTheDocument();
   });
 
   it('no muestra el aviso de "no asignada" en ASIGNADA', async () => {
@@ -130,8 +130,24 @@ describe('AtencionSolicitud: notas de avance', () => {
     expect(screen.queryByText(/aún no figura como asignada/)).not.toBeInTheDocument();
   });
 
-  it('no muestra el formulario de notas en RESUELTA', async () => {
-    await abrirAtencion('RESUELTA', 'Resuelta');
+  it.each([
+    ['REGISTRADA', 'Registrada'],
+    ['EN_EVALUACION', 'En evaluación'],
+    ['ASIGNADA', 'Asignada'],
+    ['EN_ATENCION', 'En atención'],
+    ['RESUELTA', 'Resuelta'],
+  ])('permite agregar notas en %s', async (api, ui) => {
+    await abrirAtencion(api, ui);
+    expect(screen.getByLabelText('Registrar nota de avance')).toBeInTheDocument();
+  });
+
+  it('bloquea las notas en CERRADA', async () => {
+    await abrirAtencion('CERRADA', 'Cerrada');
     expect(screen.queryByLabelText('Registrar nota de avance')).not.toBeInTheDocument();
+  });
+
+  it('"Iniciar atención" solo aparece en ASIGNADA', async () => {
+    await abrirAtencion('RESUELTA', 'Resuelta');
+    expect(screen.queryByRole('button', { name: 'Iniciar atención' })).not.toBeInTheDocument();
   });
 });

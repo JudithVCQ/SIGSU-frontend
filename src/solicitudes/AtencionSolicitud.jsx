@@ -250,7 +250,7 @@ export default function AtencionSolicitud() {
         <div className="message" role="status" style={{ marginBottom: '24px' }}>
           <Icon name="alert" />
           <div>
-            <strong>Esta solicitud aún no figura como asignada. Pide al supervisor que revise su estado.</strong>
+            <strong>Esta solicitud aún no figura como asignada. Pide al supervisor que revise su estado. Puedes dejar notas mientras tanto.</strong>
           </div>
         </div>
       )}
@@ -373,7 +373,7 @@ export default function AtencionSolicitud() {
                 ))}
               </div>
             )}
-            {(esAsignada || esEnAtencion) && (
+            {!esCerrada && (
               <form className="comment-form" onSubmit={handleAgregarAvance}>
                 <textarea
                   aria-label="Registrar nota de avance"
