@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ROLES } from '../config/constants';
-import { getSolicitudByCodigo as getMock, ESTADO_NIVEL as ESTADO_NIVEL_MOCK } from '../mocks/solicitudes';
+import { ROLES, ESTADOS } from '../config/constants';
+import { getSolicitudByCodigo as getMock } from '../mocks/solicitudes';
 import {
   getSolicitudByCodigo,
   getSeguimientos,
@@ -10,7 +10,6 @@ import {
   getEvidencias,
   getHistorial,
 } from '../services/solicitudes.js';
-import { ESTADO_NIVEL } from '../services/mappers.js';
 import { formatFechaVisual } from '../services/mappers.js';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
@@ -20,6 +19,7 @@ import { SkeletonDetalle } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import EvidenciasGaleria from '../components/EvidenciasGaleria';
+import ActividadSolicitud, { construirActividad, FormularioActividad } from '../components/ActividadSolicitud';
 import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
 import CalificacionServicio from '../components/CalificacionServicio';
 import './solicitudes.css';
@@ -133,7 +133,6 @@ export default function DetalleSolicitud() {
   );
 
   const estadoUi  = solicitud.estado ?? '';
-  const nivel     = ESTADO_NIVEL[estadoUi] ?? (USE_MOCKS ? (ESTADO_NIVEL_MOCK?.[estadoUi] ?? 0) : 0);
 
   const getBackPath = () => {
     if (isSupervisor) return '/supervisor/solicitudes';
@@ -150,19 +149,30 @@ export default function DetalleSolicitud() {
     return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   };
 
-  // Timeline: preferir historial real, o simular si está en mocks
-  const timelineItems = historial.length > 0
-    ? [...historial].reverse()
-    : (USE_MOCKS ? buildMockTimeline(solicitud, nivel) : []);
+  const eventos = construirActividad({
+    solicitud,
+    historial,
+    comentarios: seguimientos,
+  });
 
-  const textosEstado = {
+  const esPersonal = isSupervisor || isAdmin;
+  const textosEstado = esPersonal ? {
+    'Registrada':    'Pendiente de clasificar y asignar.',
+    'En evaluación': 'Clasificada. Falta asignar un técnico.',
+    'Asignada':      'Tiene responsable. La atención comenzará pronto.',
+    'En atención':   'El técnico responsable está atendiendo la solicitud.',
+    'Resuelta':      'El técnico documentó la solución. Pendiente de revisión y cierre.',
+    'Cerrada':       'La solicitud fue cerrada. El historial queda disponible.',
+  } : {
     'Registrada':    'Tu solicitud espera ser clasificada y asignada.',
-    'En evaluación': 'Solicitud clasificada. Esperando asignación de técnico.',
+    'En evaluación': 'Tu solicitud fue clasificada. Esperando asignación de técnico.',
     'Asignada':      'Ya tiene responsable. La atención comenzará pronto.',
     'En atención':   'El responsable está trabajando en tu solicitud.',
     'Resuelta':      'El servicio fue completado. Gracias por reportarlo.',
     'Cerrada':       'La solicitud fue cerrada. El historial queda disponible.',
   };
+  const pasoActual = ESTADOS.indexOf(estadoUi);
+  const tieneResponsable = solicitud.responsable && solicitud.responsable !== 'Sin asignar';
 
   return (
     <div>
@@ -181,7 +191,7 @@ export default function DetalleSolicitud() {
           <p>Registrada el {solicitud.fecha || formatFechaVisual(solicitud.creadoEn)}</p>
         </div>
 
-        {/* Acción exclusiva para SUPERVISOR según el estado del ciclo */}
+        {/* Acción del rol según el estado del ciclo */}
         {isSupervisor && (() => {
           const e = solicitud.estadoApi ?? (
             solicitud.estado === 'Registrada'    ? 'REGISTRADA' :
@@ -200,10 +210,7 @@ export default function DetalleSolicitud() {
 
           if (e === 'RESUELTA' || solicitud.estado === 'Resuelta') {
             return (
-              <Button
-                variant="primary"
-                onClick={() => navigate(`/supervisor/solicitudes/${code}/cerrar`)}
-              >
+              <Button variant="primary" onClick={() => navigate(`/supervisor/solicitudes/${code}/cerrar`)}>
                 Revisar y cerrar
               </Button>
             );
@@ -211,27 +218,18 @@ export default function DetalleSolicitud() {
 
           if ((e === 'REGISTRADA' || e === 'EN_EVALUACION') && sinResponsable) {
             return (
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="detail-actions">
                 {estaClasificada ? (
                   <>
-                    <Button
-                      variant="primary"
-                      onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}
-                    >
+                    <Button variant="primary" onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}>
                       Asignar técnico
                     </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
-                    >
+                    <Button variant="secondary" onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}>
                       Editar clasificación
                     </Button>
                   </>
                 ) : (
-                  <Button
-                    variant="primary"
-                    onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
-                  >
+                  <Button variant="primary" onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}>
                     Clasificar solicitud
                   </Button>
                 )}
@@ -245,92 +243,13 @@ export default function DetalleSolicitud() {
 
       <div className="detail-grid">
         <main className="detail-main">
-          {/* Datos principales */}
           <section className="panel info-panel">
-            <h2>Datos principales</h2>
-            <div className="info-grid">
-              <div><small>Categoría</small><span>{solicitud.categoria || '—'}</span></div>
-              <div><small>Ubicación</small><span>{solicitud.ubicacion || '—'}</span></div>
-              <div><small>Estado</small><Badge texto={estadoUi} /></div>
-              {solicitud.prioridad && <div><small>Prioridad</small><Badge texto={solicitud.prioridad} /></div>}
-              {solicitud.area && <div><small>Área responsable</small><span>{solicitud.area}</span></div>}
-              <PlazoSolicitud solicitud={solicitud} />
-            </div>
+            <h2>Descripción</h2>
             <div className="description">
-              <small>Descripción</small>
-              <p>{solicitud.descripcion}</p>
-              {solicitud.solucion && (
-                <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--borde)' }}>
-                  <small>Solución registrada por el técnico</small>
-                  <p>{solicitud.solucion}</p>
-                </div>
-              )}
+              <p>{solicitud.descripcion || 'Sin descripción.'}</p>
             </div>
           </section>
 
-          {/* Historial de estados */}
-          <section className="panel timeline">
-            <h2>Historial de la solicitud</h2>
-            {errHist && <ErrorState message={errHist} onRetry={() => cargarAnidados(solicitud.id)} compact />}
-            {timelineItems.length === 0 && !errHist && (
-              <EmptyState title="Aún no hay cambios de estado" text="El historial aparecerá cuando la solicitud avance." compact />
-            )}
-            {timelineItems.map((item, idx) => (
-              <div className="timeline-item" key={item.id ?? idx}>
-                <div className={`timeline-dot ${idx === 0 ? 'active' : ''}`}>
-                  {idx === 0 && <Icon name="check" size={12} />}
-                </div>
-                <div>
-                  {item.estadoDestino
-                    ? <strong>{item.estadoOrigen} → {item.estadoDestino}</strong>
-                    : <strong>{item.titulo}</strong>
-                  }
-                  <p>{item.observacion || item.descripcion || (item.cambiadoPor ? `por ${item.cambiadoPor}` : '')}</p>
-                  <small>{item.tiempo || item.cambiadoEn || ''}</small>
-                </div>
-              </div>
-            ))}
-          </section>
-
-          {/* Seguimientos / Comentarios */}
-          <section className="panel info-panel">
-            <h2>Comentarios</h2>
-            {errSeg && <ErrorState message={errSeg} onRetry={() => cargarAnidados(solicitud.id)} compact />}
-            {seguimientos.length === 0 && !errSeg ? (
-              <EmptyState title="Aún no hay comentarios" text="Sé la primera persona en comentar." compact />
-            ) : (
-              <div className="comments">
-                {seguimientos.map((c, i) => (
-                  <div className="comment" key={c.id ?? i}>
-                    <div className={`avatar small ${c.rol === 'Solicitante' ? '' : 'staff'}`.trim()}>
-                      {getInitials(c.nombre)}
-                    </div>
-                    <div>
-                      <div className="comment-head">
-                        <strong>{c.nombre}</strong>
-                        {c.rol && <span>{c.rol}</span>}
-                        <small>{c.tiempo}</small>
-                      </div>
-                      <p>{c.texto}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <form className="comment-form" onSubmit={handleSendComment}>
-              <textarea
-                aria-label="Escribir comentario"
-                placeholder="Escribe un comentario o actualización..."
-                value={nuevoComentario}
-                onChange={(e) => setNuevoComentario(e.target.value)}
-              />
-              <Button type="submit" icon="send" disabled={sendingComment || !nuevoComentario.trim()}>
-                {sendingComment ? 'Enviando…' : 'Comentar'}
-              </Button>
-            </form>
-          </section>
-
-          {/* Evidencias */}
           <section className="panel info-panel">
             <h2>Evidencias</h2>
             {errEvi && <ErrorState message={errEvi} onRetry={() => cargarAnidados(solicitud.id)} compact />}
@@ -340,58 +259,85 @@ export default function DetalleSolicitud() {
               <EvidenciasGaleria evidencias={evidencias} />
             )}
           </section>
+
+          {solicitud.solucion && (
+            <section className="panel info-panel">
+              <h2>Solución</h2>
+              <div className="description">
+                <p>{solicitud.solucion}</p>
+              </div>
+            </section>
+          )}
+
+          <ActividadSolicitud
+            eventos={eventos}
+            errores={[errHist, errSeg]}
+            onReintentar={() => cargarAnidados(solicitud.id)}
+          >
+            <FormularioActividad
+              valor={nuevoComentario}
+              onChange={setNuevoComentario}
+              onSubmit={handleSendComment}
+              enviando={sendingComment}
+              etiqueta="Escribir comentario"
+              placeholder="Escribe un comentario o actualización..."
+              boton={sendingComment ? 'Enviando…' : 'Comentar'}
+            />
+          </ActividadSolicitud>
         </main>
 
-        <aside>
-          {/* Estado actual */}
+        <aside className="detail-side">
           <section className="panel status-panel">
-            <div className="card-label">ESTADO ACTUAL</div>
-            <Badge texto={estadoUi} />
-            <p style={{ marginTop: '8px' }}>{textosEstado[estadoUi] ?? ''}</p>
-            <div className="progress">
-              {[0, 1, 2, 3].map((n) => (
-                <span key={n} className={n <= Math.min(nivel, 3) ? 'done' : ''} />
+            <div className="card-label">ESTADO</div>
+            <p className="estado-texto">{textosEstado[estadoUi] ?? ''}</p>
+            <ol className="pasos" aria-label="Progreso de la solicitud">
+              {ESTADOS.map((nombre, n) => (
+                <li
+                  key={nombre}
+                  className={n < pasoActual ? 'done' : n === pasoActual ? 'current' : ''}
+                  aria-current={n === pasoActual ? 'step' : undefined}
+                >
+                  <span className="paso-barra" />
+                  <span className="paso-nombre">{nombre}</span>
+                </li>
               ))}
-            </div>
-            <div className="progress-labels">
-              <span>Registrada</span>
-              <span>Resuelta</span>
+            </ol>
+            <div className="info-grid info-grid-one">
+              <PlazoSolicitud solicitud={solicitud} />
             </div>
           </section>
 
-          {/* Calificación del servicio: el solicitante califica; supervisor y admin la ven */}
-          {(isSolicitante || isSupervisor || isAdmin) && (
-            <CalificacionServicio solicitud={solicitud} puedeCalificar={esDuenoSolicitud} />
-          )}
+          <section className="panel info-panel datos-panel">
+            <h2>Datos</h2>
+            <dl className="datos-lista">
+              <div><dt>Solicitante</dt><dd>{solicitud.solicitante || '—'}</dd></div>
+              <div><dt>Categoría</dt><dd>{solicitud.categoria || '—'}</dd></div>
+              <div><dt>Área</dt><dd>{solicitud.area || '—'}</dd></div>
+              <div><dt>Prioridad</dt><dd>{solicitud.prioridad ? <Badge texto={solicitud.prioridad} /> : 'Sin clasificar'}</dd></div>
+              <div><dt>Ubicación</dt><dd>{solicitud.ubicacion || '—'}</dd></div>
+            </dl>
+          </section>
 
-          {/* Responsable */}
           <section className="panel contact-panel">
-            <div className="card-label">RESPONSABLE ASIGNADO</div>
-            {solicitud.responsable && solicitud.responsable !== 'Sin asignar' ? (
-              <>
-                <div className="contact">
-                  <div className="avatar staff">{getInitials(solicitud.responsable)}</div>
-                  <div>
-                    <strong>{solicitud.responsable}</strong>
-                    <span>{solicitud.rolResponsable || 'Técnico'}</span>
-                  </div>
+            <div className="card-label">RESPONSABLE</div>
+            {tieneResponsable ? (
+              <div className="contact">
+                <div className="avatar staff">{getInitials(solicitud.responsable)}</div>
+                <div>
+                  <strong>{solicitud.responsable}</strong>
+                  <span>{solicitud.rolResponsable || 'Técnico'}</span>
                 </div>
-                <Button
-                  variant="secondary"
-                  full
-                  icon="send"
-                  onClick={() => document.querySelector('.comment-form textarea')?.focus()}
-                >
-                  Enviar comentario
-                </Button>
-              </>
+              </div>
             ) : (
               <p className="muted-note">Todavía no hay un responsable asignado.</p>
             )}
           </section>
 
-          {/* Otras solicitudes de este solicitante (duplicados) */}
-          {(isSupervisor || user?.rol === ROLES.ADMIN) && (
+          {(isSolicitante || isSupervisor || isAdmin) && (
+            <CalificacionServicio solicitud={solicitud} puedeCalificar={esDuenoSolicitud} />
+          )}
+
+          {esPersonal && (
             <SolicitudesSolicitantePanel
               solicitanteId={solicitud.solicitanteId}
               solicitanteNombre={solicitud.solicitante}
@@ -402,15 +348,4 @@ export default function DetalleSolicitud() {
       </div>
     </div>
   );
-}
-
-function buildMockTimeline(solicitud, nivel) {
-  const steps = [
-    { titulo: 'Solicitud registrada',   descripcion: 'Registro inicial.', tiempo: solicitud.fecha },
-    { titulo: 'Responsable asignado',   descripcion: `Asignada a ${solicitud.responsable}.`, tiempo: solicitud.fecha },
-    { titulo: 'Solicitud en atención',  descripcion: 'Técnico inició labores.', tiempo: solicitud.fecha },
-    { titulo: 'Solicitud resuelta',     descripcion: 'Solución registrada.', tiempo: solicitud.fecha },
-    { titulo: 'Solicitud cerrada',      descripcion: 'Cerrada formalmente.', tiempo: solicitud.fecha },
-  ];
-  return steps.slice(0, nivel + 1).reverse();
 }
