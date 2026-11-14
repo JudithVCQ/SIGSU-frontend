@@ -10,6 +10,7 @@ import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
 import RequestTable from '../components/RequestTable';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
 import { SkeletonFilas } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
@@ -42,10 +43,6 @@ export default function BandejaSolicitudes() {
   const [prioridadId,    setPrioridadId]    = useState('');
   // "Solo vencidas" solo disponible en modo mocks (backend no tiene ese filtro)
   const [soloVencidas,   setSoloVencidas]   = useState(false);
-
-  const [page, setPage]   = useState(0);
-  useEffect(() => { setPage(0); }, [vista?.id]);
-  const PAGE_SIZE          = 15;
 
   const cargar = useCallback(() => {
     if (USE_MOCKS) {
@@ -107,8 +104,8 @@ export default function BandejaSolicitudes() {
       : items;
   const filtered = vista ? filtradosBase.filter(vista.filtro) : filtradosBase;
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged      = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  // Paginación (10 por página); vuelve a la primera al cambiar la vista rápida
+  const { pagina: page, setPagina: setPage, items: paged } = usePaginacion(filtered, vista?.id ?? '');
 
   // Acción contextual exclusiva para Supervisor según el estado de la solicitud
   const renderSupervisorAction = (r) => {
@@ -132,7 +129,7 @@ export default function BandejaSolicitudes() {
       return (
         <Button
           variant="primary"
-          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+          size="sm"
           onClick={() => navigate(`/supervisor/solicitudes/${code}/cerrar`)}
         >
           Revisar y cerrar
@@ -147,14 +144,14 @@ export default function BandejaSolicitudes() {
           <div style={{ display: 'inline-flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <Button
               variant="primary"
-              style={{ padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap' }}
+              size="sm"
               onClick={() => navigate(`/supervisor/solicitudes/${code}/asignar`)}
             >
               Asignar
             </Button>
             <Button
               variant="secondary"
-              style={{ padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap' }}
+              size="sm"
               onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
             >
               Editar clasificación
@@ -165,7 +162,7 @@ export default function BandejaSolicitudes() {
       return (
         <Button
           variant="primary"
-          style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+          size="sm"
           onClick={() => navigate(`/supervisor/solicitudes/${code}/clasificar`)}
         >
           Clasificar
@@ -177,7 +174,7 @@ export default function BandejaSolicitudes() {
     return (
       <Button
         variant="secondary"
-        style={{ padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+        size="sm"
         onClick={() => navigate(`/solicitudes/${code}`)}
       >
         Ver
@@ -262,8 +259,11 @@ export default function BandejaSolicitudes() {
         </div>
 
         {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
-        <div className="results-label">
-          {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Ordenadas por más recientes
+        <div className="tabla-encabezado">
+          <div className="results-label">
+            {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Ordenadas por más recientes
+          </div>
+          <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="arriba" />
         </div>
 
         {loading ? (
@@ -286,17 +286,7 @@ export default function BandejaSolicitudes() {
           />
         )}
 
-        <div className="pagination">
-          <span>Mostrando {paged.length} de {filtered.length}</span>
-          <div>
-            <Button variant="secondary" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
-              Anterior
-            </Button>
-            <Button variant="secondary" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
-              Siguiente
-            </Button>
-          </div>
-        </div>
+        <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="abajo" />
       </section>
     </div>
   );

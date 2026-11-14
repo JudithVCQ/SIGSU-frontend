@@ -11,6 +11,7 @@ import FormSelect from '../components/FormSelect';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
 import { SkeletonFilas, SkeletonKpis } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
@@ -71,6 +72,12 @@ export default function MisAsignaciones() {
     return matchEstado && matchPrioridad && matchQuery;
   });
 
+  // Paginación (10 por página); vuelve a la primera al cambiar vista o filtros
+  const { pagina: page, setPagina: setPage, items: paged } = usePaginacion(
+    filtered,
+    `${vista?.id ?? ''}|${query}|${estadoFilter}|${prioridadFilter}`,
+  );
+
   const getActionLabel = (r) => {
     const e = r.estadoApi ?? r.estado;
     if (e === 'ASIGNADA' || e === 'Asignada') return 'Iniciar atención';
@@ -117,8 +124,11 @@ export default function MisAsignaciones() {
         </div>
 
         {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
-        <div className="results-label">
-          {filtered.length} {filtered.length === 1 ? 'asignación' : 'asignaciones'} · Ordenadas por prioridad y fecha
+        <div className="tabla-encabezado">
+          <div className="results-label">
+            {filtered.length} {filtered.length === 1 ? 'asignación' : 'asignaciones'} · Ordenadas por prioridad y fecha
+          </div>
+          <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="arriba" />
         </div>
 
         {loading ? (
@@ -154,7 +164,7 @@ export default function MisAsignaciones() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r) => (
+                  {paged.map((r) => (
                     <tr key={r.codigo || r.id}>
                       <td>
                         <button type="button" className="request-link" onClick={() => navigate(`/tecnico/atencion/${r.codigo}`)}>
@@ -169,6 +179,7 @@ export default function MisAsignaciones() {
                       <td className="act">
                         <Button
                           variant={isPrimaryAction(r) ? 'primary' : 'secondary'}
+                          size="sm"
                           onClick={() => navigate(`/tecnico/atencion/${r.codigo}`)}
                         >
                           {getActionLabel(r)}
@@ -181,7 +192,7 @@ export default function MisAsignaciones() {
             </div>
 
             <div className="mobile-cards">
-              {filtered.map((r) => (
+              {paged.map((r) => (
                 <article className="request-card" key={r.codigo || r.id}>
                   <div className="request-card-head">
                     <div><strong>{r.codigo}</strong><span>{r.fecha}</span></div>
@@ -206,9 +217,7 @@ export default function MisAsignaciones() {
           </>
         )}
 
-        <div className="pagination">
-          <span>Mostrando {filtered.length} de {misAsignaciones.length} asignaciones</span>
-        </div>
+        <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="abajo" />
       </section>
     </div>
   );

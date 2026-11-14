@@ -16,6 +16,7 @@ import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
 import { SkeletonFilas } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
@@ -140,6 +141,12 @@ export default function GestionUsuarios() {
       return true;
     });
   }, [usuarios, busqueda, filtroRol, filtroArea, filtroEstado]);
+
+  // Paginación (10 por página); vuelve a la primera al cambiar los filtros
+  const { pagina, setPagina, items: usuariosPagina } = usePaginacion(
+    usuariosFiltrados,
+    `${busqueda}|${filtroRol}|${filtroArea}|${filtroEstado}`,
+  );
 
   // Manejo de Desactivación con ConfirmModal
   const handleConfirmDeactivate = async () => {
@@ -273,9 +280,12 @@ export default function GestionUsuarios() {
         </div>
 
         {!loading && !errLoad && (
+        <div className="tabla-encabezado">
           <div className="results-label">
             {`Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios`}
           </div>
+          <Pagination pagina={pagina} total={usuariosFiltrados.length} onChange={setPagina} posicion="arriba" />
+        </div>
         )}
 
         {/* Estado de carga */}
@@ -323,7 +333,7 @@ export default function GestionUsuarios() {
                 </tr>
               </thead>
               <tbody>
-                {usuariosFiltrados.map((u) => {
+                {usuariosPagina.map((u) => {
                   const isCurrent = currentUser?.id === u.id;
                   const roleSlug = (u.rol || '').toLowerCase();
                   return (
@@ -359,7 +369,7 @@ export default function GestionUsuarios() {
                           <Button
                             variant="secondary"
                             icon="edit"
-                            style={{ padding: '5px 10px', fontSize: '12px' }}
+                            size="sm"
                             onClick={() => setEditingUser(u)}
                             title="Editar datos y rol"
                           >
@@ -368,7 +378,7 @@ export default function GestionUsuarios() {
                           {u.activo ? (
                             <Button
                               variant="danger"
-                              style={{ padding: '5px 10px', fontSize: '12px' }}
+                              size="sm"
                               onClick={() => setUserToDeactivate(u)}
                               disabled={isCurrent}
                               title={isCurrent ? 'No puedes desactivar tu propia cuenta' : 'Desactivar acceso'}
@@ -378,7 +388,7 @@ export default function GestionUsuarios() {
                           ) : (
                             <Button
                               variant="secondary"
-                              style={{ padding: '5px 10px', fontSize: '12px', color: 'var(--verde)' }}
+                              size="sm"
                               onClick={() => handleActivar(u)}
                               title="Reactivar acceso al sistema"
                             >
@@ -398,7 +408,7 @@ export default function GestionUsuarios() {
         {/* Tarjetas en mobile (<= 720px) */}
         {!loading && !errLoad && usuariosFiltrados.length > 0 && (
           <div className="mobile-cards">
-            {usuariosFiltrados.map((u) => {
+            {usuariosPagina.map((u) => {
               const isCurrent = currentUser?.id === u.id;
               const roleSlug = (u.rol || '').toLowerCase();
               return (
@@ -464,6 +474,10 @@ export default function GestionUsuarios() {
               );
             })}
           </div>
+        )}
+
+        {!loading && !errLoad && (
+          <Pagination pagina={pagina} total={usuariosFiltrados.length} onChange={setPagina} posicion="abajo" />
         )}
       </section>
 

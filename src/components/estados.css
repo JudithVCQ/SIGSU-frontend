@@ -176,3 +176,64 @@
   font-size: 14px;
   box-shadow: 0 6px 24px var(--overlay);
 }
+
+/* ───────── Paginación ───────── */
+.tabla-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-right: 20px;
+}
+
+.tabla-encabezado .results-label {
+  padding-bottom: 8px;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.paginacion-abajo {
+  padding: 14px 20px;
+  border-top: 1px solid var(--borde);
+}
+
+.paginacion-botones {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.paginacion-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.paginacion-btn:hover:not(:disabled) {
+  border-color: var(--primario);
+  background: var(--primario-suave);
+  color: var(--primario);
+}
+
+.paginacion-btn:disabled {
+  color: var(--texto-terciario);
+  background: var(--superficie-alt);
+  cursor: not-allowed;
+}
+
+.paginacion-flecha-izq {
+  display: inline-grid;
+  transform: scaleX(-1);
+}

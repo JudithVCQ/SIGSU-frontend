@@ -15,6 +15,7 @@ import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
 import { SkeletonFilas, SkeletonDetalle } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
@@ -211,6 +212,9 @@ export default function AsignarTecnico() {
 
   const selectedTecnico = tecnicos.find((t) => String(t.id) === String(selectedTecnicoId));
 
+  // Paginación de la bandeja de solicitudes sin asignar (10 por página)
+  const { pagina, setPagina, items: sinAsignarPagina } = usePaginacion(sinAsignarList);
+
   // RENDER 1: Vista general /supervisor/asignacion (sin :id)
   if (!id) {
     return (
@@ -251,6 +255,13 @@ export default function AsignarTecnico() {
               }
             />
           ) : (
+            <>
+            <div className="tabla-encabezado">
+              <div className="results-label">
+                {sinAsignarList.length} {sinAsignarList.length === 1 ? 'solicitud' : 'solicitudes'} por asignar
+              </div>
+              <Pagination pagina={pagina} total={sinAsignarList.length} onChange={setPagina} posicion="arriba" />
+            </div>
             <div className="desktop-table">
               <table className="req-table">
                 <thead>
@@ -264,7 +275,7 @@ export default function AsignarTecnico() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sinAsignarList.map((r) => {
+                  {sinAsignarPagina.map((r) => {
                     const faltaClasificar = !r.areaId || !r.categoriaId;
                     return (
                       <tr key={r.codigo || r.id}>
@@ -282,6 +293,7 @@ export default function AsignarTecnico() {
                           {faltaClasificar ? (
                             <Button
                               variant="secondary"
+                              size="sm"
                               onClick={() => navigate(`/supervisor/solicitudes/${r.codigo || r.id}/clasificar`)}
                             >
                               Clasificar primero
@@ -289,6 +301,7 @@ export default function AsignarTecnico() {
                           ) : (
                             <Button
                               variant="primary"
+                              size="sm"
                               onClick={() => navigate(`/supervisor/solicitudes/${r.codigo || r.id}/asignar`)}
                             >
                               Asignar técnico
@@ -301,6 +314,8 @@ export default function AsignarTecnico() {
                 </tbody>
               </table>
             </div>
+            <Pagination pagina={pagina} total={sinAsignarList.length} onChange={setPagina} posicion="abajo" />
+            </>
           )}
         </section>
       </div>

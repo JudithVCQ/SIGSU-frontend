@@ -19,6 +19,7 @@ import PageHead from '../components/PageHead';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
 import { SkeletonFilas } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
@@ -143,6 +144,9 @@ export default function GestionCatalogos() {
       return c.includes(q) || n.includes(q) || idStr.includes(q);
     });
   }, [activeTab, categorias, areas, prioridades, estados, busqueda]);
+
+  // Paginación (10 por página); vuelve a la primera al cambiar de pestaña o buscar
+  const { pagina, setPagina, items: itemsPagina } = usePaginacion(itemsFiltrados, `${activeTab}|${busqueda}`);
 
   // Manejo de desactivación con ConfirmModal (RN-009)
   const handleConfirmDeactivate = async () => {
@@ -309,9 +313,12 @@ export default function GestionCatalogos() {
         </div>
 
         {!loading && !errLoad && (
+        <div className="tabla-encabezado">
           <div className="results-label">
             {`Mostrando ${itemsFiltrados.length} elementos en ${currentTabCfg.label}`}
           </div>
+          <Pagination pagina={pagina} total={itemsFiltrados.length} onChange={setPagina} posicion="arriba" />
+        </div>
         )}
 
         {/* Estado de carga */}
@@ -363,7 +370,7 @@ export default function GestionCatalogos() {
               </thead>
               <tbody>
                 {isReadOnlyTab
-                  ? itemsFiltrados.map((code) => {
+                  ? itemsPagina.map((code) => {
                       const uiText = ESTADO_API_TO_UI[code] || code;
                       return (
                         <tr key={code}>
@@ -384,7 +391,7 @@ export default function GestionCatalogos() {
                         </tr>
                       );
                     })
-                  : itemsFiltrados.map((item) => (
+                  : itemsPagina.map((item) => (
                       <tr key={item.id}>
                         <td style={{ color: 'var(--muted)' }}>#{item.id}</td>
                         <td>
@@ -410,7 +417,7 @@ export default function GestionCatalogos() {
                             <Button
                               variant="secondary"
                               icon="edit"
-                              style={{ padding: '5px 10px', fontSize: '12px' }}
+                              size="sm"
                               onClick={() => setEditingItem({ item, type: activeTab })}
                               title={`Editar ${currentTabCfg.singular}`}
                             >
@@ -418,7 +425,7 @@ export default function GestionCatalogos() {
                             </Button>
                             <Button
                               variant="danger"
-                              style={{ padding: '5px 10px', fontSize: '12px' }}
+                              size="sm"
                               onClick={() => setItemToDeactivate({ item, type: activeTab })}
                               title={`Desactivar ${currentTabCfg.singular}`}
                             >
@@ -437,7 +444,7 @@ export default function GestionCatalogos() {
         {!loading && !errLoad && itemsFiltrados.length > 0 && (
           <div className="mobile-cards">
             {isReadOnlyTab
-              ? itemsFiltrados.map((code) => {
+              ? itemsPagina.map((code) => {
                   const uiText = ESTADO_API_TO_UI[code] || code;
                   return (
                     <article className="catalog-card" key={code}>
@@ -454,7 +461,7 @@ export default function GestionCatalogos() {
                     </article>
                   );
                 })
-              : itemsFiltrados.map((item) => (
+              : itemsPagina.map((item) => (
                   <article className="catalog-card" key={item.id}>
                     <div className="catalog-card-head">
                       <div>
@@ -497,6 +504,10 @@ export default function GestionCatalogos() {
                   </article>
                 ))}
           </div>
+        )}
+
+        {!loading && !errLoad && (
+          <Pagination pagina={pagina} total={itemsFiltrados.length} onChange={setPagina} posicion="abajo" />
         )}
       </section>
 

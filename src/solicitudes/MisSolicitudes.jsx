@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import FormSelect from '../components/FormSelect';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import Pagination, { usePaginacion } from '../components/Pagination';
 import { SkeletonFilas } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
@@ -64,11 +65,6 @@ export default function MisSolicitudes() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  // Paginación cliente
-  const [page, setPage] = useState(0);
-  useEffect(() => { setPage(0); }, [vista?.id]);
-  const PAGE_SIZE = 10;
-
   const filtered = items.filter((r) => (vista ? vista.filtro(r) : true)).filter((r) => {
     const matchEstado     = !estadoFilter || r.estado === estadoFilter;
     const matchCategoria  = !categoriaId
@@ -82,8 +78,8 @@ export default function MisSolicitudes() {
     return matchEstado && matchCategoria && matchPrioridad && matchQuery;
   });
 
-  const totalPages  = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged       = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  // Paginación (10 por página); vuelve a la primera al cambiar la vista rápida
+  const { pagina: page, setPagina: setPage, items: paged } = usePaginacion(filtered, vista?.id ?? '');
 
   const clearFilters = () => {
     setQuery(''); setEstadoFilter(''); setCategoriaId(''); setPrioridadId(''); setPage(0);
@@ -152,8 +148,11 @@ export default function MisSolicitudes() {
         </div>
 
         {vista && <VistaRapidaChip etiqueta={vista.label} onQuitar={quitarVista} />}
-        <div className="results-label">
-          {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Más recientes primero
+        <div className="tabla-encabezado">
+          <div className="results-label">
+            {filtered.length} {filtered.length === 1 ? 'solicitud' : 'solicitudes'} · Más recientes primero
+          </div>
+          <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="arriba" />
         </div>
 
         {loading ? (
@@ -201,7 +200,7 @@ export default function MisSolicitudes() {
                       <td><Badge texto={r.prioridad || '—'} /></td>
                       <td>{r.fecha}</td>
                       <td className="act">
-                        <Button variant="secondary" onClick={() => navigate(`/solicitudes/${r.codigo}`)}>
+                        <Button variant="secondary" size="sm" onClick={() => navigate(`/solicitudes/${r.codigo}`)}>
                           Ver<span className="sr-only"> {r.codigo}</span>
                         </Button>
                       </td>
@@ -235,17 +234,7 @@ export default function MisSolicitudes() {
           </>
         )}
 
-        <div className="pagination">
-          <span>Mostrando {paged.length} de {filtered.length}</span>
-          <div>
-            <Button variant="secondary" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
-              Anterior
-            </Button>
-            <Button variant="secondary" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
-              Siguiente
-            </Button>
-          </div>
-        </div>
+        <Pagination pagina={page} total={filtered.length} onChange={setPage} posicion="abajo" />
       </section>
     </div>
   );
