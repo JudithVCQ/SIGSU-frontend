@@ -3,6 +3,7 @@ import { ROLES as R, ROLE_HOME } from '../config/constants';
 import { useAuth } from '../hooks/useAuth';
 import ProtectedRoute from './ProtectedRoute';
 import AppLayout from '../components/AppLayout';
+import { NotFoundPage } from './PaginasError';
 import LoginPage from '../auth/LoginPage';
 import RegisterPage from '../auth/RegisterPage';
 import SolicitanteDashboard from '../solicitudes/SolicitanteDashboard';
@@ -23,6 +24,7 @@ export default function AppRoutes() {
   const { user } = useAuth();
   return (
     <Routes>
+      <Route path="/" element={<Navigate to={user ? ROLE_HOME[user.rol] : '/login'} replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/registro" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>
@@ -49,9 +51,9 @@ export default function AppRoutes() {
             <Route path="/admin/usuarios" element={<GestionUsuarios />} />
             <Route path="/admin/catalogos" element={<GestionCatalogos />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to={user ? ROLE_HOME[user.rol] : '/login'} replace />} />
     </Routes>
   );
 }

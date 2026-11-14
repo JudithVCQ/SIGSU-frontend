@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ROLE_HOME } from '../config/constants';
+import { ForbiddenPage } from './PaginasError';
 
 // La autorización real vive en el backend; esto solo evita mostrar vistas ajenas al rol (RNF-006).
 export default function ProtectedRoute({ roles }) {
@@ -19,6 +19,6 @@ export default function ProtectedRoute({ roles }) {
   }
 
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.rol)) return <Navigate to={ROLE_HOME[user.rol]} replace />;
+  if (roles && !roles.includes(user.rol)) return <ForbiddenPage />;
   return <Outlet />;
 }
