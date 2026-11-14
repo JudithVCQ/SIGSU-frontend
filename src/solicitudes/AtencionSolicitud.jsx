@@ -22,7 +22,7 @@ import Button from '../components/Button';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
-import EvidenciaCard from '../components/EvidenciaCard';
+import EvidenciasGaleria from '../components/EvidenciasGaleria';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
 
@@ -377,11 +377,7 @@ export default function AtencionSolicitud() {
             {evidencias.length === 0 ? (
               <p className="muted-note">No se han registrado evidencias para esta solicitud.</p>
             ) : (
-              <div className="evidence-grid">
-                {evidencias.map((f, i) => (
-                  <EvidenciaCard key={f.id ?? i} evidencia={f} />
-                ))}
-              </div>
+              <EvidenciasGaleria evidencias={evidencias} />
             )}
             {esEnAtencion && (
               <div style={{ marginTop: '20px' }}>

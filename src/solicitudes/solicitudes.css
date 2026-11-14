@@ -656,6 +656,179 @@ button.upload:hover {
   text-decoration: underline;
 }
 
+/* Botón que abre el visor (reset de estilos de botón) */
+.evidence-ver {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: zoom-in;
+}
+
+/* ───────── Visor de imágenes (VisorImagenes) ───────── */
+.visor {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: rgba(12, 14, 15, 0.94);
+  color: #fff;
+}
+
+.visor-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.visor-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.visor-info strong {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visor-info span {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.visor-acciones {
+  display: flex;
+  gap: 6px;
+}
+
+.visor-boton {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.visor-boton:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.visor-boton:focus-visible,
+.visor-miniatura:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.visor-escenario {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 0 64px;
+  touch-action: pan-y;
+}
+
+.visor-imagen {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.visor-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+}
+
+.visor-prev {
+  left: 12px;
+}
+
+.visor-next {
+  right: 12px;
+}
+
+.visor-error {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.visor-error a {
+  color: #fff;
+}
+
+.visor-miniaturas {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px 18px;
+  overflow-x: auto;
+}
+
+.visor-miniatura {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.visor-miniatura.activa {
+  border-color: #fff;
+  opacity: 1;
+}
+
+.visor-miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 720px) {
+  .visor-escenario {
+    padding: 0 8px;
+  }
+
+  .visor-nav {
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .visor-prev {
+    left: 6px;
+  }
+
+  .visor-next {
+    right: 6px;
+  }
+}
+
 /* ───────── Responsive Solicitudes ───────── */
 @media (max-width: 900px) {
   .detail-grid {

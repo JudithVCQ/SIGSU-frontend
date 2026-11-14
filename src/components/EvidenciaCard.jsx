@@ -4,14 +4,16 @@
  * - Imagen (tipoMime image/*): miniatura real (liviana si es Cloudinary).
  *   Si la imagen no carga, vuelve al ícono genérico sin romper la vista.
  * - PDF: ícono de PDF.
- * - Con URL: clic abre el archivo en una pestaña nueva y hay un enlace "Descargar".
+ * - Imagen con `onVer`: clic abre el visor ampliado (VisorImagenes).
+ * - Resto con URL (PDF, o imagen sin visor): clic abre el archivo en una pestaña nueva.
+ * - Con URL siempre hay un enlace "Descargar".
  * - Sin URL (mocks o datos incompletos): solo nombre, tamaño e ícono.
  */
 import { useState } from 'react';
 import Icon from './Icon';
 import { tipoEvidencia, urlMiniatura, urlDescarga } from '../services/evidencias.js';
 
-export default function EvidenciaCard({ evidencia }) {
+export default function EvidenciaCard({ evidencia, onVer }) {
   const [imgError, setImgError] = useState(false);
 
   const nombre = evidencia?.nombreArchivo ?? evidencia?.nombre ?? evidencia?.name ?? 'archivo';
@@ -44,9 +46,23 @@ export default function EvidenciaCard({ evidencia }) {
     <div className={`evidence-thumb${mostrarImagen ? ' evidence-thumb-img' : ''}`}>{visual}</div>
   );
 
+  // Imágenes con visor: el clic amplía la imagen en lugar de abrir otra pestaña
+  const abreVisor = mostrarImagen && typeof onVer === 'function';
+
   return (
     <div className="evidence">
-      {url ? (
+      {abreVisor ? (
+        <button
+          type="button"
+          className="evidence-link evidence-ver"
+          onClick={onVer}
+          aria-label={`Ver ${nombre} en grande`}
+          title={nombre}
+        >
+          {thumb}
+          <strong>{nombre}</strong>
+        </button>
+      ) : url ? (
         <a
           className="evidence-link"
           href={url}

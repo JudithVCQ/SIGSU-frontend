@@ -16,7 +16,7 @@ import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
-import EvidenciaCard from '../components/EvidenciaCard';
+import EvidenciasGaleria from '../components/EvidenciasGaleria';
 import SolicitudesSolicitantePanel from '../components/SolicitudesSolicitantePanel';
 import CalificacionServicio from '../components/CalificacionServicio';
 import './solicitudes.css';
@@ -321,11 +321,7 @@ export default function DetalleSolicitud() {
             {evidencias.length === 0 && !errEvi ? (
               <p className="muted-note">No se adjuntaron archivos a esta solicitud.</p>
             ) : (
-              <div className="evidence-grid">
-                {evidencias.map((f, i) => (
-                  <EvidenciaCard key={f.id ?? i} evidencia={f} />
-                ))}
-              </div>
+              <EvidenciasGaleria evidencias={evidencias} />
             )}
           </section>
         </main>

@@ -14,7 +14,7 @@ import Button from '../components/Button';
 import Badge from '../components/Badge';
 import PlazoSolicitud from '../components/PlazoSolicitud';
 import Icon from '../components/Icon';
-import EvidenciaCard from '../components/EvidenciaCard';
+import EvidenciasGaleria from '../components/EvidenciasGaleria';
 import ConfirmModal from '../components/ConfirmModal';
 import './solicitudes.css';
 
@@ -251,11 +251,7 @@ export default function RevisarCerrar() {
         {evidencias.length === 0 ? (
           <p className="muted-note">No se adjuntaron archivos de evidencia a esta solicitud.</p>
         ) : (
-          <div className="evidence-grid" style={{ marginTop: '12px' }}>
-            {evidencias.map((f, i) => (
-              <EvidenciaCard key={f.id ?? i} evidencia={f} />
-            ))}
-          </div>
+          <EvidenciasGaleria evidencias={evidencias} style={{ marginTop: '12px' }} />
         )}
       </section>
 
