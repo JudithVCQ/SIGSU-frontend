@@ -11,8 +11,8 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 const SESSION_TOKEN_KEY = 'sigsu.token';
 const SESSION_USER_KEY  = 'sigsu.session';
 
-/** Tiempo en ms tras el cual se muestra el aviso "conectando…" */
-const SLOW_THRESHOLD_MS = 3_000;
+/** Tiempo en ms tras el cual se muestra el aviso de lentitud */
+const SLOW_THRESHOLD_MS = 8_000;
 /** Tiempo máximo de espera antes de cancelar la petición */
 const TIMEOUT_MS = 60_000;
 

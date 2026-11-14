@@ -143,7 +143,7 @@ describe('Verificación de sesión (AuthProvider y ProtectedRoute)', () => {
     perfilMock.mockReturnValue(new Promise(() => {})); // el servidor aún no responde
     await montar({ token: crearToken({ exp: enSegundos(3600) }) });
 
-    expect(screen.getByRole('heading', { name: 'El servidor se está iniciando' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Esto está tardando más de lo habitual…' })).toBeInTheDocument();
     expect(screen.queryByText('Panel privado')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Ir al inicio de sesión' }));

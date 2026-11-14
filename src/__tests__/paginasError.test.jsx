@@ -81,7 +81,7 @@ describe('AvisoServidor', () => {
     render(<AvisoServidor />);
     expect(screen.queryByRole('status')).toBeNull();
     act(() => lento.cb(true));
-    expect(screen.getByRole('status')).toHaveTextContent('El servidor se está iniciando, puede tardar hasta un minuto');
+    expect(screen.getByRole('status')).toHaveTextContent('Esto está tardando más de lo habitual…');
     act(() => lento.cb(false));
     expect(screen.queryByRole('status')).toBeNull();
   });
