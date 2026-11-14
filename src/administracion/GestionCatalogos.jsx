@@ -299,7 +299,7 @@ export default function GestionCatalogos() {
           <Icon name="check" size={18} />
           <div>
             <strong>Solo se muestran los elementos activos.</strong>
-            <span> Desactivar no borra el historial (RN-009). Los elementos desactivados se excluyen de futuras operaciones.</span>
+            <span> Desactivar no borra el historial. Los elementos desactivados se excluyen de futuras operaciones.</span>
           </div>
         </div>
       )}
@@ -552,7 +552,7 @@ export default function GestionCatalogos() {
         title={`¿Desactivar ${
           itemToDeactivate ? TAB_CONFIG[itemToDeactivate.type].singular : ''
         } "${itemToDeactivate?.item?.nombre}"?`}
-        message="Desactivar no borra el historial (RN-009). Al desactivarlo, dejará de estar disponible para nuevas solicitudes pero se conservará en los registros históricos."
+        message="Desactivar no borra el historial. Al desactivarlo, dejará de estar disponible para nuevas solicitudes pero se conservará en los registros históricos."
         confirmText="Desactivar elemento"
         cancelText="Cancelar"
         isDestructive={true}

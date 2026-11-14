@@ -144,7 +144,7 @@ export default function RevisarCerrar() {
         <div className="message error" role="alert" style={{ padding: '20px' }}>
           <Icon name="alert" size={24} />
           <div>
-            <strong style={{ fontSize: '15px' }}>Restricción de cierre (Regla de negocio RN-007)</strong>
+            <strong style={{ fontSize: '15px' }}>Restricción de cierre</strong>
             <p style={{ margin: '6px 0 16px 0', lineHeight: 1.5 }}>
               Solo una solicitud con estado <strong>Resuelta</strong> puede ser cerrada formalmente tras la conformidad del servicio.
               El estado actual de esta solicitud es <strong>{solicitud.estado}</strong>.
@@ -170,7 +170,7 @@ export default function RevisarCerrar() {
 
       <PageHead
         title="Revisar y cerrar solicitud"
-        text="Verifica la solución técnica y evidencias antes de otorgar la conformidad formal (RN-007)."
+        text="Verifica la solución técnica y evidencias antes de otorgar la conformidad formal."
       />
 
       {/* Pantalla de éxito tras el cierre */}
@@ -318,7 +318,7 @@ export default function RevisarCerrar() {
       <ConfirmModal
         isOpen={modalOpen}
         title="¿Confirmar cierre definitivo de la solicitud?"
-        message={`Confirma que la solución de la solicitud ${solicitud.codigo} fue revisada y cumple con la calidad requerida. Esta acción dará por finalizado el servicio formalmente (RN-007).`}
+        message={`Confirma que la solución de la solicitud ${solicitud.codigo} fue revisada y cumple con la calidad requerida. Esta acción dará por finalizado el servicio formalmente.`}
         confirmText="Aprobar y cerrar"
         cancelText="Volver a revisar"
         isDestructive={false}

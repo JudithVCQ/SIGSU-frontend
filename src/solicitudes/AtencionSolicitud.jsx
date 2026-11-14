@@ -91,7 +91,7 @@ export default function AtencionSolicitud() {
         <div className="empty">
           <Icon name="alert" size={32} />
           <strong>Acceso restringido</strong>
-          <p>Solo el técnico designado puede atender esta solicitud (RN-005).</p>
+          <p>Solo el técnico designado puede atender esta solicitud.</p>
           <Button onClick={() => navigate('/tecnico')}>Volver a mis asignaciones</Button>
         </div>
       </div>
@@ -285,7 +285,7 @@ export default function AtencionSolicitud() {
             <section className="panel info-panel">
               <h2>Registrar solución técnica</h2>
               <p className="hint-text" style={{ marginBottom: '16px' }}>
-                RN-006: Solo con solución registrada la solicitud puede pasar a &quot;Resuelta&quot;.
+                Solo con solución registrada la solicitud puede pasar a &quot;Resuelta&quot;.
               </p>
               {solucionError && (
                 <div className="message error" role="alert" style={{ marginBottom: '16px' }}>
@@ -438,7 +438,7 @@ export default function AtencionSolicitud() {
       <ConfirmModal
         isOpen={modalOpen}
         title="¿Marcar solicitud como Resuelta?"
-        message="Confirma que los trabajos han concluido y la solución fue verificada. La solicitud pasará a revisión del supervisor (RN-006 y RN-007)."
+        message="Confirma que los trabajos han concluido y la solución fue verificada. La solicitud pasará a revisión del supervisor."
         confirmText="Confirmar resolución"
         cancelText="Continuar editando"
         isDestructive={false}

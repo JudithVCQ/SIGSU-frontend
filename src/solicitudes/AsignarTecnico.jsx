@@ -384,7 +384,7 @@ export default function AsignarTecnico() {
         <div className="message error" role="alert" style={{ padding: '20px' }}>
           <Icon name="alert" size={24} />
           <div>
-            <strong style={{ fontSize: '15px' }}>Asignación bloqueada (Regla de negocio RN-004)</strong>
+            <strong style={{ fontSize: '15px' }}>Asignación bloqueada</strong>
             <p style={{ margin: '6px 0 16px 0', lineHeight: 1.5 }}>
               Para poder asignar un técnico, la solicitud debe contar previamente con una <strong>categoría</strong> y un <strong>área responsable</strong> definidas.
             </p>

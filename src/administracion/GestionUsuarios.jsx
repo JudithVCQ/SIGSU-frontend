@@ -553,7 +553,7 @@ export default function GestionUsuarios() {
       <ConfirmModal
         isOpen={Boolean(userToDeactivate)}
         title={`¿Desactivar a ${userToDeactivate?.nombre}?`}
-        message="Desactivar no borra el historial. El usuario perderá acceso al sistema pero sus solicitudes, comentarios y atenciones históricas se conservarán intactas (RN-009)."
+        message="Desactivar no borra el historial. El usuario perderá acceso al sistema pero sus solicitudes, comentarios y atenciones históricas se conservarán intactas."
         confirmText="Desactivar usuario"
         cancelText="Cancelar"
         isDestructive={true}
